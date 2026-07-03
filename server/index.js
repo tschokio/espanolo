@@ -11,6 +11,7 @@ const prisma = new PrismaClient();
 const app = express();
 
 const PORT = Number(process.env.PORT || 5180);
+const TRUST_PROXY = process.env.TRUST_PROXY || "";
 const SESSION_COOKIE = "espanolo_sid";
 const SESSION_DAYS = 30;
 const EXTERNAL_LOOKUP_TIMEOUT_MS = 9000;
@@ -18,6 +19,10 @@ const PRONUNCIATION_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const PRONUNCIATION_USER_AGENT =
   "Mozilla/5.0 (compatible; EspanoloLearning/0.1; self-hosted pronunciation resolver)";
 const pronunciationCache = new Map();
+
+if (TRUST_PROXY) {
+  app.set("trust proxy", TRUST_PROXY);
+}
 
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser(process.env.SESSION_SECRET || "dev-secret"));
@@ -39,6 +44,12 @@ const startOfUtcDay = (date = new Date()) =>
 const addDays = (date, days) => {
   const next = new Date(date);
   next.setUTCDate(next.getUTCDate() + days);
+  return next;
+};
+
+const addMinutes = (date, minutes) => {
+  const next = new Date(date);
+  next.setUTCMinutes(next.getUTCMinutes() + minutes);
   return next;
 };
 
@@ -269,6 +280,39 @@ function headersForAudioSource(source) {
   };
 }
 
+function isAudioResponse(response) {
+  const contentType = response.headers.get("content-type") || "";
+  return !contentType || contentType.startsWith("audio/") || contentType.includes("octet-stream");
+}
+
+async function closeResponse(response) {
+  try {
+    await response.body?.cancel?.();
+  } catch {
+    // Ignore cleanup failures after a successful probe.
+  }
+}
+
+async function isPronunciationSourcePlayable(source) {
+  const attempts = [
+    { method: "HEAD", headers: headersForAudioSource(source) },
+    { headers: { ...headersForAudioSource(source), Range: "bytes=0-0" } }
+  ];
+
+  for (const options of attempts) {
+    try {
+      const response = await fetchExternal(source.url, options);
+      const playable = (response.ok || response.status === 206) && isAudioResponse(response);
+      await closeResponse(response);
+      if (playable) return true;
+    } catch {
+      // Try the next probe shape before marking this source unavailable.
+    }
+  }
+
+  return false;
+}
+
 const publicUser = (user) => ({
   id: user.id,
   email: user.email,
@@ -493,19 +537,31 @@ async function updateWordReview(userId, wordId, wasCorrect) {
     where: { userId_wordId: { userId, wordId } }
   });
 
-  const intervalDays = wasCorrect
-    ? Math.max(1, Math.ceil((existing?.intervalDays || 1) * (existing?.ease || 2.1)))
-    : 1;
+  const previousCorrectCount = existing?.correctCount || 0;
+  const correctCount = previousCorrectCount + (wasCorrect ? 1 : 0);
+  const wrongCount = (existing?.wrongCount || 0) + (wasCorrect ? 0 : 1);
   const ease = wasCorrect
     ? Math.min(3.0, (existing?.ease || 2.1) + 0.08)
     : Math.max(1.25, (existing?.ease || 2.1) - 0.3);
-  const correctCount = (existing?.correctCount || 0) + (wasCorrect ? 1 : 0);
-  const wrongCount = (existing?.wrongCount || 0) + (wasCorrect ? 0 : 1);
-  const state = wasCorrect
-    ? correctCount >= 4 && intervalDays >= 7
-      ? ReviewState.MASTERED
-      : ReviewState.REVIEW
-    : ReviewState.LEARNING;
+  const now = new Date();
+  let intervalDays = 0;
+  let dueAt = addMinutes(now, 5);
+  let state = ReviewState.LEARNING;
+
+  if (wasCorrect) {
+    if (correctCount === 1) {
+      dueAt = addMinutes(now, 10);
+    } else if (correctCount === 2) {
+      intervalDays = 1;
+      dueAt = addDays(now, intervalDays);
+      state = ReviewState.REVIEW;
+    } else {
+      const previousInterval = Math.max(1, existing?.intervalDays || 1);
+      intervalDays = Math.max(correctCount === 3 ? 3 : 4, Math.ceil(previousInterval * ease));
+      dueAt = addDays(now, intervalDays);
+      state = correctCount >= 5 && intervalDays >= 14 ? ReviewState.MASTERED : ReviewState.REVIEW;
+    }
+  }
 
   return prisma.wordReview.upsert({
     where: { userId_wordId: { userId, wordId } },
@@ -515,8 +571,8 @@ async function updateWordReview(userId, wordId, wasCorrect) {
       ease,
       correctCount,
       wrongCount,
-      dueAt: addDays(new Date(), intervalDays),
-      lastAttemptAt: new Date()
+      dueAt,
+      lastAttemptAt: now
     },
     create: {
       userId,
@@ -526,8 +582,8 @@ async function updateWordReview(userId, wordId, wasCorrect) {
       ease,
       correctCount,
       wrongCount,
-      dueAt: addDays(new Date(), intervalDays),
-      lastAttemptAt: new Date()
+      dueAt,
+      lastAttemptAt: now
     }
   });
 }
@@ -722,13 +778,21 @@ async function buildDashboard(userId) {
     select: { id: true, name: true, xp: true, level: true, streakDays: true }
   });
 
-  const recentAttempts = await prisma.attempt.findMany({
-    where: { userId, createdAt: { gte: addDays(new Date(), -14) } },
-    select: { createdAt: true, isCorrect: true }
-  });
+  const [recentAttempts, recentWordAttempts] = await Promise.all([
+    prisma.attempt.findMany({
+      where: { userId, createdAt: { gte: addDays(new Date(), -14) } },
+      select: { createdAt: true }
+    }),
+    prisma.wordAttempt.findMany({
+      where: { userId, createdAt: { gte: addDays(new Date(), -14) } },
+      select: { createdAt: true }
+    })
+  ]);
 
   const activeDays = new Set(
-    recentAttempts.map((attempt) => startOfUtcDay(attempt.createdAt).toISOString().slice(0, 10))
+    [...recentAttempts, ...recentWordAttempts].map((attempt) =>
+      startOfUtcDay(attempt.createdAt).toISOString().slice(0, 10)
+    )
   );
   const streakCalendar = Array.from({ length: 14 }, (_, index) => {
     const date = addDays(startOfUtcDay(), index - 13);
@@ -1045,6 +1109,16 @@ app.get(
   requireAuth,
   asyncHandler(async (req, res) => {
     const pronunciation = await resolvePronunciation(req.query.text);
+    const shouldVerify = ["1", "true", "yes"].includes(String(req.query.verify || "").toLowerCase());
+    if (shouldVerify && pronunciation.sources.length) {
+      const sources = await Promise.all(
+        pronunciation.sources.map(async (source) => ({
+          ...source,
+          playable: await isPronunciationSourcePlayable(source)
+        }))
+      );
+      return res.json({ ...pronunciation, sources });
+    }
     res.json(pronunciation);
   })
 );
@@ -1055,9 +1129,16 @@ app.get(
   asyncHandler(async (req, res) => {
     const pronunciation = await resolvePronunciation(req.query.text);
     const provider = String(req.query.provider || "").toLowerCase();
-    const candidates = provider
+    const sourceText = String(req.query.sourceText || "");
+    let candidates = provider
       ? pronunciation.sources.filter((source) => source.provider === provider)
       : pronunciation.sources;
+    if (sourceText) {
+      const exactCandidates = candidates.filter((source) => source.sourceText === sourceText);
+      candidates = exactCandidates.length
+        ? exactCandidates
+        : candidates.filter((source) => normalizeAnswer(source.sourceText) === normalizeAnswer(sourceText));
+    }
 
     for (const source of candidates) {
       try {
@@ -1133,6 +1214,8 @@ app.get(
           lastAttempt: word.attempts[0] || null
         };
       });
+      const learned = words.filter((word) => word.review.correctCount > 0).length;
+      const reviewDue = words.filter((word) => word.review.correctCount > 0 && word.review.due).length;
 
       return {
         id: group.id,
@@ -1143,6 +1226,9 @@ app.get(
         imageKey: group.imageKey,
         total: words.length,
         due: words.filter((word) => word.review.due).length,
+        reviewDue,
+        new: words.filter((word) => word.review.correctCount === 0).length,
+        learned,
         mastered: words.filter((word) => word.review.state === ReviewState.MASTERED).length,
         words
       };
@@ -1154,6 +1240,9 @@ app.get(
       stats: {
         total: allWords.length,
         due: allWords.filter((word) => word.review.due).length,
+        reviewDue: allWords.filter((word) => word.review.correctCount > 0 && word.review.due).length,
+        new: allWords.filter((word) => word.review.correctCount === 0).length,
+        learned: allWords.filter((word) => word.review.correctCount > 0).length,
         mastered: allWords.filter((word) => word.review.state === ReviewState.MASTERED).length,
         learning: allWords.filter((word) => word.review.state === ReviewState.LEARNING || word.review.state === "NEW").length
       }

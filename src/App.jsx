@@ -8,7 +8,6 @@ import {
   Gamepad2,
   Gift,
   GraduationCap,
-  Home,
   Image,
   ExternalLink,
   ListChecks,
@@ -19,6 +18,7 @@ import {
   Plus,
   Puzzle,
   Rocket,
+  Search,
   Settings,
   Shield,
   Sparkles,
@@ -32,10 +32,9 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { key: "path", label: "Path", icon: Target },
-  { key: "dashboard", label: "Dashboard", icon: Home },
+  { key: "path", label: "Learn", icon: Target },
   { key: "words", label: "Words", icon: NotebookTabs },
-  { key: "lessons", label: "Lessons", icon: BookOpen },
+  { key: "pronunciation", label: "Audio Lab", icon: Volume2 },
   { key: "grammar", label: "Grammar", icon: GraduationCap },
   { key: "games", label: "Mini Games", icon: Gamepad2 },
   { key: "challenges", label: "Challenges", icon: Trophy },
@@ -119,22 +118,112 @@ function dictionaryLinks(text) {
   };
 }
 
+const DEFAULT_WORD_SESSION_SIZE = 8;
+const wordSessionSizes = [
+  { key: "easy", label: "Easy", count: 5 },
+  { key: "standard", label: "Standard", count: 8 },
+  { key: "challenge", label: "Challenge", count: 10 }
+];
+const wordQuestionStyles = [
+  { key: "mixed", label: "Mixed" },
+  { key: "flashcard", label: "Flip" },
+  { key: "recognition", label: "Choice" },
+  { key: "picture", label: "Picture" },
+  { key: "typing", label: "Type" }
+];
+
+function isWordLearned(word) {
+  return (word?.review?.correctCount || 0) > 0 || word?.review?.state === "MASTERED";
+}
+
+function isWordAttempted(word) {
+  return isWordLearned(word) || Boolean(word?.lastAttempt) || (word?.review?.wrongCount || 0) > 0;
+}
+
+function wordDueTimestamp(word) {
+  if (!word?.review?.dueAt) return 0;
+  const time = new Date(word.review.dueAt).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function sortWordsForLearning(a, b) {
+  return (
+    Number(b.review?.due) - Number(a.review?.due) ||
+    (a.review?.correctCount || 0) - (b.review?.correctCount || 0) ||
+    wordDueTimestamp(a) - wordDueTimestamp(b) ||
+    a.spanish.localeCompare(b.spanish)
+  );
+}
+
+function shuffleWords(words) {
+  return [...words].sort(() => 0.5 - Math.random());
+}
+
+function sessionPromptMode(type, word, position, repeated = false) {
+  if (type === "learn" && !isWordLearned(word) && !repeated) return "flashcard";
+  const modes = type === "memory" ? ["picture", "typing", "recognition", "flashcard"] : ["recognition", "picture", "flashcard", "typing"];
+  return modes[position % modes.length];
+}
+
+function buildWordSession(type, selectedGroups, groups, options = {}) {
+  const allWords = groups.flatMap((group) => group.words || []);
+  const selectedGroupList = (Array.isArray(selectedGroups) ? selectedGroups : [selectedGroups]).filter(Boolean);
+  const sessionSize = options.sessionSize || DEFAULT_WORD_SESSION_SIZE;
+  const questionStyle = options.questionStyle || "mixed";
+  const sourceWords =
+    type === "memory"
+      ? allWords.filter(isWordAttempted)
+      : selectedGroupList.flatMap((group) => group.words || []);
+  const uniqueWords = [...new Map(sourceWords.map((word) => [word.id, word])).values()];
+  const sorted = [...uniqueWords].sort(sortWordsForLearning);
+  const randomPriority = shuffleWords(sorted.slice(0, Math.max(sessionSize * 2, sessionSize)));
+  const rest = shuffleWords(sorted.slice(Math.max(sessionSize * 2, sessionSize)));
+  const pool = [...randomPriority, ...rest];
+  const primaryLimit = Math.min(pool.length, sessionSize);
+  const primary = pool.slice(0, primaryLimit);
+  const modeFor = (word, index, repeated = false) =>
+    questionStyle === "mixed" ? sessionPromptMode(type, word, index, repeated) : questionStyle;
+  const items = primary.map((word, index) => ({
+    key: `${type}-${word.id}-${index}`,
+    wordId: word.id,
+    mode: modeFor(word, index)
+  }));
+
+  if (items.length > 0) {
+    const repeatPool = [...(type === "learn" ? primary : pool)]
+      .sort((a, b) => (a.review?.correctCount || 0) - (b.review?.correctCount || 0) || a.spanish.localeCompare(b.spanish));
+    let repeatIndex = 0;
+    while (items.length < sessionSize && repeatPool.length) {
+      const word = repeatPool[repeatIndex % repeatPool.length];
+      items.push({
+        key: `${type}-${word.id}-repeat-${repeatIndex}`,
+        wordId: word.id,
+        mode: modeFor(word, items.length, true)
+      });
+      repeatIndex += 1;
+    }
+  }
+
+  return items;
+}
+
 let activePronunciationAudio = null;
 
-function pronunciationAudioUrl(text, provider = "") {
+function pronunciationAudioUrl(text, provider = "", sourceText = "") {
   const params = new URLSearchParams({ text: text || "" });
   if (provider) params.set("provider", provider);
+  if (sourceText) params.set("sourceText", sourceText);
   return `/api/pronunciation/audio?${params.toString()}`;
 }
 
-function playPronunciationClip(text, setAudioState, provider = "") {
+function playPronunciationClip(text, setAudioState, provider = "", sourceText = "") {
   if (!text || typeof window === "undefined") return;
   if (activePronunciationAudio) {
     activePronunciationAudio.pause();
     activePronunciationAudio.removeAttribute("src");
   }
 
-  const audio = new Audio(pronunciationAudioUrl(text, provider));
+  const audio = new Audio(pronunciationAudioUrl(text, provider, sourceText));
   activePronunciationAudio = audio;
   setAudioState("loading");
 
@@ -313,8 +402,9 @@ function LearningApp({ user, setUser }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const refreshDashboard = async () => {
-    setLoading(true);
+  const refreshDashboard = async (options = {}) => {
+    const showLoading = options.showLoading ?? !options.silent;
+    if (showLoading) setLoading(true);
     setError("");
     try {
       const data = await api("/api/dashboard");
@@ -323,7 +413,7 @@ function LearningApp({ user, setUser }) {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -423,24 +513,29 @@ function LearningApp({ user, setUser }) {
 }
 
 function ActiveView({ active, user, dashboard, refreshDashboard, setActive }) {
-  if (active === "path") return <LearningPathView dashboard={dashboard} refreshDashboard={refreshDashboard} setActive={setActive} />;
+  if (active === "path" || active === "dashboard" || active === "lessons") {
+    return <LearningPathView dashboard={dashboard} refreshDashboard={refreshDashboard} setActive={setActive} />;
+  }
   if (active === "words") return <WordLearnerView refreshDashboard={refreshDashboard} />;
-  if (active === "lessons") return <LessonsView lessons={dashboard.lessons} refreshDashboard={refreshDashboard} />;
+  if (active === "pronunciation") return <PronunciationLookupView />;
   if (active === "grammar") return <GrammarView lessons={dashboard.lessons} />;
   if (active === "games") return <MiniGamesView dashboard={dashboard} refreshDashboard={refreshDashboard} />;
   if (active === "challenges") return <ChallengesView challenge={dashboard.challenge} refreshDashboard={refreshDashboard} />;
   if (active === "progress") return <ProgressView dashboard={dashboard} />;
   if (active === "admin" && user.role === "ADMIN") return <AdminView refreshDashboard={refreshDashboard} />;
   if (active === "settings") return <SettingsView user={user} />;
-  return <DashboardView dashboard={dashboard} refreshDashboard={refreshDashboard} setActive={setActive} />;
+  return <LearningPathView dashboard={dashboard} refreshDashboard={refreshDashboard} setActive={setActive} />;
 }
 
 function LearningPathView({ dashboard, refreshDashboard, setActive }) {
-  const orderedLessons = dashboard.lessons;
-  const nextLesson = orderedLessons.find((lesson) => lesson.progress < 100) || orderedLessons[0];
+  const orderedLessons = dashboard.lessons || [];
+  const activeLessons = orderedLessons.filter((lessonItem) => lessonItem.progress < 100);
+  const completedLessons = orderedLessons.filter((lessonItem) => lessonItem.progress >= 100);
+  const nextLesson = activeLessons[0] || completedLessons[completedLessons.length - 1] || orderedLessons[0];
   const [selectedId, setSelectedId] = useState("");
   const [lesson, setLesson] = useState(null);
   const [loadingLesson, setLoadingLesson] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     if (!selectedId) {
@@ -456,6 +551,8 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
   const averageProgress = dashboard.lessons.length
     ? Math.round(dashboard.lessons.reduce((sum, item) => sum + item.progress, 0) / dashboard.lessons.length)
     : 0;
+  const nextIndex = nextLesson ? orderedLessons.findIndex((lessonItem) => lessonItem.id === nextLesson.id) : -1;
+  const upcomingLessons = activeLessons.slice(1);
 
   if (selectedId) {
     return loadingLesson || !lesson ? (
@@ -474,75 +571,227 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-lg bg-slate-950 p-5 text-white shadow-soft">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <section className="rounded-lg bg-slate-950 p-5 text-white shadow-soft sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-lagoon-100">
-              <Target size={16} /> Ground-up A1 Map
+              <Target size={16} /> Easiest to hardest
             </p>
-            <h1 className="mt-4 text-3xl font-black sm:text-4xl">Tap a node. Learn one thing. Pass the check.</h1>
+            <h1 className="mt-4 max-w-3xl text-3xl font-black sm:text-4xl">One path. Finish the next lesson, then move up.</h1>
+            <p className="mt-3 max-w-2xl text-sm font-semibold text-slate-300 sm:text-base">
+              Completed lessons leave the main list and move into review, so the next unfinished lesson stays easy to find.
+            </p>
           </div>
-          <div className="w-full rounded-lg bg-white/10 p-4 sm:w-80">
-            <div className="flex justify-between text-sm font-bold text-slate-200">
-              <span>Path mastery</span>
-              <span>{averageProgress}%</span>
+          <div className="grid w-full gap-3 sm:grid-cols-3 lg:w-[560px]">
+            <div className="rounded-lg bg-white/10 p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-300">Mastery</p>
+              <p className="mt-2 text-2xl font-black">{averageProgress}%</p>
+              <ProgressBar value={averageProgress} className="mt-3" color="bg-honey-500" />
             </div>
-            <ProgressBar value={averageProgress} className="mt-3" color="bg-honey-500" />
+            <div className="rounded-lg bg-white/10 p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-300">Next step</p>
+              <p className="mt-2 text-2xl font-black">{nextIndex >= 0 ? `${nextIndex + 1}/${orderedLessons.length}` : "0/0"}</p>
+              <p className="mt-1 text-xs font-bold text-slate-300">{activeLessons.length ? "In progress" : "Path complete"}</p>
+            </div>
+            <div className="rounded-lg bg-white/10 p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-300">Completed</p>
+              <p className="mt-2 text-2xl font-black">{completedLessons.length}</p>
+              <p className="mt-1 text-xs font-bold text-slate-300">{orderedLessons.length} total lessons</p>
+            </div>
+          </div>
+        </div>
+        {nextLesson && (
+          <button
+            onClick={() => setSelectedId(nextLesson.id)}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-md bg-honey-500 px-4 py-3 font-black text-white hover:bg-honey-600 sm:w-fit sm:px-6"
+          >
+            <Rocket size={18} /> {activeLessons.length ? "Continue Next Lesson" : "Review Final Lesson"}
+          </button>
+        )}
+      </section>
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <section className="space-y-5">
+          {nextLesson && activeLessons.length > 0 && (
+            <div>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="text-lg font-black">Current lesson</h2>
+                <span className="rounded-full bg-honey-100 px-3 py-1 text-xs font-black uppercase tracking-wide text-honey-700">
+                  Step {nextIndex + 1}
+                </span>
+              </div>
+              <PathLessonCard
+                lessonItem={nextLesson}
+                index={nextIndex}
+                state="current"
+                onSelect={() => setSelectedId(nextLesson.id)}
+              />
+            </div>
+          )}
+
+          {upcomingLessons.length > 0 && (
+            <div>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="text-lg font-black">Coming up</h2>
+                <span className="text-sm font-bold text-slate-500">{upcomingLessons.length} lessons</span>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {upcomingLessons.map((lessonItem) => (
+                  <PathLessonCard
+                    key={lessonItem.id}
+                    lessonItem={lessonItem}
+                    index={orderedLessons.findIndex((item) => item.id === lessonItem.id)}
+                    state="upcoming"
+                    onSelect={() => setSelectedId(lessonItem.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeLessons.length === 0 && orderedLessons.length > 0 && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <AssetImage imageKey="rewards-and-progress:15" alt="Path complete" className="h-20 w-20 shrink-0" />
+                <div>
+                  <h2 className="text-xl font-black text-emerald-950">All lessons are complete</h2>
+                  <p className="mt-1 text-sm font-semibold text-emerald-800">
+                    Use the completed section below to review anything from the beginning.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {completedLessons.length > 0 && (
+            <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm sm:p-5">
+              <button
+                onClick={() => setShowCompleted((value) => !value)}
+                className="flex w-full items-center justify-between gap-3 text-left"
+              >
+                <span>
+                  <span className="block text-lg font-black">Completed lessons</span>
+                  <span className="mt-1 block text-sm font-semibold text-slate-500">
+                    {completedLessons.length} moved out of the main path
+                  </span>
+                </span>
+                <span className="rounded-md border border-stone-200 px-3 py-2 text-sm font-black text-slate-700">
+                  {showCompleted ? "Hide" : "Show"}
+                </span>
+              </button>
+              {showCompleted && (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {completedLessons.map((lessonItem) => (
+                    <PathLessonCard
+                      key={lessonItem.id}
+                      lessonItem={lessonItem}
+                      index={orderedLessons.findIndex((item) => item.id === lessonItem.id)}
+                      state="completed"
+                      onSelect={() => setSelectedId(lessonItem.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+        </section>
+
+        <aside className="space-y-5">
+          <Panel title="Path Status" icon={ListChecks}>
+            <div className="grid gap-3">
+              <InfoTile label="Open lessons" value={activeLessons.length} />
+              <InfoTile label="Completed" value={completedLessons.length} />
+              <InfoTile label="Average mastery" value={`${averageProgress}%`} />
+            </div>
             {nextLesson && (
               <button
                 onClick={() => setSelectedId(nextLesson.id)}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-honey-500 px-4 py-3 font-black text-white hover:bg-honey-600"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-lagoon-500 px-4 py-3 font-black text-white hover:bg-lagoon-600"
               >
-                <Rocket size={18} /> Continue
+                <Rocket size={18} /> {activeLessons.length ? "Start Next" : "Review"}
               </button>
             )}
-          </div>
-        </div>
-      </section>
+          </Panel>
 
-      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {orderedLessons.map((lessonItem, index) => {
-              const done = lessonItem.progress >= 100;
-              const isNext = nextLesson?.id === lessonItem.id;
-              return (
-                <button
-                  key={lessonItem.id}
-                  onClick={() => setSelectedId(lessonItem.id)}
-                  className={classNames(
-                    "relative min-h-44 rounded-lg border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-soft",
-                    done
-                      ? "border-emerald-200 bg-emerald-50"
-                      : isNext
-                        ? "border-honey-500 bg-amber-50"
-                        : "border-stone-200 bg-white"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="relative shrink-0">
-                      <AssetImage imageKey={lessonItem.imageKey} alt={lessonItem.title} className="h-16 w-16" />
-                      <span className="absolute -left-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-slate-950 text-xs font-black text-white">
-                        {index + 1}
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-black uppercase tracking-wide text-slate-500">{lessonItem.theme}</p>
-                      <h2 className="mt-1 text-lg font-black leading-tight">{lessonItem.title}</h2>
-                    </div>
-                  </div>
-                  <p className="mt-4 line-clamp-2 text-sm text-slate-600">{lessonItem.summary}</p>
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <ProgressBar value={lessonItem.progress} className="flex-1" color={done ? "bg-emerald-500" : "bg-lagoon-500"} />
-                    <span className="text-sm font-black text-slate-700">{lessonItem.progress}%</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+          <Panel title="Other Practice" icon={NotebookTabs}>
+            <div className="space-y-3">
+              <button
+                onClick={() => setActive("words")}
+                className="flex w-full items-center justify-between rounded-md border border-stone-200 bg-white px-4 py-3 text-left font-black text-slate-700 hover:bg-stone-50"
+              >
+                Words
+                <NotebookTabs size={18} className="text-lagoon-600" />
+              </button>
+              <button
+                onClick={() => setActive("grammar")}
+                className="flex w-full items-center justify-between rounded-md border border-stone-200 bg-white px-4 py-3 text-left font-black text-slate-700 hover:bg-stone-50"
+              >
+                Grammar
+                <GraduationCap size={18} className="text-lagoon-600" />
+              </button>
+            </div>
+          </Panel>
+        </aside>
+      </div>
     </div>
+  );
+}
+
+function PathLessonCard({ lessonItem, index, state, onSelect }) {
+  const done = lessonItem.progress >= 100;
+  const current = state === "current";
+  const actionLabel = done ? "Review" : lessonItem.progress > 0 ? "Continue" : "Start";
+
+  return (
+    <button
+      onClick={onSelect}
+      className={classNames(
+        "group flex min-h-36 w-full flex-col rounded-lg border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-soft",
+        current
+          ? "border-honey-500 bg-amber-50"
+          : done
+            ? "border-emerald-200 bg-emerald-50"
+            : "border-stone-200 bg-white hover:bg-stone-50"
+      )}
+    >
+      <div className="flex gap-4">
+        <div className="relative shrink-0">
+          <AssetImage imageKey={lessonItem.imageKey} alt={lessonItem.title} className="h-20 w-20" />
+          <span
+            className={classNames(
+              "absolute -left-2 -top-2 grid h-7 w-7 place-items-center rounded-full text-xs font-black text-white",
+              done ? "bg-emerald-600" : current ? "bg-honey-600" : "bg-slate-950"
+            )}
+          >
+            {index + 1}
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-lagoon-700">{lessonItem.cefrLevel}</span>
+            <span className="text-xs font-black uppercase tracking-wide text-slate-500">{lessonItem.theme}</span>
+          </div>
+          <h3 className="mt-2 text-lg font-black leading-tight text-slate-950">{lessonItem.title}</h3>
+          <p className="mt-2 line-clamp-2 text-sm font-semibold text-slate-600">{lessonItem.summary}</p>
+        </div>
+      </div>
+      <div className="mt-auto pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <ProgressBar
+            value={lessonItem.progress}
+            className="flex-1"
+            color={done ? "bg-emerald-500" : current ? "bg-honey-500" : "bg-lagoon-500"}
+          />
+          <span className="text-sm font-black text-slate-700">{lessonItem.progress}%</span>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span className="font-bold text-slate-500">
+            {lessonItem.estimatedMinutes} min · {lessonItem.exerciseCount} checks
+          </span>
+          <span className="font-black text-lagoon-700 group-hover:text-lagoon-900">{actionLabel}</span>
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -684,9 +933,9 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
               return next;
             });
           }}
-          onComplete={async () => {
-            await refreshDashboard();
+          onComplete={() => {
             setStep((value) => value + 1);
+            refreshDashboard?.({ silent: true }).catch(() => null);
           }}
         />
       )}
@@ -697,6 +946,16 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
 function WordLearnerView({ refreshDashboard }) {
   const [data, setData] = useState(null);
   const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+  const [studyMode, setStudyMode] = useState("learn");
+  const [session, setSession] = useState(null);
+  const [sessionIndex, setSessionIndex] = useState(0);
+  const [sessionResults, setSessionResults] = useState([]);
+  const [sessionNotice, setSessionNotice] = useState("");
+  const [lastSummary, setLastSummary] = useState(null);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const [difficulty, setDifficulty] = useState("standard");
+  const [questionStyle, setQuestionStyle] = useState("mixed");
   const [mode, setMode] = useState("flashcard");
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -704,11 +963,19 @@ function WordLearnerView({ refreshDashboard }) {
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadWords = async () => {
-    setLoading(true);
+  const resetCard = () => {
+    setFlipped(false);
+    setTypedAnswer("");
+    setFeedback(null);
+  };
+
+  const loadWords = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     const payload = await api("/api/words");
+    const cityGroup = payload.groups.find((group) => group.slug === "city-transport");
     setData(payload);
-    setSelectedGroupId((current) => current || payload.groups[0]?.id || "");
+    setSelectedGroupId((current) => current || cityGroup?.id || payload.groups[0]?.id || "");
+    setSelectedGroupIds((current) => (current.length ? current : cityGroup?.id ? [cityGroup.id] : payload.groups[0]?.id ? [payload.groups[0].id] : []));
     setLoading(false);
   };
 
@@ -716,234 +983,1150 @@ function WordLearnerView({ refreshDashboard }) {
     loadWords();
   }, []);
 
-  const selectedGroup = data?.groups.find((group) => group.id === selectedGroupId) || data?.groups[0];
+  const selectedGroups = data?.groups.filter((group) => selectedGroupIds.includes(group.id)) || [];
+  const selectedGroup = selectedGroups[0] || data?.groups.find((group) => group.id === selectedGroupId) || data?.groups[0];
   const words = useMemo(() => {
-    const list = selectedGroup?.words || [];
-    return [...list].sort((a, b) => Number(b.review.due) - Number(a.review.due) || a.spanish.localeCompare(b.spanish));
-  }, [selectedGroup]);
-  const word = words[index % Math.max(1, words.length)];
-  const allWords = data?.groups.flatMap((group) => group.words) || [];
-  const choices = useMemo(() => {
-    if (!word) return [];
-    const distractors = allWords
-      .filter((candidate) => candidate.id !== word.id)
-      .map((candidate) => candidate.english)
-      .filter(Boolean)
-      .slice(0, 30);
-    const pool = [word.english, ...distractors.sort(() => 0.5 - Math.random()).slice(0, 3)];
-    return pool.sort(() => 0.5 - Math.random());
-  }, [word?.id, allWords.length]);
+    const list = selectedGroups.length ? selectedGroups.flatMap((group) => group.words || []) : selectedGroup?.words || [];
+    return [...list].sort(sortWordsForLearning);
+  }, [selectedGroup, selectedGroups]);
+  const allWords = useMemo(() => data?.groups.flatMap((group) => group.words) || [], [data]);
+  const memoryCount = allWords.filter(isWordAttempted).length;
+  const sessionSize = wordSessionSizes.find((item) => item.key === difficulty)?.count || DEFAULT_WORD_SESSION_SIZE;
 
-  const resetCard = () => {
-    setFlipped(false);
-    setTypedAnswer("");
-    setFeedback(null);
+  const beginSession = (type = studyMode, groupId = selectedGroupId, sourceData = data) => {
+    if (!sourceData?.groups?.length) return;
+    const group =
+      sourceData.groups.find((item) => item.id === groupId) ||
+      sourceData.groups.find((item) => item.slug === "city-transport") ||
+      sourceData.groups[0];
+    const items = buildWordSession(type, group, sourceData.groups, { sessionSize, questionStyle });
+
+    setStudyMode(type);
+    setSelectedGroupId(group?.id || "");
+    setIndex(0);
+    resetCard();
+
+    if (!items.length) {
+      setSession(null);
+      setSessionResults([]);
+      setSessionIndex(0);
+      setSessionNotice(type === "memory" ? "Do a few category questions first, then Memory will test them again." : "This deck has no words yet.");
+      return;
+    }
+
+    setSession({
+      type,
+      groupId: group?.id || "",
+      groupTitle: type === "memory" ? "Memory" : group?.title || "Words",
+      questionStyle,
+      sessionSize,
+      items,
+      startedAt: Date.now()
+    });
+    setSessionIndex(0);
+    setSessionResults([]);
+    setSessionNotice("");
   };
 
+  const startQuiz = (type = studyMode) => {
+    if (!data?.groups?.length) return;
+    const groupsForQuiz = data.groups.filter((group) => selectedGroupIds.includes(group.id));
+
+    if (type !== "memory" && !groupsForQuiz.length) {
+      setSessionNotice("Choose at least one category first.");
+      return;
+    }
+
+    const items = buildWordSession(type, groupsForQuiz, data.groups, { sessionSize, questionStyle });
+    if (!items.length) {
+      setSession(null);
+      setSessionResults([]);
+      setSessionIndex(0);
+      setSessionNotice(type === "memory" ? "Do a few category questions first, then Memory will test them again." : "The selected categories have no words yet.");
+      return;
+    }
+
+    setStudyMode(type);
+    setSelectedGroupId(groupsForQuiz[0]?.id || selectedGroupId || data.groups[0]?.id || "");
+    setSession({
+      type,
+      groupIds: groupsForQuiz.map((group) => group.id),
+      groupTitle: type === "memory" ? "Memory" : groupsForQuiz.map((group) => group.title).join(", "),
+      questionStyle,
+      sessionSize,
+      items,
+      startedAt: Date.now()
+    });
+    setSessionIndex(0);
+    setSessionResults([]);
+    setSessionNotice("");
+    setLastSummary(null);
+    resetCard();
+  };
+
+  const finishQuiz = () => {
+    const total = session?.items.length || 0;
+    const correct = sessionResults.filter(Boolean).length;
+    const score = total ? Math.round((correct / total) * 100) : 0;
+    setLastSummary({
+      title: session?.groupTitle || "Words",
+      type: session?.type || studyMode,
+      correct,
+      total,
+      score,
+      difficulty: wordSessionSizes.find((item) => item.key === difficulty)?.label || "Standard",
+      questionType: wordQuestionStyles.find((item) => item.key === questionStyle)?.label || "Mixed"
+    });
+    setSession(null);
+    setSessionIndex(0);
+    setSessionResults([]);
+    resetCard();
+    loadWords(false);
+    refreshDashboard?.({ silent: true }).catch(() => null);
+  };
+
+  useEffect(() => {
+    if (!data || hasAutoStarted) return;
+    setHasAutoStarted(true);
+  }, [data, hasAutoStarted]);
+
+  const sessionFinished = Boolean(session && sessionIndex >= session.items.length);
+  const currentSessionItem = !sessionFinished ? session?.items[sessionIndex] : null;
+  const sessionWord = currentSessionItem
+    ? allWords.find((candidate) => candidate.id === currentSessionItem.wordId) || null
+    : null;
+  const word = sessionWord || (!sessionFinished ? words[index % Math.max(1, words.length)] : null);
+  const activeMode = currentSessionItem?.mode || mode;
+  const choices = useMemo(() => {
+    if (!word) return [];
+    const answerField = activeMode === "picture" ? "spanish" : "english";
+    const distractors = allWords
+      .filter((candidate) => candidate.id !== word.id)
+      .map((candidate) => candidate[answerField])
+      .filter(Boolean)
+      .slice(0, 30);
+    const pool = [word[answerField], ...distractors.sort(() => 0.5 - Math.random()).slice(0, 3)];
+    return pool.sort(() => 0.5 - Math.random());
+  }, [word?.id, activeMode, allWords.length]);
+
   const nextCard = () => {
+    if (session) {
+      if (sessionIndex + 1 >= session.items.length) {
+        finishQuiz();
+        return;
+      }
+      setSessionIndex((current) => Math.min(current + 1, session.items.length));
+      resetCard();
+      return;
+    }
     setIndex((current) => (words.length ? (current + 1) % words.length : 0));
     resetCard();
   };
 
-  const submitWord = async (answer, attemptMode = mode) => {
+  const submitWord = async (answer, attemptMode = activeMode) => {
     if (!word) return;
     const result = await api(`/api/words/${word.id}/attempt`, {
       method: "POST",
       body: {
-        mode: attemptMode === "typing" ? "en-es" : "es-en",
+        mode: ["typing", "picture"].includes(attemptMode) ? "en-es" : "es-en",
         answer
       }
     });
     setFeedback(result);
-    await refreshDashboard?.();
+    if (session) {
+      setSessionResults((current) => {
+        const next = [...current];
+        next[sessionIndex] = Boolean(result.correct);
+        return next;
+      });
+    } else {
+      await loadWords(false);
+    }
   };
 
   if (loading || !data) {
     return <Panel title="Words">Loading word decks...</Panel>;
   }
 
-  if (!word) {
+  if (!word && !sessionFinished) {
     return <Panel title="Words">No words are available yet.</Panel>;
   }
 
+  const sessionTotal = session?.items.length || 0;
+  const attemptedCount = sessionResults.filter((result) => result !== undefined).length;
+  const sessionCorrect = sessionResults.filter(Boolean).length;
+  const sessionProgress = sessionTotal ? Math.round((attemptedCount / sessionTotal) * 100) : 0;
+  const scorePercent = sessionTotal ? Math.round((sessionCorrect / sessionTotal) * 100) : 0;
+  const selectedLearned = selectedGroup?.learned ?? selectedGroup?.mastered ?? 0;
+  const selectedTotal = selectedGroup?.total || 0;
+  const promptLabel =
+    activeMode === "typing" ? "Type" : activeMode === "recognition" ? "Choice" : activeMode === "picture" ? "Picture" : "Flip";
+  const expectedChoice = activeMode === "picture" ? word?.spanish : word?.english;
+  const nextLabel = session
+    ? sessionIndex + 1 >= session.items.length
+      ? "Finish session"
+      : "Next question"
+    : "Next word";
+  const sessionTitle = session
+    ? session.type === "memory"
+      ? "Memory Session"
+      : `${session.groupTitle || selectedGroup?.title || "Words"} Session`
+    : selectedGroup?.title || "Word Deck";
+  const selectedWordCount = selectedGroups.reduce((sum, group) => sum + (group.total || group.words?.length || 0), 0);
+  const canStartQuiz = studyMode === "memory" ? memoryCount > 0 : selectedGroups.length > 0 && selectedWordCount > 0;
+
+  if (!session) {
+    return (
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <section className="space-y-5">
+          <Panel title="Word Quiz Setup" icon={NotebookTabs}>
+            {lastSummary && (
+              <div className="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-wide text-emerald-700">Last Quiz</p>
+                    <h2 className="mt-1 text-xl font-black text-emerald-950">{lastSummary.title}</h2>
+                    <p className="mt-1 text-sm font-bold text-slate-700">
+                      {lastSummary.correct}/{lastSummary.total} correct · {lastSummary.difficulty} · {lastSummary.questionType}
+                    </p>
+                  </div>
+                  <div className="text-3xl font-black text-emerald-700">{lastSummary.score}%</div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-4 rounded-lg border border-stone-200 bg-stone-50 p-4 lg:grid-cols-[1fr_1fr]">
+              <div>
+                <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">Mode</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    ["learn", "Learn Categories"],
+                    ["memory", "Memory"]
+                  ].map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setStudyMode(key);
+                        setSessionNotice("");
+                      }}
+                      className={classNames(
+                        "rounded-md px-3 py-2 text-xs font-black",
+                        studyMode === key ? "bg-slate-950 text-white" : "bg-white text-slate-600 hover:bg-stone-100"
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">Difficulty</p>
+                <div className="flex flex-wrap gap-2">
+                  {wordSessionSizes.map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => setDifficulty(item.key)}
+                      className={classNames(
+                        "rounded-md px-3 py-2 text-xs font-black",
+                        difficulty === item.key ? "bg-slate-950 text-white" : "bg-white text-slate-600 hover:bg-stone-100"
+                      )}
+                    >
+                      {item.label} · {item.count}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="lg:col-span-2">
+                <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">Question Type</p>
+                <div className="flex flex-wrap gap-2">
+                  {wordQuestionStyles.map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setQuestionStyle(item.key);
+                        resetCard();
+                      }}
+                      className={classNames(
+                        "rounded-md px-3 py-2 text-xs font-black",
+                        questionStyle === item.key ? "bg-slate-950 text-white" : "bg-white text-slate-600 hover:bg-stone-100"
+                      )}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {sessionNotice && (
+              <div className="mt-4 rounded-lg border border-honey-200 bg-honey-50 p-4 font-bold text-honey-900">
+                {sessionNotice}
+              </div>
+            )}
+
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm font-bold text-slate-600">
+                {studyMode === "memory"
+                  ? `${memoryCount} memory word${memoryCount === 1 ? "" : "s"} available`
+                  : `${selectedGroups.length} categor${selectedGroups.length === 1 ? "y" : "ies"} · ${selectedWordCount} words`}
+              </div>
+              <button
+                disabled={!canStartQuiz}
+                onClick={() => startQuiz(studyMode)}
+                className="rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Start Quiz
+              </button>
+            </div>
+          </Panel>
+
+          <Panel title="Categories" icon={ListChecks}>
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  const ids = data.groups.map((group) => group.id);
+                  setSelectedGroupIds(ids);
+                  setSelectedGroupId(ids[0] || "");
+                }}
+                className="rounded-md border border-stone-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-stone-50"
+              >
+                Select All
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedGroupIds([]);
+                  setSelectedGroupId("");
+                }}
+                className="rounded-md border border-stone-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-stone-50"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {data.groups.map((group) => {
+                const selected = selectedGroupIds.includes(group.id);
+                const learned = group.learned ?? group.mastered ?? 0;
+                return (
+                  <button
+                    key={group.id}
+                    onClick={() => {
+                      setSelectedGroupIds((current) => {
+                        const next = current.includes(group.id)
+                          ? current.filter((id) => id !== group.id)
+                          : [...current, group.id];
+                        setSelectedGroupId(next[0] || "");
+                        return next;
+                      });
+                      setSessionNotice("");
+                    }}
+                    className={classNames(
+                      "grid grid-cols-[54px_1fr_auto] items-center gap-3 rounded-lg border p-3 text-left",
+                      selected ? "border-lagoon-500 bg-lagoon-50" : "border-stone-200 bg-white hover:bg-stone-50"
+                    )}
+                  >
+                    <AssetImage imageKey={group.imageKey} alt={group.title} className="h-12 w-12" />
+                    <div className="min-w-0">
+                      <p className="truncate font-black">{group.title}</p>
+                      <p className="truncate text-xs text-slate-500">
+                        {group.new ?? 0} new · {group.reviewDue ?? group.due} review
+                      </p>
+                      <ProgressBar value={group.total ? (learned / group.total) * 100 : 0} className="mt-2" />
+                    </div>
+                    <span className="text-sm font-black text-lagoon-700">{learned}/{group.total}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Panel>
+        </section>
+
+        <aside className="space-y-5">
+          <Panel title="Word Stats" icon={BarChart3}>
+            <div className="grid grid-cols-2 gap-3">
+              <InfoTile label="Total" value={data.stats.total} />
+              <InfoTile label="New" value={data.stats.new ?? 0} />
+              <InfoTile label="Review" value={data.stats.reviewDue ?? data.stats.due} />
+              <InfoTile label="Memory" value={memoryCount} />
+              <InfoTile label="Learned" value={data.stats.learned ?? 0} />
+              <InfoTile label="Mastered" value={data.stats.mastered} />
+            </div>
+          </Panel>
+        </aside>
+      </div>
+    );
+  }
+
+  return (
+    <section className="mx-auto max-w-4xl space-y-5">
+      <Panel
+        title={sessionTitle}
+        icon={Sparkles}
+        action={
+          <button
+            onClick={() => {
+              setSession(null);
+              setSessionIndex(0);
+              setSessionResults([]);
+              resetCard();
+            }}
+            className="rounded-md border border-stone-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-stone-50"
+          >
+            Exit
+          </button>
+        }
+      >
+        <div className="mb-5 rounded-lg border border-lagoon-100 bg-lagoon-50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-black text-lagoon-900">
+            <span>{session.type === "memory" ? `Memory · ${memoryCount} words` : session.groupTitle}</span>
+            <span>
+              {attemptedCount}/{sessionTotal} answered · {promptLabel}
+            </span>
+          </div>
+          <ProgressBar value={sessionProgress} className="mt-3" />
+        </div>
+
+        <div className={classNames("grid gap-5", activeMode === "picture" ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1")}>
+          {activeMode === "picture" && (
+            <div>
+              <AssetImage imageKey={word.imageKey || selectedGroup?.imageKey} alt={word.spanish} className="aspect-square w-full" />
+              <div className="mt-3 flex justify-between text-sm font-bold text-slate-500">
+                <span>{sessionIndex + 1} / {sessionTotal}</span>
+                <span>{word.review.state}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex min-h-[330px] flex-col rounded-lg border border-stone-200 bg-stone-50 p-5">
+            {activeMode === "flashcard" && (
+              <>
+                <p className="text-sm font-black uppercase tracking-wide text-slate-500">Front</p>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-4xl font-black text-slate-950">{word.spanish}</h2>
+                  <PronunciationTools text={word.spanish} />
+                </div>
+                {flipped && (
+                  <div className="mt-6 grid gap-4 rounded-lg border border-lagoon-200 bg-white p-4 sm:grid-cols-[150px_1fr] sm:items-center">
+                    <AssetImage imageKey={word.imageKey || selectedGroup?.imageKey} alt={word.spanish} className="aspect-square w-full" />
+                    <div>
+                      <p className="text-sm font-black text-lagoon-700">Meaning</p>
+                      <p className="mt-1 text-2xl font-black text-lagoon-900">{word.english}</p>
+                      <p className="mt-2 text-sm font-bold text-slate-600">
+                        {word.partOfSpeech}
+                        {word.gender ? ` · ${word.gender}` : ""}
+                      </p>
+                      {word.example && <p className="mt-3 font-bold text-slate-700">{word.example}</p>}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-auto flex flex-wrap gap-3 pt-6">
+                  {!flipped ? (
+                    <button onClick={() => setFlipped(true)} className="rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600">
+                      Flip Card
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        disabled={Boolean(feedback)}
+                        onClick={() => submitWord(word.english, "flashcard")}
+                        className="rounded-md bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700 disabled:cursor-default disabled:opacity-60"
+                      >
+                        I knew it
+                      </button>
+                      <button
+                        disabled={Boolean(feedback)}
+                        onClick={() => submitWord("", "flashcard")}
+                        className="rounded-md bg-red-600 px-5 py-3 font-black text-white hover:bg-red-700 disabled:cursor-default disabled:opacity-60"
+                      >
+                        Again
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+
+            {activeMode === "recognition" && (
+              <>
+                <p className="text-sm font-black uppercase tracking-wide text-slate-500">Choose the meaning</p>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-4xl font-black text-slate-950">{word.spanish}</h2>
+                  <PronunciationTools text={word.spanish} />
+                </div>
+                <div className="mt-6 grid gap-3">
+                  {choices.map((choice) => (
+                    <button
+                      key={choice}
+                      disabled={Boolean(feedback)}
+                      onClick={() => submitWord(choice, "recognition")}
+                      className={classNames(
+                        "rounded-md border bg-white px-4 py-3 text-left font-bold hover:bg-stone-50 disabled:cursor-default",
+                        feedback && choice === expectedChoice && "border-emerald-400 bg-emerald-50 text-emerald-900",
+                        feedback && feedback.correct === false && choice === feedback.expected && "border-emerald-400 bg-emerald-50"
+                      )}
+                    >
+                      {choice}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {activeMode === "picture" && (
+              <>
+                <p className="text-sm font-black uppercase tracking-wide text-slate-500">Choose the Spanish</p>
+                <h2 className="mt-3 text-3xl font-black text-slate-950">What is this?</h2>
+                <div className="mt-3">
+                  <PronunciationTools text={word.spanish} />
+                </div>
+                <div className="mt-6 grid gap-3">
+                  {choices.map((choice) => (
+                    <button
+                      key={choice}
+                      disabled={Boolean(feedback)}
+                      onClick={() => submitWord(choice, "picture")}
+                      className={classNames(
+                        "rounded-md border bg-white px-4 py-3 text-left font-bold hover:bg-stone-50 disabled:cursor-default",
+                        feedback && choice === expectedChoice && "border-emerald-400 bg-emerald-50 text-emerald-900",
+                        feedback && feedback.correct === false && choice === feedback.expected && "border-emerald-400 bg-emerald-50"
+                      )}
+                    >
+                      {choice}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {activeMode === "typing" && (
+              <>
+                <p className="text-sm font-black uppercase tracking-wide text-slate-500">Type the Spanish</p>
+                <h2 className="mt-3 text-4xl font-black text-slate-950">{word.english}</h2>
+                <input
+                  value={typedAnswer}
+                  disabled={Boolean(feedback)}
+                  onChange={(event) => setTypedAnswer(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    if (!feedback && typedAnswer.trim()) {
+                      submitWord(typedAnswer, "typing");
+                    }
+                  }}
+                  className="mt-6 w-full rounded-md border border-stone-200 bg-white px-4 py-4 text-xl font-bold outline-none focus:border-lagoon-500 disabled:bg-stone-100"
+                  placeholder="Spanish word"
+                />
+                <button
+                  disabled={!typedAnswer.trim() || Boolean(feedback)}
+                  onClick={() => submitWord(typedAnswer, "typing")}
+                  className="mt-4 w-fit rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600 disabled:opacity-50"
+                >
+                  Check
+                </button>
+              </>
+            )}
+
+            {feedback && (
+              <div className={classNames("mt-5 rounded-lg border p-4", feedback.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50")}>
+                <p className={classNames("font-black", feedback.correct ? "text-emerald-900" : "text-red-900")}>
+                  {feedback.correct ? `Correct +${feedback.xpAwarded} XP` : "Not yet"}
+                </p>
+                <p className="mt-1 text-sm text-slate-700">
+                  Expected: <span className="font-black">{feedback.expected}</span>
+                </p>
+                <p className="mt-1 text-sm text-slate-700">{feedback.review.message}</p>
+                <button onClick={nextCard} className="mt-4 rounded-md bg-slate-950 px-4 py-2 font-black text-white">
+                  {nextLabel}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </Panel>
+    </section>
+  );
+
   return (
     <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
-      <section className="space-y-5">
-        <Panel title="Vocabulary Decks" icon={NotebookTabs}>
-          <div className="grid gap-3">
-            {data.groups.map((group) => (
+      <section className="order-1 space-y-5 xl:order-2">
+        <Panel
+          title={sessionTitle}
+          icon={Sparkles}
+          action={
+            <div className="flex flex-wrap gap-2 text-xs font-black">
               <button
-                key={group.id}
-                onClick={() => {
-                  setSelectedGroupId(group.id);
-                  setIndex(0);
-                  resetCard();
-                }}
+                onClick={() => beginSession("learn")}
                 className={classNames(
-                  "grid grid-cols-[54px_1fr_auto] items-center gap-3 rounded-lg border p-3 text-left",
-                  selectedGroupId === group.id ? "border-lagoon-500 bg-lagoon-50" : "border-stone-200 bg-white hover:bg-stone-50"
+                  "rounded-md px-3 py-2",
+                  studyMode === "learn" ? "bg-lagoon-500 text-white" : "bg-stone-100 text-slate-600 hover:bg-stone-200"
                 )}
               >
-                <AssetImage imageKey={group.imageKey} alt={group.title} className="h-12 w-12" />
-                <div className="min-w-0">
-                  <p className="truncate font-black">{group.title}</p>
-                  <p className="truncate text-xs text-slate-500">{group.total} words · {group.due} due</p>
-                  <ProgressBar value={group.total ? (group.mastered / group.total) * 100 : 0} className="mt-2" />
-                </div>
-                <span className="text-sm font-black text-lagoon-700">{group.mastered}/{group.total}</span>
+                Learn
               </button>
-            ))}
+              <button
+                onClick={() => beginSession("memory")}
+                className={classNames(
+                  "rounded-md px-3 py-2",
+                  studyMode === "memory" ? "bg-lagoon-500 text-white" : "bg-stone-100 text-slate-600 hover:bg-stone-200"
+                )}
+              >
+                Memory
+              </button>
+            </div>
+          }
+        >
+          <div className="mb-5 grid gap-3 rounded-lg border border-stone-200 bg-stone-50 p-3 lg:grid-cols-[1fr_1.2fr_auto] lg:items-center">
+            <div>
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">Difficulty</p>
+              <div className="flex flex-wrap gap-2">
+                {wordSessionSizes.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setDifficulty(item.key)}
+                    className={classNames(
+                      "rounded-md px-3 py-2 text-xs font-black",
+                      difficulty === item.key ? "bg-slate-950 text-white" : "bg-white text-slate-600 hover:bg-stone-100"
+                    )}
+                  >
+                    {item.label} · {item.count}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">Question Type</p>
+              <div className="flex flex-wrap gap-2">
+                {wordQuestionStyles.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => {
+                      setQuestionStyle(item.key);
+                      setMode(item.key === "mixed" ? "flashcard" : item.key);
+                      resetCard();
+                    }}
+                    className={classNames(
+                      "rounded-md px-3 py-2 text-xs font-black",
+                      questionStyle === item.key ? "bg-slate-950 text-white" : "bg-white text-slate-600 hover:bg-stone-100"
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() => beginSession(studyMode === "memory" ? "memory" : "learn")}
+              className="rounded-md bg-lagoon-500 px-4 py-3 font-black text-white hover:bg-lagoon-600"
+            >
+              Start
+            </button>
+          </div>
+
+          {sessionNotice && (
+            <div className="mb-5 rounded-lg border border-honey-200 bg-honey-50 p-4 font-bold text-honey-900">
+              {sessionNotice}
+            </div>
+          )}
+
+          {!session && (
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-200 bg-stone-50 p-3">
+              <div className="flex rounded-md bg-white p-1 text-xs font-black shadow-sm">
+                {[
+                  ["flashcard", "Card"],
+                  ["recognition", "Choice"],
+                  ["picture", "Picture"],
+                  ["typing", "Type"]
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setMode(key);
+                      setQuestionStyle(key);
+                      resetCard();
+                    }}
+                    className={classNames("rounded px-3 py-2", mode === key ? "bg-slate-950 text-white" : "text-slate-500")}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => beginSession("learn")}
+                className="rounded-md bg-lagoon-500 px-4 py-2 font-black text-white hover:bg-lagoon-600"
+              >
+                Start session
+              </button>
+            </div>
+          )}
+
+          {session && !sessionFinished && (
+            <div className="mb-5 rounded-lg border border-lagoon-100 bg-lagoon-50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-black text-lagoon-900">
+                <span>{session.type === "memory" ? `Memory · ${memoryCount} words` : "Category learning"}</span>
+                <span>
+                  {attemptedCount}/{sessionTotal} answered · {promptLabel}
+                </span>
+              </div>
+              <ProgressBar value={sessionProgress} className="mt-3" />
+            </div>
+          )}
+
+          {sessionFinished ? (
+            <div className="mx-auto max-w-xl py-4 text-center">
+              <AssetImage imageKey="rewards-and-progress:15" alt="Complete" className="mx-auto h-28 w-28" />
+              <h2 className="mt-5 text-3xl font-black text-slate-950">Session complete</h2>
+              <p className="mt-2 font-semibold text-slate-600">
+                {sessionCorrect}/{sessionTotal} correct
+              </p>
+              <div className="mx-auto mt-5 max-w-sm">
+                <ProgressBar value={scorePercent} color={scorePercent >= 80 ? "bg-emerald-500" : "bg-honey-500"} />
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <InfoTile label="Score" value={`${scorePercent}%`} />
+                <InfoTile label="Questions" value={sessionTotal} />
+                <InfoTile
+                  label={session.type === "memory" ? "Memory" : "Deck"}
+                  value={session.type === "memory" ? memoryCount : `${selectedLearned}/${selectedTotal}`}
+                />
+              </div>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <button
+                  onClick={() => beginSession("learn")}
+                  className="rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600"
+                >
+                  Learn again
+                </button>
+                <button
+                  onClick={() => beginSession("memory")}
+                  className="rounded-md border border-stone-200 bg-white px-5 py-3 font-black text-slate-700 hover:bg-stone-50"
+                >
+                  Memory
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={classNames("grid gap-5", activeMode === "picture" ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1")}>
+              {activeMode === "picture" && (
+                <div>
+                  <AssetImage imageKey={word.imageKey || selectedGroup?.imageKey} alt={word.spanish} className="aspect-square w-full" />
+                  <div className="mt-3 flex justify-between text-sm font-bold text-slate-500">
+                    <span>{session ? `${sessionIndex + 1} / ${sessionTotal}` : `${index + 1} / ${words.length}`}</span>
+                    <span>{word.review.state}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex min-h-[330px] flex-col rounded-lg border border-stone-200 bg-stone-50 p-5">
+                {activeMode === "flashcard" && (
+                  <>
+                    <p className="text-sm font-black uppercase tracking-wide text-slate-500">Front</p>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <h2 className="text-4xl font-black text-slate-950">{word.spanish}</h2>
+                      <PronunciationTools text={word.spanish} />
+                    </div>
+                    {flipped && (
+                      <div className="mt-6 grid gap-4 rounded-lg border border-lagoon-200 bg-white p-4 sm:grid-cols-[150px_1fr] sm:items-center">
+                        <AssetImage imageKey={word.imageKey || selectedGroup?.imageKey} alt={word.spanish} className="aspect-square w-full" />
+                        <div>
+                          <p className="text-sm font-black text-lagoon-700">Meaning</p>
+                          <p className="mt-1 text-2xl font-black text-lagoon-900">{word.english}</p>
+                          <p className="mt-2 text-sm font-bold text-slate-600">
+                            {word.partOfSpeech}
+                            {word.gender ? ` · ${word.gender}` : ""}
+                          </p>
+                          {word.example && <p className="mt-3 font-bold text-slate-700">{word.example}</p>}
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-auto flex flex-wrap gap-3 pt-6">
+                      {!flipped ? (
+                        <button onClick={() => setFlipped(true)} className="rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600">
+                          Flip Card
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            disabled={Boolean(feedback)}
+                            onClick={() => submitWord(word.english, "flashcard")}
+                            className="rounded-md bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700 disabled:cursor-default disabled:opacity-60"
+                          >
+                            I knew it
+                          </button>
+                          <button
+                            disabled={Boolean(feedback)}
+                            onClick={() => submitWord("", "flashcard")}
+                            className="rounded-md bg-red-600 px-5 py-3 font-black text-white hover:bg-red-700 disabled:cursor-default disabled:opacity-60"
+                          >
+                            Again
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {activeMode === "recognition" && (
+                  <>
+                    <p className="text-sm font-black uppercase tracking-wide text-slate-500">Choose the meaning</p>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <h2 className="text-4xl font-black text-slate-950">{word.spanish}</h2>
+                      <PronunciationTools text={word.spanish} />
+                    </div>
+                    <div className="mt-6 grid gap-3">
+                      {choices.map((choice) => (
+                        <button
+                          key={choice}
+                          disabled={Boolean(feedback)}
+                          onClick={() => submitWord(choice, "recognition")}
+                          className={classNames(
+                            "rounded-md border bg-white px-4 py-3 text-left font-bold hover:bg-stone-50 disabled:cursor-default",
+                            feedback && choice === expectedChoice && "border-emerald-400 bg-emerald-50 text-emerald-900",
+                            feedback && feedback.correct === false && choice === feedback.expected && "border-emerald-400 bg-emerald-50"
+                          )}
+                        >
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {activeMode === "picture" && (
+                  <>
+                    <p className="text-sm font-black uppercase tracking-wide text-slate-500">Choose the Spanish</p>
+                    <h2 className="mt-3 text-3xl font-black text-slate-950">What is this?</h2>
+                    <div className="mt-3">
+                      <PronunciationTools text={word.spanish} />
+                    </div>
+                    <div className="mt-6 grid gap-3">
+                      {choices.map((choice) => (
+                        <button
+                          key={choice}
+                          disabled={Boolean(feedback)}
+                          onClick={() => submitWord(choice, "picture")}
+                          className={classNames(
+                            "rounded-md border bg-white px-4 py-3 text-left font-bold hover:bg-stone-50 disabled:cursor-default",
+                            feedback && choice === expectedChoice && "border-emerald-400 bg-emerald-50 text-emerald-900",
+                            feedback && feedback.correct === false && choice === feedback.expected && "border-emerald-400 bg-emerald-50"
+                          )}
+                        >
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {activeMode === "typing" && (
+                  <>
+                    <p className="text-sm font-black uppercase tracking-wide text-slate-500">Type the Spanish</p>
+                    <h2 className="mt-3 text-4xl font-black text-slate-950">{word.english}</h2>
+                    <input
+                      value={typedAnswer}
+                      disabled={Boolean(feedback)}
+                      onChange={(event) => setTypedAnswer(event.target.value)}
+                      className="mt-6 w-full rounded-md border border-stone-200 bg-white px-4 py-4 text-xl font-bold outline-none focus:border-lagoon-500 disabled:bg-stone-100"
+                      placeholder="Spanish word"
+                    />
+                    <button
+                      disabled={!typedAnswer.trim() || Boolean(feedback)}
+                      onClick={() => submitWord(typedAnswer, "typing")}
+                      className="mt-4 w-fit rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600 disabled:opacity-50"
+                    >
+                      Check
+                    </button>
+                  </>
+                )}
+
+                {feedback && (
+                  <div className={classNames("mt-5 rounded-lg border p-4", feedback.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50")}>
+                    <p className={classNames("font-black", feedback.correct ? "text-emerald-900" : "text-red-900")}>
+                      {feedback.correct ? `Correct +${feedback.xpAwarded} XP` : "Not yet"}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-700">
+                      Expected: <span className="font-black">{feedback.expected}</span>
+                    </p>
+                    <p className="mt-1 text-sm text-slate-700">{feedback.review.message}</p>
+                    <button onClick={nextCard} className="mt-4 rounded-md bg-slate-950 px-4 py-2 font-black text-white">
+                      {nextLabel}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </Panel>
+      </section>
+
+      <section className="order-2 space-y-5 xl:order-1">
+        <Panel title="Vocabulary Decks" icon={NotebookTabs}>
+          <div className="grid gap-3">
+            {data.groups.map((group) => {
+              const learned = group.learned ?? group.mastered ?? 0;
+              return (
+                <button
+                  key={group.id}
+                  onClick={() => {
+                    beginSession("learn", group.id);
+                  }}
+                  className={classNames(
+                    "grid grid-cols-[54px_1fr_auto] items-center gap-3 rounded-lg border p-3 text-left",
+                    selectedGroupId === group.id ? "border-lagoon-500 bg-lagoon-50" : "border-stone-200 bg-white hover:bg-stone-50"
+                  )}
+                >
+                  <AssetImage imageKey={group.imageKey} alt={group.title} className="h-12 w-12" />
+                  <div className="min-w-0">
+                    <p className="truncate font-black">{group.title}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {group.new ?? 0} new · {group.reviewDue ?? group.due} review
+                    </p>
+                    <ProgressBar value={group.total ? (learned / group.total) * 100 : 0} className="mt-2" />
+                  </div>
+                  <span className="text-sm font-black text-lagoon-700">{learned}/{group.total}</span>
+                </button>
+              );
+            })}
           </div>
         </Panel>
 
         <Panel title="Word Stats" icon={BarChart3}>
           <div className="grid grid-cols-2 gap-3">
             <InfoTile label="Total" value={data.stats.total} />
-            <InfoTile label="Due" value={data.stats.due} />
-            <InfoTile label="Learning" value={data.stats.learning} />
+            <InfoTile label="New" value={data.stats.new ?? 0} />
+            <InfoTile label="Review" value={data.stats.reviewDue ?? data.stats.due} />
+            <InfoTile label="Learned" value={data.stats.learned ?? 0} />
+            <InfoTile label="Memory" value={memoryCount} />
             <InfoTile label="Mastered" value={data.stats.mastered} />
           </div>
         </Panel>
       </section>
+    </div>
+  );
+}
 
+function PronunciationLookupView() {
+  const [query, setQuery] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [bestAudioState, setBestAudioState] = useState("idle");
+  const [sourceAudioStates, setSourceAudioStates] = useState({});
+  const searchText = query.trim();
+  const sources = result?.sources || [];
+  const playableCount = sources.filter((source) => source.playable).length;
+  const links = result?.links || (searchText ? dictionaryLinks(searchText) : null);
+
+  const providerLabel = (provider) => {
+    if (provider === "spanishdict") return "SpanishDict";
+    if (provider === "leo") return "LEO";
+    return provider || "Provider";
+  };
+
+  const audioLabel = (state, idleLabel = "Play") => {
+    if (state === "loading") return "Loading";
+    if (state === "playing") return "Playing";
+    if (state === "error") return "Retry";
+    return idleLabel;
+  };
+
+  const setSourceAudioState = (key) => (state) => {
+    setSourceAudioStates((current) => ({ ...current, [key]: state }));
+  };
+
+  const lookup = async (event) => {
+    event.preventDefault();
+    if (!searchText) return;
+
+    setLoading(true);
+    setError("");
+    setResult(null);
+    setBestAudioState("idle");
+    setSourceAudioStates({});
+
+    try {
+      const params = new URLSearchParams({ text: searchText, verify: "1" });
+      const pronunciation = await api(`/api/pronunciation?${params.toString()}`);
+      setResult(pronunciation);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
       <section className="space-y-5">
-        <Panel
-          title={selectedGroup?.title || "Word Deck"}
-          icon={Sparkles}
-          action={
-            <div className="flex rounded-md bg-stone-100 p-1 text-xs font-black">
-              {[
-                ["flashcard", "Card"],
-                ["recognition", "Choice"],
-                ["typing", "Type"]
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    setMode(key);
-                    resetCard();
-                  }}
-                  className={classNames("rounded px-3 py-2", mode === key ? "bg-white text-coral-600 shadow-sm" : "text-slate-500")}
-                >
-                  {label}
-                </button>
-              ))}
+        <Panel title="Audio Lookup" icon={Volume2}>
+          <form onSubmit={lookup} className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <label className="block text-sm font-semibold text-slate-700">
+              Word
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className="mt-2 w-full rounded-md border border-stone-200 bg-white px-4 py-4 text-xl font-black text-slate-950 outline-none focus:border-lagoon-500"
+                placeholder="Spanish word or phrase"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={!searchText || loading}
+              className="inline-flex min-h-[58px] items-center justify-center gap-2 rounded-md bg-slate-950 px-5 py-3 font-black text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Search size={18} />
+              {loading ? "Searching" : "Find Audio"}
+            </button>
+          </form>
+
+          {error && <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 font-bold text-red-700">{error}</div>}
+
+          {loading && (
+            <div className="mt-5 rounded-lg border border-stone-200 bg-stone-50 p-5 font-bold text-slate-600">
+              Searching SpanishDict and LEO...
             </div>
-          }
-        >
-          <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
-            <div>
-              <AssetImage imageKey={word.imageKey || selectedGroup?.imageKey} alt={word.spanish} className="aspect-square w-full" />
-              <div className="mt-3 flex justify-between text-sm font-bold text-slate-500">
-                <span>{index + 1} / {words.length}</span>
-                <span>{word.review.state}</span>
-              </div>
-            </div>
+          )}
 
-            <div className="flex min-h-[330px] flex-col rounded-lg border border-stone-200 bg-stone-50 p-5">
-              {mode === "flashcard" && (
-                <>
-                  <p className="text-sm font-black uppercase tracking-wide text-slate-500">Front</p>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-4xl font-black text-slate-950">{word.spanish}</h2>
-                    <PronunciationTools text={word.spanish} />
-                  </div>
-                  <p className="mt-2 text-slate-600">{word.partOfSpeech}{word.gender ? ` · ${word.gender}` : ""}</p>
-                  <div className="mt-6 rounded-lg bg-white p-4">
-                    <p className="text-sm font-black text-slate-500">Example</p>
-                    <p className="mt-1 font-bold">{word.example || "No example yet."}</p>
-                  </div>
-                  {flipped && (
-                    <div className="mt-5 rounded-lg border border-lagoon-200 bg-lagoon-50 p-4">
-                      <p className="text-sm font-black text-lagoon-700">Meaning</p>
-                      <p className="mt-1 text-2xl font-black text-lagoon-900">{word.english}</p>
-                    </div>
-                  )}
-                  <div className="mt-auto flex flex-wrap gap-3 pt-6">
-                    {!flipped ? (
-                      <button onClick={() => setFlipped(true)} className="rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600">
-                        Flip Card
-                      </button>
-                    ) : (
-                      <>
-                        <button onClick={() => submitWord(word.english, "flashcard")} className="rounded-md bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700">
-                          I knew it
-                        </button>
-                        <button onClick={() => submitWord("", "flashcard")} className="rounded-md bg-red-600 px-5 py-3 font-black text-white hover:bg-red-700">
-                          Again
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {mode === "recognition" && (
-                <>
-                  <p className="text-sm font-black uppercase tracking-wide text-slate-500">Choose the meaning</p>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-4xl font-black text-slate-950">{word.spanish}</h2>
-                    <PronunciationTools text={word.spanish} />
-                  </div>
-                  <div className="mt-6 grid gap-3">
-                    {choices.map((choice) => (
-                      <button
-                        key={choice}
-                        disabled={Boolean(feedback)}
-                        onClick={() => submitWord(choice, "recognition")}
-                        className={classNames(
-                          "rounded-md border bg-white px-4 py-3 text-left font-bold hover:bg-stone-50 disabled:cursor-default",
-                          feedback && choice === word.english && "border-emerald-400 bg-emerald-50 text-emerald-900",
-                          feedback && feedback.correct === false && choice === feedback.expected && "border-emerald-400 bg-emerald-50"
-                        )}
-                      >
-                        {choice}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {mode === "typing" && (
-                <>
-                  <p className="text-sm font-black uppercase tracking-wide text-slate-500">Type the Spanish</p>
-                  <h2 className="mt-3 text-4xl font-black text-slate-950">{word.english}</h2>
-                  <div className="mt-3">
-                    <PronunciationTools text={word.spanish} />
-                  </div>
-                  <input
-                    value={typedAnswer}
-                    disabled={Boolean(feedback)}
-                    onChange={(event) => setTypedAnswer(event.target.value)}
-                    className="mt-6 w-full rounded-md border border-stone-200 bg-white px-4 py-4 text-xl font-bold outline-none focus:border-lagoon-500 disabled:bg-stone-100"
-                    placeholder="Spanish word"
-                  />
-                  <button
-                    disabled={!typedAnswer.trim() || Boolean(feedback)}
-                    onClick={() => submitWord(typedAnswer, "typing")}
-                    className="mt-4 w-fit rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600 disabled:opacity-50"
-                  >
-                    Check
-                  </button>
-                </>
-              )}
-
-              {feedback && (
-                <div className={classNames("mt-5 rounded-lg border p-4", feedback.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50")}>
-                  <p className={classNames("font-black", feedback.correct ? "text-emerald-900" : "text-red-900")}>
-                    {feedback.correct ? `Correct +${feedback.xpAwarded} XP` : "Not yet"}
+          {result && (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-lagoon-100 bg-lagoon-50 p-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">Search</p>
+                  <h2 className="mt-1 text-3xl font-black text-slate-950">{result.text}</h2>
+                  <p className="mt-1 text-sm font-bold text-slate-600">
+                    {sources.length} match{sources.length === 1 ? "" : "es"} · {playableCount} playable
                   </p>
-                  <p className="mt-1 text-sm text-slate-700">Expected: <span className="font-black">{feedback.expected}</span></p>
-                  <p className="mt-1 text-sm text-slate-700">{feedback.review.message}</p>
-                  <button onClick={nextCard} className="mt-4 rounded-md bg-slate-950 px-4 py-2 font-black text-white">
-                    Next word
-                  </button>
+                </div>
+                <button
+                  type="button"
+                  disabled={!sources.length}
+                  onClick={() => playPronunciationClip(result.text, setBestAudioState)}
+                  className={classNames(
+                    "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 py-2 font-black",
+                    bestAudioState === "playing"
+                      ? "border-lagoon-300 bg-white text-lagoon-800"
+                      : "border-stone-200 bg-white text-slate-800 hover:bg-stone-50",
+                    bestAudioState === "error" && "border-red-200 bg-red-50 text-red-700",
+                    !sources.length && "cursor-not-allowed opacity-50"
+                  )}
+                >
+                  <Volume2 size={18} />
+                  {audioLabel(bestAudioState, "Best Match")}
+                </button>
+              </div>
+
+              {sources.length ? (
+                <div className="grid gap-3">
+                  {sources.map((source, index) => {
+                    const key = `${source.provider}-${source.sourceText || result.text}-${index}`;
+                    const state = sourceAudioStates[key] || "idle";
+                    const providerLink = source.provider === "leo" ? result.links.leo : result.links.spanishDict;
+                    return (
+                      <div
+                        key={key}
+                        className="grid gap-4 rounded-lg border border-stone-200 bg-white p-4 shadow-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-white">
+                              {providerLabel(source.provider)}
+                            </span>
+                            <span
+                              className={classNames(
+                                "rounded-full px-3 py-1 text-xs font-black",
+                                source.playable
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-stone-100 text-slate-600"
+                              )}
+                            >
+                              {source.playable ? "Playable" : "Not confirmed"}
+                            </span>
+                          </div>
+                          <p className="mt-2 truncate text-lg font-black text-slate-950">{source.sourceText || result.text}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              playPronunciationClip(result.text, setSourceAudioState(key), source.provider, source.sourceText)
+                            }
+                            className={classNames(
+                              "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-200 bg-white px-4 font-black text-slate-700 hover:bg-stone-50",
+                              state === "playing" && "border-lagoon-300 bg-lagoon-50 text-lagoon-800",
+                              state === "error" && "border-red-200 bg-red-50 text-red-700"
+                            )}
+                          >
+                            <Volume2 size={17} />
+                            {audioLabel(state)}
+                          </button>
+                          <a
+                            href={providerLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-200 bg-white px-4 font-black text-slate-700 hover:bg-stone-50"
+                          >
+                            <ExternalLink size={16} />
+                            Open
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-honey-200 bg-honey-50 p-5">
+                  <p className="font-black text-honey-900">No matching clip found</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-700">Dictionary entries are available for manual review.</p>
                 </div>
               )}
             </div>
-          </div>
+          )}
         </Panel>
       </section>
+
+      <aside className="space-y-5">
+        <Panel title="Resolver" icon={ListChecks}>
+          <div className="grid grid-cols-2 gap-3">
+            <InfoTile label="Sources" value={result ? sources.length : 0} />
+            <InfoTile label="Playable" value={result ? playableCount : 0} />
+          </div>
+          <div className="mt-5 rounded-lg border border-stone-200 bg-stone-50 p-4">
+            <p className="text-xs font-black uppercase tracking-wide text-slate-500">Provider Order</p>
+            <div className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+              <div className="flex items-center justify-between rounded-md bg-white px-3 py-2">
+                <span>1</span>
+                <span>SpanishDict</span>
+              </div>
+              <div className="flex items-center justify-between rounded-md bg-white px-3 py-2">
+                <span>2</span>
+                <span>LEO</span>
+              </div>
+            </div>
+          </div>
+          {links && (
+            <div className="mt-5 grid gap-2">
+              <a
+                href={links.spanishDict}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-between rounded-md border border-stone-200 bg-white px-3 py-3 font-black text-slate-700 hover:bg-stone-50"
+              >
+                SpanishDict
+                <ExternalLink size={16} />
+              </a>
+              <a
+                href={links.leo}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-between rounded-md border border-stone-200 bg-white px-3 py-3 font-black text-slate-700 hover:bg-stone-50"
+              >
+                LEO
+                <ExternalLink size={16} />
+              </a>
+            </div>
+          )}
+        </Panel>
+      </aside>
     </div>
   );
 }
@@ -1016,7 +2199,7 @@ function CurrentLessonCard({ lesson, setActive }) {
         <span className="font-bold">{lesson.progress}%</span>
       </div>
       <button
-        onClick={() => setActive("lessons")}
+        onClick={() => setActive("path")}
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-md bg-lagoon-500 px-4 py-3 font-bold text-white hover:bg-lagoon-600"
       >
         <BookOpen size={18} /> Continue Lesson
