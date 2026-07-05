@@ -2687,7 +2687,10 @@ function PracticePanel({
   onResult,
   gameKey,
   autoAdvance = false,
-  autoAdvanceDelay = 900
+  autoAdvanceDelay = 900,
+  autoAdvanceOnWrong = false,
+  showInlineFeedback = true,
+  autoSubmitChoices = false
 }) {
   const [answer, setAnswer] = useState("");
   const [words, setWords] = useState([]);
@@ -2742,19 +2745,22 @@ function PracticePanel({
     }
   };
 
-  const submit = async () => {
-    if (!canSubmit) return;
+  const submit = async (answerOverride = null, wordsOverride = null) => {
+    const submittedAnswer = answerOverride ?? answer;
+    const submittedWords = wordsOverride ?? words;
+    const submittedValue = isSentenceBuilder ? submittedWords.join(" ") : submittedAnswer;
+    if (!submittedValue.trim() || locked) return;
     setBusy(true);
     try {
       const result = await api(`/api/exercises/${exercise.id}/attempt`, {
         method: "POST",
         body: {
           source,
-          answer,
-          words
+          answer: submittedAnswer,
+          words: submittedWords
         }
       });
-      const resultWithAnswer = { ...result, submitted: selectedValue };
+      const resultWithAnswer = { ...result, submitted: submittedValue };
       setFeedback(resultWithAnswer);
       onResult?.(resultWithAnswer);
       setHintOpen(false);
@@ -2767,7 +2773,7 @@ function PracticePanel({
         });
       }
 
-      if (autoAdvance && result.correct) {
+      if (autoAdvance && (result.correct || autoAdvanceOnWrong)) {
         window.setTimeout(() => {
           continueAfterFeedback();
         }, autoAdvanceDelay);
@@ -2837,6 +2843,7 @@ function PracticePanel({
                 disabled={locked}
                 feedback={feedback}
                 acceptedValues={acceptedValues}
+                onAutoSelect={autoSubmitChoices ? (value) => submit(value, words) : null}
               />
             )}
           </div>
@@ -2877,7 +2884,7 @@ function PracticePanel({
         </div>
       )}
 
-      {feedback && (
+      {feedback && showInlineFeedback && (
         <div className={classNames("mt-4 rounded-lg border p-4", feedback.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50")}>
           <div className="flex gap-3">
             <div
@@ -2930,7 +2937,7 @@ function PracticePanel({
             </button>
           </>
         )}
-        {locked && (!autoAdvance || !feedback.correct) && (
+        {locked && (!autoAdvance || (!feedback.correct && !autoAdvanceOnWrong)) && (
           <div>
             <button
               onClick={feedback.correct ? continueAfterFeedback : resetAttempt}
@@ -2953,7 +2960,7 @@ function PracticePanel({
             )}
           </div>
         )}
-        {locked && autoAdvance && feedback.correct && (
+        {locked && autoAdvance && (feedback.correct || autoAdvanceOnWrong) && (
           <div className="rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
             Next question loading...
           </div>
@@ -3053,7 +3060,7 @@ function PronunciationTools({ text, compact = false }) {
   );
 }
 
-function AnswerChoices({ exercise, answer, setAnswer, disabled = false, feedback, acceptedValues = [] }) {
+function AnswerChoices({ exercise, answer, setAnswer, disabled = false, feedback, acceptedValues = [], onAutoSelect = null }) {
   const [freeText, setFreeText] = useState(false);
   const hasAttemptFeedback = Boolean(feedback && typeof feedback.correct === "boolean");
 
@@ -3086,7 +3093,10 @@ function AnswerChoices({ exercise, answer, setAnswer, disabled = false, feedback
           <button
             key={option.id}
             disabled={disabled}
-            onClick={() => setAnswer(option.value)}
+            onClick={() => {
+              setAnswer(option.value);
+              onAutoSelect?.(option.value);
+            }}
             className={classNames(
               "flex items-center gap-3 rounded-md border px-4 py-3 text-left font-semibold transition disabled:cursor-default",
               hasAttemptFeedback && correctOption && "border-emerald-400 bg-emerald-50 text-emerald-900",
@@ -3486,7 +3496,7 @@ function GrammarView({ lessons }) {
 
 function MiniGamesView({ dashboard, refreshDashboard }) {
   const [activeGame, setActiveGame] = useState(null);
-  const [exercise, setExercise] = useState(null);
+  const [gameExercises, setGameExercises] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const startGame = async (game) => {
@@ -3502,7 +3512,7 @@ function MiniGamesView({ dashboard, refreshDashboard }) {
           : game.key === "article-match"
             ? "ARTICLE_MATCH"
             : "CONJUGATION";
-      setExercise(exercises.find((item) => item.type === preferredType) || exercises[0] || dashboard.practiceExercise);
+      setGameExercises(shuffleItems(exercises.filter((item) => item.type === preferredType)));
     } finally {
       setLoading(false);
     }
@@ -3531,16 +3541,236 @@ function MiniGamesView({ dashboard, refreshDashboard }) {
       {activeGame?.key === "word-catcher" ? (
         <WordCatcherGame game={activeGame} refreshDashboard={refreshDashboard} />
       ) : activeGame && (
-        <PracticePanel
-          title={loading ? "Loading Game..." : activeGame.title}
-          exercise={exercise}
-          source="GAME"
-          gameKey={activeGame.key}
-          onComplete={refreshDashboard}
+        <PracticeMiniGameRound
+          game={activeGame}
+          exercises={gameExercises}
+          loading={loading}
+          refreshDashboard={refreshDashboard}
         />
       )}
     </div>
   );
+}
+
+function PracticeMiniGameRound({ game, exercises, loading, refreshDashboard }) {
+  const [deck, setDeck] = useState([]);
+  const [index, setIndex] = useState(0);
+  const [results, setResults] = useState([]);
+  const [lastAnswer, setLastAnswer] = useState(null);
+  const [finished, setFinished] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [timeLimit, setTimeLimit] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(5);
+  const [roundResolving, setRoundResolving] = useState(false);
+  const latestResultsRef = useRef([]);
+
+  useEffect(() => {
+    setIndex(0);
+    setDeck(shuffleItems(exercises));
+    setResults([]);
+    latestResultsRef.current = [];
+    setLastAnswer(null);
+    setFinished(false);
+  }, [game?.key, exercises.map((exercise) => exercise.id).join("|")]);
+
+  const current = deck.length ? deck[index % deck.length] : null;
+  const total = deck.length;
+  const correct = results.filter(Boolean).length;
+  const deckPosition = total ? (index % total) + 1 : 0;
+  const progress = total ? Math.round((deckPosition / total) * 100) : 0;
+  const score = correct * 250 + results.length * 25;
+  const timing = miniGameTiming(game.key, index);
+
+  const finishRound = async (finalResults = results) => {
+    setFinished(true);
+    setSaving(true);
+    const finalCorrect = finalResults.filter(Boolean).length;
+    try {
+      await api(`/api/minigames/${game.key}/score`, {
+        method: "POST",
+        body: { score: finalCorrect * 250 + finalResults.length * 25 }
+      });
+      await refreshDashboard?.({ silent: true });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const advance = async (finalResults = latestResultsRef.current) => {
+    setIndex((currentIndex) => currentIndex + 1);
+    if (total && (index + 1) % total === 0) {
+      setDeck((currentDeck) => shuffleItems(currentDeck));
+    }
+  };
+
+  const recordResult = (result) => {
+    setRoundResolving(true);
+    const nextResults = [...latestResultsRef.current, Boolean(result.correct)];
+    latestResultsRef.current = nextResults;
+    setResults(nextResults);
+    setLastAnswer(result);
+    return nextResults;
+  };
+
+  useEffect(() => {
+    if (!current || finished) return;
+    const nextLimit = miniGameTiming(game.key, index).limit;
+    setTimeLimit(nextLimit);
+    setTimeLeft(nextLimit);
+    setRoundResolving(false);
+  }, [current?.id, game.key, index, finished]);
+
+  useEffect(() => {
+    if (!current || finished || loading || roundResolving) return undefined;
+
+    const timer = window.setInterval(() => {
+      setTimeLeft((value) => Math.max(0, value - 0.1));
+    }, 100);
+
+    const timeout = window.setTimeout(async () => {
+      window.clearInterval(timer);
+      setRoundResolving(true);
+      const result = await api(`/api/exercises/${current.id}/attempt`, {
+        method: "POST",
+        body: {
+          source: "GAME",
+          answer: "",
+          words: []
+        }
+      });
+      const nextResults = recordResult({
+        ...result,
+        correct: false,
+        submitted: "Timed out",
+        explanation: `Time ran out. ${result.explanation || "Keep going."}`
+      });
+      window.setTimeout(() => {
+        advance(nextResults);
+      }, 850);
+    }, timing.limit * 1000);
+
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(timeout);
+    };
+  }, [current?.id, index, finished, loading, roundResolving, timing.limit]);
+
+  if (loading) {
+    return <Panel title={game.title} icon={Gamepad2}>Loading mini-game questions...</Panel>;
+  }
+
+  if (!total) {
+    return (
+      <Panel title={game.title} icon={Gamepad2}>
+        <p className="text-sm font-semibold text-slate-600">No matching exercises are available yet.</p>
+      </Panel>
+    );
+  }
+
+  if (finished) {
+    const percent = results.length ? Math.round((correct / results.length) * 100) : 0;
+    return (
+      <Panel title={`${game.title} Complete`} icon={Trophy}>
+        <div className="grid gap-4 md:grid-cols-[120px_1fr] md:items-center">
+          <AssetImage imageKey="rewards-and-progress:15" alt="Complete" className="h-28 w-28" />
+          <div>
+            <h2 className="text-3xl font-black text-slate-950">{correct}/{results.length} correct</h2>
+            <p className="mt-2 font-semibold text-slate-600">{saving ? "Saving score..." : "Score saved."}</p>
+            <ProgressBar value={percent} className="mt-4" color={percent >= 80 ? "bg-emerald-500" : "bg-honey-500"} />
+          </div>
+        </div>
+      </Panel>
+    );
+  }
+
+  return (
+    <section className="space-y-5">
+      <Panel title={game.title} icon={Gamepad2}>
+        <div className="grid gap-3 sm:grid-cols-5">
+          <InfoTile label="Round" value={index + 1} />
+          <InfoTile label="Deck" value={`${deckPosition}/${total}`} />
+          <InfoTile label="Correct" value={correct} />
+          <InfoTile label="Time" value={`${Math.ceil(timeLeft)}s`} />
+          <InfoTile label="High Score" value={game.highScore || 0} />
+        </div>
+        <ProgressBar value={progress} className="mt-4" />
+        <div className="mt-4">
+          <div className="mb-2 flex justify-between text-xs font-black uppercase tracking-wide text-slate-500">
+            <span>Timer</span>
+            <span>
+              {Math.ceil(timeLeft)}s / {timeLimit}s
+            </span>
+          </div>
+          <ProgressBar
+            value={timeLimit ? (timeLeft / timeLimit) * 100 : 0}
+            color={timeLeft <= 2 ? "bg-red-500" : timeLeft <= 4 ? "bg-honey-500" : "bg-emerald-500"}
+          />
+          <p className="mt-2 text-xs font-bold text-slate-500">
+            Endless mode: no repeats until the current deck cycles. Starts at {timing.start}s and shrinks toward {timing.min}s.
+          </p>
+        </div>
+        <button
+          onClick={() => finishRound(latestResultsRef.current)}
+          className="mt-4 rounded-md border border-stone-200 bg-white px-4 py-2 font-black text-slate-700 hover:bg-stone-50"
+        >
+          End Round
+        </button>
+      </Panel>
+
+      {lastAnswer && (
+        <div
+          className={classNames(
+            "rounded-lg border p-4",
+            lastAnswer.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+          )}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className={classNames("text-xs font-black uppercase tracking-wide", lastAnswer.correct ? "text-emerald-700" : "text-red-700")}>
+                Previous answer
+              </p>
+              <p className="mt-1 font-black text-slate-950">{lastAnswer.correct ? "Correct" : "Wrong"}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                You answered: {lastAnswer.submitted || "-"} · Correct: {lastAnswer.expected || "-"}
+              </p>
+            </div>
+            <span className={classNames("rounded-full px-3 py-1 text-sm font-black", lastAnswer.correct ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800")}>
+              {lastAnswer.correct ? `+${lastAnswer.xpAwarded || 0} XP` : "Keep going"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      <PracticePanel
+        key={current.id}
+        title={`${game.title} Round`}
+        exercise={current}
+        source="GAME"
+        autoAdvance
+        autoAdvanceOnWrong
+        autoAdvanceDelay={850}
+        autoSubmitChoices
+        showInlineFeedback={false}
+        onResult={(result) => {
+          recordResult(result);
+        }}
+        onComplete={() => advance(latestResultsRef.current)}
+      />
+    </section>
+  );
+}
+
+function miniGameTiming(gameKey, index) {
+  const configs = {
+    "article-match": { start: 5, min: 1, step: 0.45 },
+    "conjugation-sprint": { start: 7, min: 2, step: 0.55 },
+    "sentence-builder": { start: 10, min: 3, step: 0.75 }
+  };
+  const config = configs[gameKey] || { start: 6, min: 1, step: 0.5 };
+  return {
+    ...config,
+    limit: Math.max(config.min, Math.round((config.start - index * config.step) * 10) / 10)
+  };
 }
 
 function WordCatcherGame({ game, refreshDashboard }) {
