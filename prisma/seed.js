@@ -18,6 +18,24 @@ const addDays = (date, days) => {
 
 const levelForXp = (xp) => Math.max(1, Math.floor(xp / 250) + 1);
 
+async function upsertGroupWord(groupId, [spanish, english, partOfSpeech, gender, example, imageKey]) {
+  const existing = await prisma.word.findFirst({ where: { groupId, spanish } });
+  const data = {
+    groupId,
+    spanish,
+    english,
+    partOfSpeech,
+    gender,
+    example,
+    imageKey: imageKey || null
+  };
+
+  if (existing) {
+    return prisma.word.update({ where: { id: existing.id }, data });
+  }
+  return prisma.word.create({ data });
+}
+
 const topics = [
   {
     slug: "absolute-basics",
@@ -236,6 +254,9 @@ const vocabularyGroups = [
     situation: "conversation",
     imageKey: "daily-actions:15",
     words: [
+      ["hola", "hello", "phrase", null, "Hola, soy Ana.", null],
+      ["me llamo", "my name is", "phrase", null, "Hola, me llamo Ana.", "people-and-family:1"],
+      ["soy de", "I am from", "phrase", null, "Soy de Austria.", "travel-and-survival:5"],
       ["por favor", "please", "phrase", null, "Un cafe, por favor.", null],
       ["gracias", "thank you", "phrase", null, "Gracias por la ayuda.", null],
       ["perdon", "sorry / excuse me", "phrase", null, "Perdon, ¿donde esta el hotel?", "travel-and-survival:1"],
@@ -343,10 +364,97 @@ const vocabularyGroups = [
       ["la noche", "night", "noun", "feminine", "Leo por la noche.", "weather-and-time:11"],
       ["el paraguas", "umbrella", "noun", "masculine", "Necesito un paraguas.", "weather-and-time:14"]
     ]
+  },
+  {
+    slug: "body-and-health",
+    title: "Body and Health",
+    description: "Simple body words and health states for saying what hurts or how you feel.",
+    situation: "health",
+    imageKey: "emotions-and-states:7",
+    words: [
+      ["la cabeza", "head", "noun", "feminine", "Me duele la cabeza.", "people-and-family:1"],
+      ["la mano", "hand", "noun", "feminine", "Levanto la mano.", "people-and-family:16"],
+      ["el ojo", "eye", "noun", "masculine", "El ojo esta rojo.", "emotions-and-states:10"],
+      ["la boca", "mouth", "noun", "feminine", "La boca esta seca.", "emotions-and-states:14"],
+      ["el pie", "foot", "noun", "masculine", "Me duele el pie.", "daily-actions:5"],
+      ["el cuerpo", "body", "noun", "masculine", "El cuerpo esta cansado.", "emotions-and-states:3"],
+      ["me duele", "it hurts me", "phrase", null, "Me duele la cabeza.", "emotions-and-states:7"],
+      ["tengo frio", "I am cold", "phrase", null, "Tengo frio hoy.", "weather-and-time:7"],
+      ["tengo calor", "I am hot", "phrase", null, "Tengo calor hoy.", "weather-and-time:6"],
+      ["tengo hambre", "I am hungry", "phrase", null, "Tengo hambre.", "emotions-and-states:13"],
+      ["tengo sed", "I am thirsty", "phrase", null, "Tengo sed.", "emotions-and-states:14"],
+      ["el doctor", "doctor", "noun", "masculine", "Necesito un doctor.", "people-and-family:11"]
+    ]
+  },
+  {
+    slug: "numbers-and-colors",
+    title: "Numbers and Colors",
+    description: "Tiny quantity and color words used in descriptions and shopping.",
+    situation: "describing things",
+    imageKey: "grammar-scenes:8",
+    words: [
+      ["uno", "one", "number", null, "Tengo uno.", "grammar-scenes:8"],
+      ["dos", "two", "number", null, "Tengo dos manzanas.", "fruit-and-produce:1"],
+      ["tres", "three", "number", null, "Tengo tres libros.", "classroom-basics:3"],
+      ["cuatro", "four", "number", null, "Quiero cuatro uvas.", "fruit-and-produce:6"],
+      ["cinco", "five", "number", null, "Tengo cinco minutos.", "weather-and-time:13"],
+      ["rojo", "red", "adjective", "masculine", "El tomate es rojo.", "fruit-and-produce:11"],
+      ["roja", "red", "adjective", "feminine", "La manzana es roja.", "fruit-and-produce:1"],
+      ["azul", "blue", "adjective", null, "La camisa es azul.", "clothing-basics:1"],
+      ["verde", "green", "adjective", null, "La ensalada es verde.", "fruit-and-produce:24"],
+      ["amarillo", "yellow", "adjective", "masculine", "El platano es amarillo.", "fruit-and-produce:2"],
+      ["blanco", "white", "adjective", "masculine", "El pan es blanco.", "food-and-ordering:3"],
+      ["negro", "black", "adjective", "masculine", "El cafe es negro.", "food-and-ordering:2"]
+    ]
+  },
+  {
+    slug: "nature-and-animals",
+    title: "Nature and Animals",
+    description: "Friendly outdoor words for parks, weather, and simple descriptions.",
+    situation: "outside",
+    imageKey: "places-around-town:3",
+    words: [
+      ["el arbol", "tree", "noun", "masculine", "El arbol esta en el parque.", "places-around-town:3"],
+      ["la flor", "flower", "noun", "feminine", "La flor es roja.", "places-around-town:3"],
+      ["el perro", "dog", "noun", "masculine", "El perro esta en casa.", "people-and-family:15"],
+      ["el gato", "cat", "noun", "masculine", "El gato esta en la silla.", "home-objects:2"],
+      ["el pajaro", "bird", "noun", "masculine", "El pajaro esta en el arbol.", "places-around-town:3"],
+      ["el sol", "sun", "noun", "masculine", "Hace sol.", "weather-and-time:1"],
+      ["la lluvia", "rain", "noun", "feminine", "La lluvia esta fuerte.", "weather-and-time:2"],
+      ["la playa", "beach", "noun", "feminine", "Estoy en la playa.", "places-around-town:16"],
+      ["el agua", "water", "noun", "masculine", "El agua esta fria.", "food-and-ordering:1"],
+      ["bonito", "pretty", "adjective", "masculine", "El parque es bonito.", "places-around-town:3"]
+    ]
   }
 ];
 
 const lessons = [
+  {
+    slug: "intro-greetings-pronouns-ser",
+    title: "Greetings, Pronouns, and SER",
+    summary: "Say hello, use yo, and introduce yourself with soy and me llamo.",
+    cefrLevel: "A1",
+    theme: "Self-introduction",
+    situation: "meeting someone",
+    imageKey: "people-and-family:1",
+    topicSlug: "absolute-basics",
+    vocabularySlugs: ["people-and-pronouns", "useful-phrases"],
+    order: 0,
+    estimatedMinutes: 8,
+    outcomes: [
+      "You can introduce yourself.",
+      "You can say where you are from.",
+      "You can recognize when soy is used for identity."
+    ],
+    conceptKeys: ["greetings", "pronouns", "ser-identity", "self-introduction"],
+    reviewSummary: "You practiced hello, yo, soy, me llamo, and soy de for a simple introduction.",
+    sentences: [
+      ["Hola.", "Hello.", "Use hola to start a simple greeting."],
+      ["Yo soy Ana.", "I am Ana.", "Use soy for identity, names, and roles."],
+      ["Me llamo Ana.", "My name is Ana.", "Me llamo is the natural phrase for giving your name."],
+      ["Soy de Austria.", "I am from Austria.", "Origin uses soy because it is part of identity."]
+    ]
+  },
   {
     slug: "zero-pronouns",
     title: "Zero: Yo, Tu, El, Ella",
@@ -472,7 +580,8 @@ const lessons = [
     sentences: [
       ["Yo hablo espanol.", "I speak Spanish.", "Yo uses the -o ending."],
       ["Tu estudias mucho.", "You study a lot.", "Tu uses the -as ending."],
-      ["Ellos trabajan hoy.", "They work today.", "Ellos uses the -an ending."]
+      ["Ellos trabajan hoy.", "They work today.", "Ellos uses the -an ending."],
+      ["Nosotros caminamos al parque.", "We walk to the park.", "Nosotros uses the -amos ending."]
     ]
   },
   {
@@ -491,7 +600,8 @@ const lessons = [
       ["Estoy feliz hoy.", "I am happy today.", "Use estar for feelings that can change."],
       ["Ella esta cansada.", "She is tired.", "Cansada agrees with ella."],
       ["Estamos nerviosos.", "We are nervous.", "Estamos matches nosotros."],
-      ["El estudiante esta enfermo.", "The student is sick.", "Use estar for temporary health states."]
+      ["El estudiante esta enfermo.", "The student is sick.", "Use estar for temporary health states."],
+      ["Ana esta nerviosa.", "Ana is nervous.", "Use esta with Ana because she is one person."]
     ]
   },
   {
@@ -685,6 +795,426 @@ const lessons = [
     ]
   },
   {
+    slug: "polite-words-one-at-a-time",
+    title: "Polite Words One at a Time",
+    summary: "Slow down and practice por favor, gracias, and perdon as separate building blocks.",
+    cefrLevel: "A1",
+    theme: "Conversation Repair",
+    situation: "polite basics",
+    imageKey: "daily-actions:15",
+    topicSlug: "absolute-basics",
+    vocabularySlugs: ["useful-phrases"],
+    order: 19,
+    estimatedMinutes: 5,
+    sentences: [
+      ["Por favor.", "Please.", "Use por favor to make a request polite."],
+      ["Gracias.", "Thank you.", "Gracias is the basic thank-you phrase."],
+      ["Perdon.", "Sorry / excuse me.", "Use perdon to apologize or get attention."],
+      ["Perdon, por favor.", "Excuse me, please.", "Two short phrases can work together."]
+    ]
+  },
+  {
+    slug: "slow-down-and-repeat",
+    title: "Slow Down and Repeat",
+    summary: "Practice the exact phrase you need when speech feels too fast.",
+    cefrLevel: "A1",
+    theme: "Conversation Repair",
+    situation: "asking someone to slow down",
+    imageKey: "daily-actions:6",
+    topicSlug: "absolute-basics",
+    vocabularySlugs: ["useful-phrases"],
+    order: 20,
+    estimatedMinutes: 5,
+    sentences: [
+      ["Mas despacio.", "More slowly.", "Use mas despacio when someone speaks too fast."],
+      ["Mas despacio, por favor.", "More slowly, please.", "Add por favor to make the request polite."],
+      ["No entiendo.", "I do not understand.", "Use this when you are lost."],
+      ["No entiendo, mas despacio.", "I do not understand, more slowly.", "Combine repair phrases in one sentence."]
+    ]
+  },
+  {
+    slug: "soy-with-people",
+    title: "Soy with People",
+    summary: "Use soy for simple identity sentences with people words.",
+    cefrLevel: "A1",
+    theme: "Identity",
+    situation: "introducing yourself",
+    imageKey: "people-and-family:3",
+    topicSlug: "absolute-basics",
+    vocabularySlugs: ["people-and-pronouns", "classroom-basics"],
+    order: 21,
+    estimatedMinutes: 6,
+    sentences: [
+      ["Soy estudiante.", "I am a student.", "Soy is enough when the subject is I."],
+      ["Yo soy estudiante.", "I am a student.", "Yo can be included for emphasis or clarity."],
+      ["Soy profesor.", "I am a teacher.", "Use soy for roles and identities."],
+      ["Yo soy una persona.", "I am a person.", "Una matches persona."]
+    ]
+  },
+  {
+    slug: "soy-de-origin",
+    title: "Soy de for Origin",
+    summary: "Learn the tiny frame soy de for saying where you are from.",
+    cefrLevel: "A1",
+    theme: "Identity",
+    situation: "saying where you are from",
+    imageKey: "travel-and-survival:5",
+    topicSlug: "absolute-basics",
+    vocabularySlugs: ["useful-phrases", "people-and-pronouns"],
+    order: 22,
+    estimatedMinutes: 5,
+    sentences: [
+      ["Soy de Austria.", "I am from Austria.", "Use soy de for origin."],
+      ["Yo soy de Austria.", "I am from Austria.", "Yo is optional but useful for beginners."],
+      ["Ella es de Austria.", "She is from Austria.", "Use es de for he, she, or it."],
+      ["El es de Austria.", "He is from Austria.", "El plus es gives he is."]
+    ]
+  },
+  {
+    slug: "el-article-masculine",
+    title: "El for Masculine Nouns",
+    summary: "Practice one article at a time: el before masculine singular nouns.",
+    cefrLevel: "A1",
+    theme: "Articles",
+    situation: "objects and places",
+    imageKey: "classroom-basics:3",
+    topicSlug: "articles-gender",
+    vocabularySlugs: ["classroom-basics", "places-around-town"],
+    order: 23,
+    estimatedMinutes: 6,
+    sentences: [
+      ["El libro.", "The book.", "Libro uses el."],
+      ["El parque.", "The park.", "Parque uses el."],
+      ["El estudiante.", "The student.", "Estudiante can use el for a male student."],
+      ["El libro es nuevo.", "The book is new.", "El marks a masculine singular noun."]
+    ]
+  },
+  {
+    slug: "la-article-feminine",
+    title: "La for Feminine Nouns",
+    summary: "Practice one article at a time: la before feminine singular nouns.",
+    cefrLevel: "A1",
+    theme: "Articles",
+    situation: "objects and places",
+    imageKey: "classroom-basics:6",
+    topicSlug: "articles-gender",
+    vocabularySlugs: ["classroom-basics", "places-around-town"],
+    order: 24,
+    estimatedMinutes: 6,
+    sentences: [
+      ["La silla.", "The chair.", "Silla uses la."],
+      ["La tienda.", "The store.", "Tienda uses la."],
+      ["La profesora.", "The teacher.", "Profesora uses la."],
+      ["La tienda esta abierta.", "The store is open.", "La marks a feminine singular noun."]
+    ]
+  },
+  {
+    slug: "un-and-una",
+    title: "Un and Una",
+    summary: "Move from the to a/an with one masculine and one feminine form.",
+    cefrLevel: "A1",
+    theme: "Articles",
+    situation: "asking for things",
+    imageKey: "food-and-ordering:3",
+    topicSlug: "articles-gender",
+    vocabularySlugs: ["food-and-ordering", "classroom-basics"],
+    order: 25,
+    estimatedMinutes: 6,
+    sentences: [
+      ["Un cafe.", "A coffee.", "Cafe uses un."],
+      ["Una manzana.", "An apple.", "Manzana uses una."],
+      ["Quiero un cafe.", "I want a coffee.", "Use un before cafe."],
+      ["Quiero una manzana.", "I want an apple.", "Use una before manzana."]
+    ]
+  },
+  {
+    slug: "estoy-en-one-place",
+    title: "Estoy en One Place",
+    summary: "Use estoy en for saying where you are right now.",
+    cefrLevel: "A1",
+    theme: "Location",
+    situation: "where you are",
+    imageKey: "places-around-town:7",
+    topicSlug: "location-prepositions",
+    vocabularySlugs: ["places-around-town", "home-and-objects"],
+    order: 26,
+    estimatedMinutes: 6,
+    sentences: [
+      ["Estoy en casa.", "I am at home.", "Estoy en gives your current location."],
+      ["Estoy en el cafe.", "I am in the cafe.", "Use en el before masculine place nouns."],
+      ["Estoy en la tienda.", "I am in the store.", "Use en la before feminine place nouns."],
+      ["Estoy en la biblioteca.", "I am in the library.", "Estar handles location."]
+    ]
+  },
+  {
+    slug: "esta-cerca-y-lejos",
+    title: "Esta Cerca y Lejos",
+    summary: "Say that a place is near or far with esta.",
+    cefrLevel: "A1",
+    theme: "Location",
+    situation: "finding places",
+    imageKey: "places-around-town:4",
+    topicSlug: "location-prepositions",
+    vocabularySlugs: ["places-around-town", "travel-and-survival"],
+    order: 27,
+    estimatedMinutes: 6,
+    sentences: [
+      ["La tienda esta cerca.", "The store is nearby.", "Use esta for location."],
+      ["La estacion esta lejos.", "The station is far.", "Lejos means far."],
+      ["El hotel esta cerca.", "The hotel is nearby.", "Hotel uses el."],
+      ["El museo esta lejos.", "The museum is far.", "Museo uses el."]
+    ]
+  },
+  {
+    slug: "no-before-the-verb",
+    title: "No Before the Verb",
+    summary: "Practice the simplest Spanish negation pattern slowly.",
+    cefrLevel: "A1",
+    theme: "Negation",
+    situation: "simple negatives",
+    imageKey: "grammar-scenes:12",
+    topicSlug: "negation-basics",
+    vocabularySlugs: ["useful-phrases", "daily-actions"],
+    order: 28,
+    estimatedMinutes: 6,
+    sentences: [
+      ["No entiendo.", "I do not understand.", "No goes before entiendo."],
+      ["No hablo espanol.", "I do not speak Spanish.", "No goes before hablo."],
+      ["No soy estudiante.", "I am not a student.", "No goes before soy."],
+      ["Ella no trabaja hoy.", "She does not work today.", "No stays before the conjugated verb."]
+    ]
+  },
+  {
+    slug: "quiero-one-thing",
+    title: "Quiero One Thing",
+    summary: "Use quiero with one food or drink before building longer orders.",
+    cefrLevel: "A1",
+    theme: "Ordering",
+    situation: "cafe",
+    imageKey: "food-and-ordering:2",
+    topicSlug: "ordering-food",
+    vocabularySlugs: ["food-and-ordering", "fruit-and-produce"],
+    order: 29,
+    estimatedMinutes: 6,
+    sentences: [
+      ["Quiero agua.", "I want water.", "Quiero can be followed directly by a noun."],
+      ["Quiero un cafe.", "I want a coffee.", "Add un before cafe."],
+      ["Quiero pan.", "I want bread.", "Some food requests do not need an article."],
+      ["Quiero una naranja.", "I want an orange.", "Una matches naranja."]
+    ]
+  },
+  {
+    slug: "necesito-one-thing",
+    title: "Necesito One Thing",
+    summary: "Use necesito for practical needs one object at a time.",
+    cefrLevel: "A1",
+    theme: "Useful Verbs",
+    situation: "travel needs",
+    imageKey: "travel-and-survival:5",
+    topicSlug: "tener-necesitar",
+    vocabularySlugs: ["travel-and-survival", "home-and-objects", "useful-phrases"],
+    order: 30,
+    estimatedMinutes: 6,
+    sentences: [
+      ["Necesito ayuda.", "I need help.", "A survival phrase for getting unstuck."],
+      ["Necesito un mapa.", "I need a map.", "Use un before mapa."],
+      ["Necesito la llave.", "I need the key.", "Use la before llave."],
+      ["Necesito el pasaporte.", "I need the passport.", "Use el before pasaporte."]
+    ]
+  },
+  {
+    slug: "tengo-one-thing",
+    title: "Tengo One Thing",
+    summary: "Use tengo to say what you have before adding longer sentences.",
+    cefrLevel: "A1",
+    theme: "Useful Verbs",
+    situation: "possessions",
+    imageKey: "city-transport:12",
+    topicSlug: "tener-necesitar",
+    vocabularySlugs: ["travel-and-survival", "home-and-objects"],
+    order: 31,
+    estimatedMinutes: 6,
+    sentences: [
+      ["Tengo un mapa.", "I have a map.", "Tengo means I have."],
+      ["Tengo una llave.", "I have a key.", "Use una before llave."],
+      ["Tengo una mochila.", "I have a backpack.", "Mochila uses una."],
+      ["No tengo el pasaporte.", "I do not have the passport.", "No goes before tengo."]
+    ]
+  },
+  {
+    slug: "donde-esta-frame",
+    title: "Donde Esta Frame",
+    summary: "Learn one question frame: donde esta plus a place.",
+    cefrLevel: "A1",
+    theme: "Questions",
+    situation: "asking for location",
+    imageKey: "travel-and-survival:1",
+    topicSlug: "question-words",
+    vocabularySlugs: ["travel-and-survival", "places-around-town"],
+    order: 32,
+    estimatedMinutes: 6,
+    sentences: [
+      ["¿Donde esta el hotel?", "Where is the hotel?", "Donde asks where."],
+      ["¿Donde esta la estacion?", "Where is the station?", "Use la before estacion."],
+      ["¿Donde esta el museo?", "Where is the museum?", "Use el before museo."],
+      ["¿Donde esta el restaurante?", "Where is the restaurant?", "One frame works with many places."]
+    ]
+  },
+  {
+    slug: "que-quieres-frame",
+    title: "Que Quieres Frame",
+    summary: "Use que quieres to ask what someone wants.",
+    cefrLevel: "A1",
+    theme: "Questions",
+    situation: "simple choices",
+    imageKey: "grammar-scenes:11",
+    topicSlug: "question-words",
+    vocabularySlugs: ["food-and-ordering", "useful-phrases"],
+    order: 33,
+    estimatedMinutes: 6,
+    sentences: [
+      ["¿Que quieres?", "What do you want?", "Que asks what."],
+      ["Quiero agua.", "I want water.", "Answer with quiero."],
+      ["Quiero un cafe.", "I want a coffee.", "A short answer is natural."],
+      ["No entiendo la pregunta.", "I do not understand the question.", "Use a repair phrase when needed."]
+    ]
+  },
+  {
+    slug: "cuanto-cuesta-frame",
+    title: "Cuanto Cuesta Frame",
+    summary: "Practice one price question before using it in restaurants and markets.",
+    cefrLevel: "A1",
+    theme: "Questions",
+    situation: "prices",
+    imageKey: "food-and-ordering:18",
+    topicSlug: "question-words",
+    vocabularySlugs: ["food-and-ordering", "fruit-and-produce", "useful-phrases"],
+    order: 34,
+    estimatedMinutes: 6,
+    sentences: [
+      ["¿Cuanto cuesta?", "How much does it cost?", "A complete useful question."],
+      ["¿Cuanto cuesta el pan?", "How much does the bread cost?", "Use el before pan."],
+      ["¿Cuanto cuesta la manzana?", "How much does the apple cost?", "Use la before manzana."],
+      ["La cuenta, por favor.", "The bill, please.", "Useful after asking about prices."]
+    ]
+  },
+  {
+    slug: "yo-ar-verbs",
+    title: "Yo with -ar Verbs",
+    summary: "Practice just the I form of common -ar verbs.",
+    cefrLevel: "A1",
+    theme: "Verbs",
+    situation: "talking about yourself",
+    imageKey: "daily-actions:1",
+    topicSlug: "present-tense-ar",
+    vocabularySlugs: ["daily-actions", "food-and-ordering"],
+    order: 35,
+    estimatedMinutes: 7,
+    sentences: [
+      ["Yo hablo espanol.", "I speak Spanish.", "Yo uses the -o ending."],
+      ["Yo estudio hoy.", "I study today.", "Estudiar becomes estudio."],
+      ["Yo trabajo hoy.", "I work today.", "Trabajar becomes trabajo."],
+      ["Yo compro pan.", "I buy bread.", "Comprar becomes compro."]
+    ]
+  },
+  {
+    slug: "tu-ar-verbs",
+    title: "Tu with -ar Verbs",
+    summary: "Practice just the you form of common -ar verbs.",
+    cefrLevel: "A1",
+    theme: "Verbs",
+    situation: "talking to one person",
+    imageKey: "daily-actions:2",
+    topicSlug: "present-tense-ar",
+    vocabularySlugs: ["daily-actions", "people-and-pronouns"],
+    order: 36,
+    estimatedMinutes: 7,
+    sentences: [
+      ["Tu hablas espanol.", "You speak Spanish.", "Tu uses the -as ending."],
+      ["Tu estudias hoy.", "You study today.", "Estudiar becomes estudias."],
+      ["Tu trabajas hoy.", "You work today.", "Trabajar becomes trabajas."],
+      ["Tu compras pan.", "You buy bread.", "Comprar becomes compras."]
+    ]
+  },
+  {
+    slug: "nosotros-and-ellos-ar-verbs",
+    title: "Nosotros and Ellos with -ar Verbs",
+    summary: "Practice we and they forms after yo and tu feel familiar.",
+    cefrLevel: "A1",
+    theme: "Verbs",
+    situation: "groups",
+    imageKey: "people-and-family:16",
+    topicSlug: "present-tense-ar",
+    vocabularySlugs: ["daily-actions", "people-and-pronouns"],
+    order: 37,
+    estimatedMinutes: 7,
+    sentences: [
+      ["Nosotros hablamos espanol.", "We speak Spanish.", "Nosotros uses -amos."],
+      ["Nosotros caminamos al parque.", "We walk to the park.", "Caminar becomes caminamos."],
+      ["Ellos trabajan hoy.", "They work today.", "Ellos uses -an."],
+      ["Ellos estudian hoy.", "They study today.", "Estudiar becomes estudian."]
+    ]
+  },
+  {
+    slug: "feeling-words-slowly",
+    title: "Feeling Words Slowly",
+    summary: "Use estoy with one feeling at a time before adding agreement details.",
+    cefrLevel: "A1",
+    theme: "Feelings",
+    situation: "how you feel",
+    imageKey: "emotions-and-states:1",
+    topicSlug: "estar-emotions",
+    vocabularySlugs: ["emotions-and-states"],
+    order: 38,
+    estimatedMinutes: 6,
+    sentences: [
+      ["Estoy feliz.", "I am happy.", "Use estoy for a current feeling."],
+      ["Estoy triste.", "I am sad.", "Triste works for masculine and feminine."],
+      ["Estoy cansado.", "I am tired.", "Cansado is a masculine form."],
+      ["Estoy emocionado.", "I am excited.", "Use estar for current emotional state."],
+      ["Ella esta triste.", "She is sad.", "Use esta for one person: ella."],
+      ["Ana esta nerviosa.", "Ana is nervous.", "Nerviosa is a feminine form."]
+    ]
+  },
+  {
+    slug: "objects-on-the-table",
+    title: "Objects on the Table",
+    summary: "Use estar en with concrete objects around the home and classroom.",
+    cefrLevel: "A1",
+    theme: "Location",
+    situation: "objects around you",
+    imageKey: "home-objects:1",
+    topicSlug: "location-prepositions",
+    vocabularySlugs: ["home-and-objects", "classroom-basics"],
+    order: 39,
+    estimatedMinutes: 7,
+    sentences: [
+      ["El libro esta en la mesa.", "The book is on the table.", "Use estar for object location."],
+      ["El lapiz esta en la mesa.", "The pencil is on the table.", "El marks lapiz."],
+      ["La mochila esta en la silla.", "The backpack is on the chair.", "La marks mochila."],
+      ["La llave esta en la mesa.", "The key is on the table.", "La marks llave."]
+    ]
+  },
+  {
+    slug: "plural-articles-slowly",
+    title: "Plural Articles Slowly",
+    summary: "Move from el and la to los and las with easy examples.",
+    cefrLevel: "A1",
+    theme: "Plural Agreement",
+    situation: "people and objects",
+    imageKey: "grammar-scenes:8",
+    topicSlug: "plural-agreement",
+    vocabularySlugs: ["classroom-basics", "people-and-pronouns", "fruit-and-produce"],
+    order: 40,
+    estimatedMinutes: 7,
+    sentences: [
+      ["Los estudiantes.", "The students.", "Los marks masculine or mixed plural."],
+      ["Las sillas.", "The chairs.", "Las marks feminine plural."],
+      ["Las uvas estan frescas.", "The grapes are fresh.", "Las works with feminine plural nouns."],
+      ["Los estudiantes hablan.", "The students speak.", "Plural people use a plural verb form."]
+    ]
+  },
+  {
     slug: "checkpoint-a1-foundations",
     title: "A1 Foundations Checkpoint",
     summary: "Mix identity, location, articles, verbs, food, and travel in one review checkpoint.",
@@ -694,7 +1224,7 @@ const lessons = [
     imageKey: "rewards-and-progress:15",
     topicSlug: "question-words",
     vocabularySlugs: ["classroom-basics", "daily-actions", "food-and-ordering", "travel-and-survival", "useful-phrases"],
-    order: 19,
+    order: 41,
     estimatedMinutes: 12,
     sentences: [
       ["Yo soy estudiante y estoy en la biblioteca.", "I am a student and I am in the library.", "Mix ser for identity and estar for location."],
@@ -702,10 +1232,303 @@ const lessons = [
       ["¿Donde esta la estacion?", "Where is the station?", "Travel question frame."],
       ["No entiendo, mas despacio por favor.", "I do not understand, more slowly please.", "Conversation repair phrase."]
     ]
+  },
+  {
+    slug: "body-words-slowly",
+    title: "Body Words Slowly",
+    summary: "Learn a few body words before using health phrases.",
+    cefrLevel: "A1",
+    theme: "Health",
+    situation: "body vocabulary",
+    imageKey: "emotions-and-states:7",
+    topicSlug: "tener-necesitar",
+    vocabularySlugs: ["body-and-health"],
+    order: 42,
+    estimatedMinutes: 6,
+    sentences: [
+      ["La cabeza.", "The head.", "Cabeza uses la."],
+      ["La mano.", "The hand.", "Mano uses la."],
+      ["El pie.", "The foot.", "Pie uses el."],
+      ["El cuerpo esta cansado.", "The body is tired.", "Use estar for a current state."]
+    ]
+  },
+  {
+    slug: "me-duele-basics",
+    title: "Me Duele Basics",
+    summary: "Use me duele to say what hurts.",
+    cefrLevel: "A1",
+    theme: "Health",
+    situation: "saying what hurts",
+    imageKey: "emotions-and-states:7",
+    topicSlug: "tener-necesitar",
+    vocabularySlugs: ["body-and-health", "useful-phrases"],
+    order: 43,
+    estimatedMinutes: 7,
+    sentences: [
+      ["Me duele la cabeza.", "My head hurts.", "Use me duele with one thing that hurts."],
+      ["Me duele el pie.", "My foot hurts.", "El matches pie."],
+      ["Necesito un doctor.", "I need a doctor.", "Use necesito for practical needs."],
+      ["No entiendo al doctor.", "I do not understand the doctor.", "Use no before entiendo."]
+    ]
+  },
+  {
+    slug: "hunger-thirst-hot-cold",
+    title: "Hunger, Thirst, Hot, Cold",
+    summary: "Use tengo for common body states.",
+    cefrLevel: "A1",
+    theme: "Health",
+    situation: "body states",
+    imageKey: "emotions-and-states:13",
+    topicSlug: "tener-necesitar",
+    vocabularySlugs: ["body-and-health", "food-and-ordering", "weather-and-time"],
+    order: 44,
+    estimatedMinutes: 7,
+    sentences: [
+      ["Tengo hambre.", "I am hungry.", "Spanish uses tengo with hunger."],
+      ["Tengo sed.", "I am thirsty.", "Spanish uses tengo with thirst."],
+      ["Tengo frio.", "I am cold.", "Spanish uses tengo with cold."],
+      ["Tengo calor.", "I am hot.", "Spanish uses tengo with heat."]
+    ]
+  },
+  {
+    slug: "numbers-one-to-five",
+    title: "Numbers One to Five",
+    summary: "Use tiny numbers with familiar objects.",
+    cefrLevel: "A1",
+    theme: "Numbers",
+    situation: "counting",
+    imageKey: "grammar-scenes:8",
+    topicSlug: "plural-agreement",
+    vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "classroom-basics"],
+    order: 45,
+    estimatedMinutes: 7,
+    sentences: [
+      ["Tengo uno.", "I have one.", "Uno means one."],
+      ["Tengo dos manzanas.", "I have two apples.", "Dos means two."],
+      ["Tengo tres libros.", "I have three books.", "Tres means three."],
+      ["Quiero cuatro uvas.", "I want four grapes.", "Cuatro means four."]
+    ]
+  },
+  {
+    slug: "colors-with-things",
+    title: "Colors with Things",
+    summary: "Add simple color descriptions to things you already know.",
+    cefrLevel: "A1",
+    theme: "Descriptions",
+    situation: "describing objects",
+    imageKey: "fruit-and-produce:1",
+    topicSlug: "articles-gender",
+    vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "clothing-basics"],
+    order: 46,
+    estimatedMinutes: 8,
+    sentences: [
+      ["La manzana es roja.", "The apple is red.", "Roja agrees with manzana."],
+      ["El tomate es rojo.", "The tomato is red.", "Rojo agrees with tomate."],
+      ["La camisa es azul.", "The shirt is blue.", "Azul works for masculine and feminine."],
+      ["El platano es amarillo.", "The banana is yellow.", "Amarillo agrees with platano."]
+    ]
+  },
+  {
+    slug: "park-nature-words",
+    title: "Park Nature Words",
+    summary: "Use outdoor words with estar and simple descriptions.",
+    cefrLevel: "A1",
+    theme: "Outside",
+    situation: "in the park",
+    imageKey: "places-around-town:3",
+    topicSlug: "location-prepositions",
+    vocabularySlugs: ["nature-and-animals", "places-around-town"],
+    order: 47,
+    estimatedMinutes: 7,
+    sentences: [
+      ["El arbol esta en el parque.", "The tree is in the park.", "Use estar for location."],
+      ["La flor es roja.", "The flower is red.", "Use ser for a normal description."],
+      ["El perro esta en casa.", "The dog is at home.", "Use estar for location."],
+      ["El parque es bonito.", "The park is pretty.", "Use ser for a general description."]
+    ]
+  },
+  {
+    slug: "weather-outside",
+    title: "Weather Outside",
+    summary: "Connect weather words with outdoor places.",
+    cefrLevel: "A1",
+    theme: "Weather",
+    situation: "outside",
+    imageKey: "weather-and-time:1",
+    topicSlug: "question-words",
+    vocabularySlugs: ["weather-and-time", "nature-and-animals"],
+    order: 48,
+    estimatedMinutes: 7,
+    sentences: [
+      ["Hace sol en el parque.", "It is sunny in the park.", "Hace sol describes sunny weather."],
+      ["Llueve en la ciudad.", "It rains in the city.", "Llueve means it rains."],
+      ["El agua esta fria.", "The water is cold.", "Use estar for current temperature."],
+      ["Estoy en la playa.", "I am at the beach.", "Use estar for where you are."]
+    ]
   }
 ];
 
 const exercises = [
+  {
+    slug: "intro-hola-means-hello",
+    lessonSlug: "intro-greetings-pronouns-ser",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Greeting.",
+    instruction: "Choose the meaning.",
+    questionText: "hola",
+    answerJson: { correct: "hello", accepted: ["hello", "hi"], goal: "vocabulary_recognition" },
+    explanation: "Hola means hello. It is the easiest way to start a greeting.",
+    difficulty: 1,
+    order: 1,
+    xpReward: 8,
+    imageKey: "people-and-family:1",
+    options: [
+      ["hello", "hello", true],
+      ["thank you", "thank you", false],
+      ["goodbye", "goodbye", false]
+    ]
+  },
+  {
+    slug: "intro-yo-soy-name",
+    lessonSlug: "intro-greetings-pronouns-ser",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.CLOZE,
+    prompt: "Identity with SER.",
+    instruction: "Use soy for I am plus a name.",
+    questionText: "Yo ____ Ana.",
+    answerJson: {
+      correct: "soy",
+      accepted: ["soy"],
+      goal: "ser_identity",
+      errorHints: {
+        ser_estar: "Use soy here because a name is identity. Correct: Yo soy Ana."
+      }
+    },
+    explanation: "Use soy for identity: Yo soy Ana.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 10,
+    imageKey: "grammar-scenes:1",
+    options: [
+      ["soy", "soy", true],
+      ["estoy", "estoy", false],
+      ["es", "es", false]
+    ]
+  },
+  {
+    slug: "intro-me-llamo-ana",
+    lessonSlug: "intro-greetings-pronouns-ser",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.TRANSLATION,
+    prompt: "Introduce your name.",
+    instruction: "Type the Spanish phrase.",
+    questionText: "My name is Ana.",
+    answerJson: {
+      correct: "Me llamo Ana.",
+      accepted: ["me llamo ana", "me llamo ana."],
+      alternatives: [{ answer: "Soy Ana.", note: "Soy Ana is also a natural short introduction." }],
+      goal: "active_production"
+    },
+    explanation: "Me llamo Ana is the natural Spanish phrase for My name is Ana.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 14,
+    imageKey: "people-and-family:1",
+    options: []
+  },
+  {
+    slug: "intro-build-hola-soy-ana",
+    lessonSlug: "intro-greetings-pronouns-ser",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Build an introduction.",
+    instruction: "Put the words in order.",
+    questionText: "Hello, I am Ana.",
+    answerJson: {
+      correctWords: ["Hola", ",", "soy", "Ana", "."],
+      goal: "word_order"
+    },
+    explanation: "A simple introduction can be Hola, soy Ana.",
+    difficulty: 1,
+    order: 4,
+    xpReward: 14,
+    imageKey: "people-and-family:1",
+    options: [
+      ["Hola", "Hola", false],
+      [",", ",", false],
+      ["soy", "soy", false],
+      ["Ana", "Ana", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "intro-soy-de-austria",
+    lessonSlug: "intro-greetings-pronouns-ser",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.TRANSLATION,
+    prompt: "Say origin.",
+    instruction: "Type the Spanish sentence.",
+    questionText: "I am from Austria.",
+    answerJson: {
+      correct: "Soy de Austria.",
+      accepted: ["soy de austria", "soy de austria."],
+      goal: "ser_origin",
+      errorHints: {
+        ser_estar: "Use soy for origin. Correct: Soy de Austria. Estoy de Austria is not used."
+      }
+    },
+    explanation: "Use soy de for origin: Soy de Austria.",
+    difficulty: 2,
+    order: 5,
+    xpReward: 16,
+    imageKey: "travel-and-survival:5",
+    options: []
+  },
+  {
+    slug: "intro-correct-estoy-de-austria",
+    lessonSlug: "intro-greetings-pronouns-ser",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.ERROR_CORRECTION,
+    prompt: "Fix the mistake.",
+    instruction: "Rewrite the sentence correctly.",
+    questionText: "Estoy de Austria.",
+    answerJson: {
+      correct: "Soy de Austria.",
+      accepted: ["soy de austria", "soy de austria."],
+      goal: "mistake_correction",
+      errorHints: {
+        ser_estar: "Origin uses ser, not estar. Correct: Soy de Austria."
+      }
+    },
+    explanation: "Use ser for origin. Soy de Austria is correct.",
+    difficulty: 2,
+    order: 6,
+    xpReward: 16,
+    imageKey: "grammar-scenes:1",
+    options: []
+  },
+  {
+    slug: "intro-scenario-cafe-greeting",
+    lessonSlug: "intro-greetings-pronouns-ser",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.TRANSLATION,
+    prompt: "Scenario response.",
+    instruction: "You meet someone. Say hello and give your name.",
+    questionText: "Say: Hello, my name is Ana.",
+    answerJson: {
+      correct: "Hola, me llamo Ana.",
+      accepted: ["hola me llamo ana", "hola, me llamo ana", "hola me llamo ana.", "hola, me llamo ana."],
+      alternatives: [{ answer: "Hola, soy Ana.", note: "Hola, soy Ana is also a valid short introduction." }],
+      goal: "scenario_response"
+    },
+    explanation: "Hola, me llamo Ana is a complete practical introduction.",
+    difficulty: 2,
+    order: 7,
+    xpReward: 18,
+    imageKey: "people-and-family:1",
+    options: []
+  },
   {
     slug: "zero-yo-means-i",
     lessonSlug: "zero-pronouns",
@@ -2033,37 +2856,25 @@ async function upsertExercise(exercise, lessonBySlug, topicBySlug) {
 }
 
 async function main() {
-  const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@espanolo.local";
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD || "change-me";
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
 
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: { role: Role.ADMIN, name: "Admin" },
-    create: {
-      email: adminEmail,
-      name: "Admin",
-      role: Role.ADMIN,
-      passwordHash: await hashPassword(adminPassword),
-      xp: 1250,
-      level: levelForXp(1250),
-      streakDays: 23,
-      lastPracticeDate: new Date()
-    }
-  });
-
-  await prisma.user.upsert({
-    where: { email: "ana@example.local" },
-    update: {},
-    create: {
-      email: "ana@example.local",
-      name: "Ana",
-      passwordHash: await hashPassword("demo1234"),
-      xp: 840,
-      level: levelForXp(840),
-      streakDays: 6,
-      lastPracticeDate: new Date()
-    }
-  });
+  if (adminEmail && adminPassword) {
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: { role: Role.ADMIN, name: "Admin" },
+      create: {
+        email: adminEmail,
+        name: "Admin",
+        role: Role.ADMIN,
+        passwordHash: await hashPassword(adminPassword),
+        xp: 1250,
+        level: levelForXp(1250),
+        streakDays: 23,
+        lastPracticeDate: new Date()
+      }
+    });
+  }
 
   for (const topic of topics) {
     await prisma.grammarTopic.upsert({
@@ -2094,18 +2905,9 @@ async function main() {
       }
     });
 
-    await prisma.word.deleteMany({ where: { groupId: savedGroup.id } });
-    await prisma.word.createMany({
-      data: group.words.map(([spanish, english, partOfSpeech, gender, example, imageKey]) => ({
-        groupId: savedGroup.id,
-        spanish,
-        english,
-        partOfSpeech,
-        gender,
-        example,
-        imageKey: imageKey || null
-      }))
-    });
+    for (const word of group.words) {
+      await upsertGroupWord(savedGroup.id, word);
+    }
   }
 
   const groupRecords = await prisma.vocabularyGroup.findMany();
@@ -2122,6 +2924,9 @@ async function main() {
         theme: lesson.theme,
         situation: lesson.situation,
         imageKey: lesson.imageKey || null,
+        outcomesJson: lesson.outcomes || [],
+        conceptKeys: lesson.conceptKeys || [],
+        reviewSummary: lesson.reviewSummary || "",
         order: lesson.order,
         estimatedMinutes: lesson.estimatedMinutes,
         topicId: topic.id,
@@ -2137,6 +2942,9 @@ async function main() {
         theme: lesson.theme,
         situation: lesson.situation,
         imageKey: lesson.imageKey || null,
+        outcomesJson: lesson.outcomes || [],
+        conceptKeys: lesson.conceptKeys || [],
+        reviewSummary: lesson.reviewSummary || "",
         order: lesson.order,
         estimatedMinutes: lesson.estimatedMinutes,
         topicId: topic.id,
@@ -2216,8 +3024,10 @@ async function main() {
     });
   }
 
-  console.log(`Seeded Espanolo. Admin login: ${adminEmail} / ${adminPassword}`);
-  console.log("Demo learner login: ana@example.local / demo1234");
+  console.log("Seeded Espanolo content.");
+  if (adminEmail && adminPassword) {
+    console.log(`Seeded admin login: ${adminEmail}`);
+  }
 }
 
 main()

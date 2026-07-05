@@ -6,6 +6,13 @@ const cookieParser = require("cookie-parser");
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const { PrismaClient, Role, AttemptSource, ReviewState } = require("@prisma/client");
+const {
+  acceptedAnswersForExercise,
+  evaluateExerciseAnswer,
+  expectedAnswerForExercise,
+  scheduleExerciseReview,
+  scheduleWordReview
+} = require("./learning-core");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -16,6 +23,7 @@ const SESSION_COOKIE = "espanolo_sid";
 const SESSION_DAYS = 30;
 const EXTERNAL_LOOKUP_TIMEOUT_MS = 9000;
 const PRONUNCIATION_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const PRONUNCIATION_CACHE_VERSION = 2;
 const PRONUNCIATION_USER_AGENT =
   "Mozilla/5.0 (compatible; EspanoloLearning/0.1; self-hosted pronunciation resolver)";
 const pronunciationCache = new Map();
@@ -65,6 +73,14 @@ const slugify = (value) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "")
     .slice(0, 80);
+
+const parseTextList = (value) => {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  return String(value || "")
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
 
 const normalizeAnswer = (value) =>
   String(value || "")
@@ -144,6 +160,114 @@ function normalizeSpanishDictAudioUrl(rawUrl) {
   );
 }
 
+function decodeJsonString(value) {
+  try {
+    return JSON.parse(`"${String(value || "").replace(/"/g, '\\"')}"`);
+  } catch {
+    return decodeHtmlEntities(String(value || ""));
+  }
+}
+
+function extractJsonAfter(html, key) {
+  const marker = `"${key}":`;
+  const markerIndex = html.indexOf(marker);
+  if (markerIndex < 0) return null;
+  const start = html.indexOf("[", markerIndex + marker.length);
+  if (start < 0) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < html.length; index += 1) {
+    const char = html[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+    } else if (char === "[") {
+      depth += 1;
+    } else if (char === "]") {
+      depth -= 1;
+      if (depth === 0) {
+        return html.slice(start, index + 1);
+      }
+    }
+  }
+  return null;
+}
+
+function phraseMeaningFallback(text) {
+  const cleaned = normalizeAnswer(text);
+  const originalTail = (prefix) => String(text || "").trim().slice(prefix.length).trim();
+  if (cleaned === "hola") return "hello";
+  if (cleaned === "gracias") return "thank you";
+  if (cleaned === "por favor") return "please";
+  if (cleaned === "no entiendo") return "I do not understand";
+  if (cleaned.startsWith("soy de ")) return `I am from ${originalTail("soy de ")}`;
+  if (cleaned.startsWith("me llamo ")) return `my name is ${originalTail("me llamo ")}`;
+  if (cleaned.startsWith("quiero ")) return `I want ${originalTail("quiero ")}`;
+  if (cleaned.startsWith("necesito ")) return `I need ${originalTail("necesito ")}`;
+  return "";
+}
+
+function extractSpanishDictMeanings(html, text) {
+  const direct = [
+    ...html.matchAll(/"translation":"([^"\\]*(?:\\.[^"\\]*)*)"/g)
+  ]
+    .map((match) => decodeJsonString(match[1]))
+    .map((value) => value.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .filter((value) => !/^[-–—]+$/.test(value));
+
+  const wordByWordJson = extractJsonAfter(html, "wordByWordTranslations");
+  let wordByWord = [];
+  if (wordByWordJson) {
+    try {
+      wordByWord = JSON.parse(wordByWordJson)
+        .map((item) => ({
+          query: item.query || item.source || "",
+          meaning: item.quickdef1 || item.quickdef2 || ""
+        }))
+        .filter((item) => item.query && item.meaning);
+    } catch {
+      wordByWord = [];
+    }
+  }
+
+  const fallback = phraseMeaningFallback(text);
+  const articleTokens = new Set(["el", "la", "los", "las", "un", "una", "unos", "unas"]);
+  const meaningfulQueryTokens = meaningfulTokens(text);
+  const meaningfulWordByWord = wordByWord.filter((item) => !articleTokens.has(normalizeAnswer(item.query)));
+  const wordByWordIsUseful =
+    wordByWord.length > 1 &&
+    meaningfulWordByWord.length > 0 &&
+    meaningfulWordByWord.length >= Math.min(meaningfulQueryTokens.length, meaningfulWordByWord.length);
+  const wordByWordMeaning = wordByWordIsUseful
+    ? wordByWord.map((item) => `${item.query} = ${item.meaning}`).join("; ")
+    : "";
+  const meanings = [...direct, fallback, wordByWordMeaning]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .filter((value, index, list) => list.findIndex((item) => normalizeAnswer(item) === normalizeAnswer(value)) === index)
+    .slice(0, 6);
+
+  return {
+    meanings: meanings.map((meaning, index) => ({
+      text: meaning,
+      source: index < direct.length ? "SpanishDict" : fallback && meaning === fallback ? "Pattern" : "Word by word"
+    })),
+    wordByWord
+  };
+}
+
 async function fetchExternal(url, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), EXTERNAL_LOOKUP_TIMEOUT_MS);
@@ -212,6 +336,13 @@ async function resolveSpanishDictPronunciation(text) {
   ).slice(0, 3);
 }
 
+async function resolveSpanishDictMeaning(text) {
+  const html = await fetchExternalText(dictionaryLinks(text).spanishDict, {
+    Referer: "https://www.spanishdict.com/"
+  });
+  return extractSpanishDictMeanings(html, text);
+}
+
 async function resolveLeoPronunciation(text) {
   const html = await fetchExternalText(dictionaryLinks(text).leo, {
     Referer: "https://dict.leo.org/"
@@ -251,25 +382,37 @@ async function resolvePronunciation(text) {
 
   const cacheKey = normalizeAnswer(cleaned);
   const cached = pronunciationCache.get(cacheKey);
-  if (cached && Date.now() - cached.createdAt < PRONUNCIATION_CACHE_TTL_MS) {
+  if (
+    cached &&
+    cached.version === PRONUNCIATION_CACHE_VERSION &&
+    Array.isArray(cached.payload.meanings) &&
+    Date.now() - cached.createdAt < PRONUNCIATION_CACHE_TTL_MS
+  ) {
     return cached.payload;
   }
 
   const results = await Promise.allSettled([
     resolveSpanishDictPronunciation(cleaned),
-    resolveLeoPronunciation(cleaned)
+    resolveLeoPronunciation(cleaned),
+    resolveSpanishDictMeaning(cleaned)
   ]);
   const sources = sortPronunciationSources(
-    results.flatMap((result) => (result.status === "fulfilled" ? result.value : []))
+    results
+      .slice(0, 2)
+      .flatMap((result) => (result.status === "fulfilled" ? result.value : []))
   ).map(({ score, ...source }) => source);
+  const meaningPayload = results[2]?.status === "fulfilled" ? results[2].value : { meanings: [], wordByWord: [] };
 
   const payload = {
     text: cleaned,
     links: dictionaryLinks(cleaned),
     sources,
+    meanings: meaningPayload.meanings || [],
+    bestMeaning: meaningPayload.meanings?.[0]?.text || "",
+    wordByWord: meaningPayload.wordByWord || [],
     resolvedAt: new Date().toISOString()
   };
-  pronunciationCache.set(cacheKey, { createdAt: Date.now(), payload });
+  pronunciationCache.set(cacheKey, { version: PRONUNCIATION_CACHE_VERSION, createdAt: Date.now(), payload });
   return payload;
 }
 
@@ -337,6 +480,7 @@ const publicExercise = (exercise) => ({
   imageKey: exercise.imageKey,
   lessonId: exercise.lessonId,
   topicId: exercise.topicId,
+  answerGoal: exercise.answerJson?.goal || "",
   options: [...(exercise.options || [])]
     .sort((a, b) => a.order - b.order)
     .map((option) => ({
@@ -345,6 +489,47 @@ const publicExercise = (exercise) => ({
       value: option.value
     }))
 });
+
+const isLessonReviewDue = (progress, now = new Date()) =>
+  Boolean(progress?.completedAt && progress?.reviewDueAt && new Date(progress.reviewDueAt).getTime() <= now.getTime());
+
+const publicLessonSummary = (lesson) => {
+  const progress = lesson.progress?.[0] || null;
+  const reviewDue = isLessonReviewDue(progress);
+  const mastery = progress?.mastery || 0;
+  const status = reviewDue
+    ? "review_due"
+    : progress?.completedAt
+      ? "completed"
+      : mastery > 0
+        ? "practicing"
+        : "not_started";
+
+  return {
+    id: lesson.id,
+    slug: lesson.slug,
+    title: lesson.title,
+    summary: lesson.summary,
+    cefrLevel: lesson.cefrLevel,
+    theme: lesson.theme,
+    situation: lesson.situation,
+    imageKey: lesson.imageKey,
+    estimatedMinutes: lesson.estimatedMinutes,
+    progress: mastery,
+    completedAt: progress?.completedAt || null,
+    reviewDueAt: progress?.reviewDueAt || null,
+    lastReviewedAt: progress?.lastReviewedAt || null,
+    reviewIntervalDays: progress?.reviewIntervalDays || 3,
+    lessonReviewCount: progress?.lessonReviewCount || 0,
+    reviewDue,
+    status,
+    outcomes: Array.isArray(lesson.outcomesJson) ? lesson.outcomesJson : [],
+    conceptKeys: Array.isArray(lesson.conceptKeys) ? lesson.conceptKeys : [],
+    reviewSummary: lesson.reviewSummary || "",
+    exerciseCount: lesson.exercises?.length || 0,
+    topic: lesson.topic
+  };
+};
 
 const publicWord = (word) => ({
   id: word.id,
@@ -419,48 +604,8 @@ const requireAdmin = (req, res, next) => {
 
 app.use(sessionMiddleware);
 
-function evaluateExercise(exercise, submitted) {
-  const answerSpec = exercise.answerJson || {};
-
-  if (exercise.type === "SENTENCE_BUILDER") {
-    const submittedWords = Array.isArray(submitted.words)
-      ? submitted.words
-      : String(submitted.answer || "").split(/\s+/);
-    const expected = Array.isArray(answerSpec.correctWords)
-      ? answerSpec.correctWords.join(" ")
-      : answerSpec.correct;
-    return normalizeAnswer(submittedWords.join(" ")) === normalizeAnswer(expected);
-  }
-
-  const answer = normalizeAnswer(submitted.answer || submitted.value || "");
-  const accepted = Array.isArray(answerSpec.accepted)
-    ? answerSpec.accepted
-    : [answerSpec.correct];
-
-  return accepted.some((candidate) => normalizeAnswer(candidate) === answer);
-}
-
-function expectedAnswerForExercise(exercise) {
-  const answerSpec = exercise.answerJson || {};
-  if (Array.isArray(answerSpec.correctWords)) {
-    return answerSpec.correctWords.join(" ");
-  }
-  return answerSpec.correct || "";
-}
-
-function acceptedAnswersForExercise(exercise) {
-  const answerSpec = exercise.answerJson || {};
-  if (Array.isArray(answerSpec.correctWords)) {
-    return [answerSpec.correctWords.join(" ")];
-  }
-  if (Array.isArray(answerSpec.accepted)) {
-    return answerSpec.accepted;
-  }
-  return answerSpec.correct ? [answerSpec.correct] : [];
-}
-
 async function refreshLessonProgress(userId, lessonId) {
-  const [totalExercises, correctAttempts] = await Promise.all([
+  const [totalExercises, correctAttempts, existingProgress] = await Promise.all([
     prisma.exercise.count({ where: { lessonId } }),
     prisma.attempt.findMany({
       where: {
@@ -469,19 +614,27 @@ async function refreshLessonProgress(userId, lessonId) {
         exercise: { lessonId }
       },
       select: { exerciseId: true }
-    })
+    }),
+    prisma.userLessonProgress.findUnique({ where: { userId_lessonId: { userId, lessonId } } })
   ]);
 
   const completedExercises = new Set(correctAttempts.map((attempt) => attempt.exerciseId)).size;
   const mastery = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
+  const now = new Date();
+  const firstCompletedAt = mastery >= 100 ? existingProgress?.completedAt || now : existingProgress?.completedAt || null;
+  const firstReviewDueAt =
+    mastery >= 100 && !existingProgress?.completedAt && !existingProgress?.reviewDueAt
+      ? addDays(now, 1)
+      : existingProgress?.reviewDueAt || null;
 
-  return prisma.userLessonProgress.upsert({
+  const progress = await prisma.userLessonProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
     update: {
       completedExercises,
       totalExercises,
       mastery,
-      completedAt: mastery >= 100 ? new Date() : null
+      completedAt: firstCompletedAt,
+      reviewDueAt: firstReviewDueAt
     },
     create: {
       userId,
@@ -489,103 +642,521 @@ async function refreshLessonProgress(userId, lessonId) {
       completedExercises,
       totalExercises,
       mastery,
-      completedAt: mastery >= 100 ? new Date() : null
+      completedAt: firstCompletedAt,
+      reviewDueAt: firstReviewDueAt
+    }
+  });
+
+  if (mastery >= 100) {
+    await enrollLessonWordsForReview(userId, lessonId);
+  }
+
+  return progress;
+}
+
+async function completeLessonReinforcement(userId, lessonId, score = 100) {
+  const progress = await refreshLessonProgress(userId, lessonId);
+  const now = new Date();
+  const strongReview = Number(score) >= 80 && progress.mastery >= 80;
+  const currentInterval = progress.reviewIntervalDays || 3;
+  const nextInterval = strongReview ? Math.min(30, progress.lessonReviewCount ? Math.ceil(currentInterval * 1.7) : 3) : 1;
+
+  return prisma.userLessonProgress.update({
+    where: { userId_lessonId: { userId, lessonId } },
+    data: {
+      completedAt: progress.completedAt || now,
+      lastReviewedAt: now,
+      lessonReviewCount: { increment: 1 },
+      reviewIntervalDays: nextInterval,
+      reviewDueAt: addDays(now, nextInterval)
     }
   });
 }
 
-async function updateReviewItem(userId, exerciseId, wasCorrect) {
+async function updateReviewItem(userId, exerciseId, quality) {
   const existing = await prisma.reviewItem.findUnique({
     where: { userId_exerciseId: { userId, exerciseId } }
   });
-
-  const intervalDays = wasCorrect
-    ? Math.max(1, Math.ceil((existing?.intervalDays || 1) * (existing?.ease || 2.3)))
-    : 1;
-  const ease = wasCorrect
-    ? Math.min(3.0, (existing?.ease || 2.3) + 0.1)
-    : Math.max(1.3, (existing?.ease || 2.3) - 0.25);
-  const state = wasCorrect
-    ? intervalDays >= 14
-      ? ReviewState.MASTERED
-      : ReviewState.REVIEW
-    : ReviewState.LEARNING;
+  const scheduled = scheduleExerciseReview(existing, quality);
 
   return prisma.reviewItem.upsert({
     where: { userId_exerciseId: { userId, exerciseId } },
     update: {
-      state,
-      intervalDays,
-      ease,
-      dueAt: addDays(new Date(), intervalDays),
+      state: ReviewState[scheduled.state],
+      intervalDays: scheduled.intervalDays,
+      ease: scheduled.ease,
+      dueAt: scheduled.dueAt,
       lastAttemptAt: new Date()
     },
     create: {
       userId,
       exerciseId,
-      state,
-      intervalDays,
-      ease,
-      dueAt: addDays(new Date(), intervalDays),
+      state: ReviewState[scheduled.state],
+      intervalDays: scheduled.intervalDays,
+      ease: scheduled.ease,
+      dueAt: scheduled.dueAt,
       lastAttemptAt: new Date()
     }
   });
 }
 
-async function updateWordReview(userId, wordId, wasCorrect) {
+async function updateWordReview(userId, wordId, quality) {
   const existing = await prisma.wordReview.findUnique({
     where: { userId_wordId: { userId, wordId } }
   });
-
-  const previousCorrectCount = existing?.correctCount || 0;
-  const correctCount = previousCorrectCount + (wasCorrect ? 1 : 0);
-  const wrongCount = (existing?.wrongCount || 0) + (wasCorrect ? 0 : 1);
-  const ease = wasCorrect
-    ? Math.min(3.0, (existing?.ease || 2.1) + 0.08)
-    : Math.max(1.25, (existing?.ease || 2.1) - 0.3);
-  const now = new Date();
-  let intervalDays = 0;
-  let dueAt = addMinutes(now, 5);
-  let state = ReviewState.LEARNING;
-
-  if (wasCorrect) {
-    if (correctCount === 1) {
-      dueAt = addMinutes(now, 10);
-    } else if (correctCount === 2) {
-      intervalDays = 1;
-      dueAt = addDays(now, intervalDays);
-      state = ReviewState.REVIEW;
-    } else {
-      const previousInterval = Math.max(1, existing?.intervalDays || 1);
-      intervalDays = Math.max(correctCount === 3 ? 3 : 4, Math.ceil(previousInterval * ease));
-      dueAt = addDays(now, intervalDays);
-      state = correctCount >= 5 && intervalDays >= 14 ? ReviewState.MASTERED : ReviewState.REVIEW;
-    }
-  }
+  const scheduled = scheduleWordReview(existing, quality);
 
   return prisma.wordReview.upsert({
     where: { userId_wordId: { userId, wordId } },
     update: {
-      state,
-      intervalDays,
-      ease,
-      correctCount,
-      wrongCount,
-      dueAt,
-      lastAttemptAt: now
+      state: ReviewState[scheduled.state],
+      intervalDays: scheduled.intervalDays,
+      ease: scheduled.ease,
+      correctCount: scheduled.correctCount,
+      wrongCount: scheduled.wrongCount,
+      dueAt: scheduled.dueAt,
+      lastAttemptAt: new Date()
     },
     create: {
       userId,
       wordId,
-      state,
-      intervalDays,
-      ease,
-      correctCount,
-      wrongCount,
-      dueAt,
-      lastAttemptAt: now
+      state: ReviewState[scheduled.state],
+      intervalDays: scheduled.intervalDays,
+      ease: scheduled.ease,
+      correctCount: scheduled.correctCount,
+      wrongCount: scheduled.wrongCount,
+      dueAt: scheduled.dueAt,
+      lastAttemptAt: new Date()
     }
   });
+}
+
+async function enrollLessonWordsForReview(userId, lessonId, dueAt = addMinutes(new Date(), 10)) {
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: {
+      vocabularyGroups: {
+        select: {
+          words: { select: { id: true } }
+        }
+      }
+    }
+  });
+
+  const wordIds = [
+    ...new Set(lesson?.vocabularyGroups.flatMap((group) => group.words.map((word) => word.id)) || [])
+  ];
+  if (!wordIds.length) return 0;
+
+  const result = await prisma.wordReview.createMany({
+    data: wordIds.map((wordId) => ({
+      userId,
+      wordId,
+      state: ReviewState.LEARNING,
+      intervalDays: 0,
+      ease: 2.1,
+      dueAt
+    })),
+    skipDuplicates: true
+  });
+
+  return result.count;
+}
+
+async function enrollCompletedLessonWordsForReview(userId) {
+  const completed = await prisma.userLessonProgress.findMany({
+    where: {
+      userId,
+      completedAt: { not: null },
+      mastery: { gte: 100 }
+    },
+    select: { lessonId: true }
+  });
+
+  let count = 0;
+  for (const progress of completed) {
+    count += await enrollLessonWordsForReview(userId, progress.lessonId);
+  }
+  return count;
+}
+
+async function ensureAudioLabVocabularyGroup() {
+  return prisma.vocabularyGroup.upsert({
+    where: { slug: "audio-lab-saved" },
+    update: {
+      title: "Audio Lab Saved",
+      description: "Words and phrases saved from pronunciation lookup.",
+      situation: "personal audio",
+      imageKey: "daily-actions:15"
+    },
+    create: {
+      slug: "audio-lab-saved",
+      title: "Audio Lab Saved",
+      description: "Words and phrases saved from pronunciation lookup.",
+      situation: "personal audio",
+      imageKey: "daily-actions:15"
+    }
+  });
+}
+
+async function saveAudioLookupWord(userId, text, english) {
+  const spanish = String(text || "").replace(/\s+/g, " ").trim();
+  if (!spanish) throw new Error("A Spanish word or phrase is required");
+
+  const group = await ensureAudioLabVocabularyGroup();
+  const existingWords = await prisma.word.findMany({ where: { groupId: group.id } });
+  const existing = existingWords.find((word) => normalizeAnswer(word.spanish) === normalizeAnswer(spanish));
+  const cleanedEnglish = String(english || "").replace(/\s+/g, " ").trim() || "Meaning not found yet";
+  const data = {
+    spanish,
+    english: cleanedEnglish,
+    partOfSpeech: spanish.split(/\s+/).length > 1 ? "phrase" : "word",
+    gender: null,
+    example: spanish,
+    imageKey: group.imageKey,
+    groupId: group.id
+  };
+
+  const word = existing
+    ? await prisma.word.update({ where: { id: existing.id }, data })
+    : await prisma.word.create({ data });
+
+  const existingReview = await prisma.wordReview.findUnique({
+    where: { userId_wordId: { userId, wordId: word.id } }
+  });
+  const review = await prisma.wordReview.upsert({
+    where: { userId_wordId: { userId, wordId: word.id } },
+    update: {
+      dueAt: existingReview?.dueAt || new Date(),
+      state: ReviewState.LEARNING
+    },
+    create: {
+      userId,
+      wordId: word.id,
+      state: ReviewState.LEARNING,
+      intervalDays: 0,
+      ease: 2.1,
+      dueAt: new Date(),
+      lastAttemptAt: null
+    }
+  });
+
+  return { word, group, review, created: !existing };
+}
+
+async function audioLabSavedWords(userId, limit = 12) {
+  const group = await prisma.vocabularyGroup.findUnique({ where: { slug: "audio-lab-saved" } });
+  if (!group) return [];
+
+  const reviews = await prisma.wordReview.findMany({
+    where: {
+      userId,
+      word: { groupId: group.id }
+    },
+    orderBy: [{ updatedAt: "desc" }],
+    take: limit,
+    include: { word: true }
+  });
+
+  return reviews.map((review) => ({
+    ...publicWord(review.word),
+    groupSlug: group.slug,
+    groupTitle: group.title,
+    review: {
+      state: review.state,
+      dueAt: review.dueAt,
+      correctCount: review.correctCount,
+      wrongCount: review.wrongCount,
+      due: review.dueAt <= new Date()
+    }
+  }));
+}
+
+function categoryLabel(category) {
+  const labels = {
+    accent: "Accents",
+    gender_article: "Articles and Gender",
+    missing_required_article: "Missing Articles",
+    ser_estar: "Ser vs Estar",
+    verb_conjugation: "Verb Forms",
+    vocabulary: "Vocabulary",
+    word_order: "Word Order"
+  };
+  return labels[category] || "Spanish Pattern";
+}
+
+function mistakeWeakSpotKey({ exercise, word, errorCategory }) {
+  if (exercise) return `exercise:${exercise.id}:${errorCategory || "general"}`;
+  if (word) return `word:${word.id}:${errorCategory || "vocabulary"}`;
+  return `general:${errorCategory || "practice"}`;
+}
+
+async function recordMistakeEvent({ userId, exercise, word, source, evaluation }) {
+  if (!evaluation || evaluation.correct) return null;
+
+  const weakSpotKey = mistakeWeakSpotKey({ exercise, word, errorCategory: evaluation.errorCategory });
+  const occurrenceCount = (await prisma.mistakeEvent.count({ where: { userId, weakSpotKey } })) + 1;
+
+  return prisma.mistakeEvent.create({
+    data: {
+      userId,
+      exerciseId: exercise?.id || null,
+      wordId: word?.id || null,
+      lessonId: exercise?.lessonId || null,
+      topicId: exercise?.topicId || null,
+      source: source || "LESSON",
+      submittedAnswer: evaluation.submitted || "",
+      correctAnswer: evaluation.expected || "",
+      errorCategory: evaluation.errorCategory || "vocabulary",
+      feedbackMessage: evaluation.feedbackMessage || "",
+      weakSpotKey,
+      occurrenceCount,
+      lastOccurredAt: new Date()
+    }
+  });
+}
+
+function summarizeMistakeEvents(events) {
+  const byKey = new Map();
+  for (const event of events) {
+    const existing = byKey.get(event.weakSpotKey);
+    const count = (existing?.count || 0) + 1;
+    const lastOccurredAt =
+      !existing || new Date(event.lastOccurredAt) > new Date(existing.lastOccurredAt)
+        ? event.lastOccurredAt
+        : existing.lastOccurredAt;
+    const topicTitle = event.topic?.title || event.exercise?.topic?.title || "";
+    const lessonTitle = event.lesson?.title || event.exercise?.lesson?.title || "";
+    const wordTitle = event.word?.spanish || "";
+    byKey.set(event.weakSpotKey, {
+      key: event.weakSpotKey,
+      title: topicTitle || lessonTitle || wordTitle || categoryLabel(event.errorCategory),
+      detail: wordTitle
+        ? `${wordTitle} = ${event.word.english}`
+        : lessonTitle
+          ? lessonTitle
+          : categoryLabel(event.errorCategory),
+      category: event.errorCategory,
+      categoryLabel: categoryLabel(event.errorCategory),
+      count,
+      lastOccurredAt,
+      feedbackMessage: event.feedbackMessage,
+      exercise: event.exercise ? publicExercise(event.exercise) : null,
+      word: event.word ? publicWord(event.word) : null
+    });
+  }
+  return [...byKey.values()].sort(
+    (a, b) => b.count - a.count || new Date(b.lastOccurredAt).getTime() - new Date(a.lastOccurredAt).getTime()
+  );
+}
+
+async function buildMistakeSummary(userId, limit = 6) {
+  const events = await prisma.mistakeEvent.findMany({
+    where: { userId, lastOccurredAt: { gte: addDays(new Date(), -14) } },
+    orderBy: { lastOccurredAt: "desc" },
+    take: 80,
+    include: {
+      exercise: { include: { options: true, lesson: true, topic: true } },
+      lesson: true,
+      topic: true,
+      word: true
+    }
+  });
+
+  const summary = summarizeMistakeEvents(events);
+  const visible = [];
+  for (const spot of summary) {
+    if (spot.exercise?.id) {
+      const [latestCorrect, review] = await Promise.all([
+        prisma.attempt.findFirst({
+          where: {
+            userId,
+            exerciseId: spot.exercise.id,
+            isCorrect: true,
+            createdAt: { gt: new Date(spot.lastOccurredAt) }
+          },
+          orderBy: { createdAt: "desc" }
+        }),
+        prisma.reviewItem.findUnique({
+          where: { userId_exerciseId: { userId, exerciseId: spot.exercise.id } }
+        })
+      ]);
+      if (latestCorrect && review?.dueAt && review.dueAt > new Date()) continue;
+    }
+
+    if (spot.word?.id) {
+      const [latestCorrect, review] = await Promise.all([
+        prisma.wordAttempt.findFirst({
+          where: {
+            userId,
+            wordId: spot.word.id,
+            isCorrect: true,
+            createdAt: { gt: new Date(spot.lastOccurredAt) }
+          },
+          orderBy: { createdAt: "desc" }
+        }),
+        prisma.wordReview.findUnique({
+          where: { userId_wordId: { userId, wordId: spot.word.id } }
+        })
+      ]);
+      if (latestCorrect && review?.dueAt && review.dueAt > new Date()) continue;
+    }
+
+    visible.push(spot);
+    if (visible.length >= limit) break;
+  }
+
+  return visible;
+}
+
+async function buildDueReview(userId, limit = 12) {
+  const now = new Date();
+  const [grammarCount, wordCount, grammarItems, wordItems, weakSpots] = await Promise.all([
+    prisma.reviewItem.count({
+      where: { userId, dueAt: { lte: now } }
+    }),
+    prisma.wordReview.count({
+      where: { userId, dueAt: { lte: now } }
+    }),
+    prisma.reviewItem.findMany({
+      where: { userId, dueAt: { lte: now } },
+      orderBy: { dueAt: "asc" },
+      take: limit,
+      include: {
+        exercise: {
+          include: {
+            options: true,
+            lesson: true,
+            topic: true
+          }
+        }
+      }
+    }),
+    prisma.wordReview.findMany({
+      where: { userId, dueAt: { lte: now } },
+      orderBy: { dueAt: "asc" },
+      take: limit,
+      include: {
+        word: { include: { vocabularyGroup: true } }
+      }
+    }),
+    buildMistakeSummary(userId, 5)
+  ]);
+
+  const items = [
+    ...weakSpots.map((spot) => ({
+      type: "mistake",
+      key: spot.key,
+      title: spot.title,
+      detail: spot.detail,
+      category: spot.category,
+      count: spot.count,
+      exercise: spot.exercise,
+      word: spot.word
+    })),
+    ...grammarItems.map((item) => ({
+      type: "grammar",
+      key: `grammar:${item.id}`,
+      title: item.exercise.topic?.title || item.exercise.lesson?.title || "Grammar review",
+      detail: item.exercise.questionText,
+      dueAt: item.dueAt,
+      state: item.state,
+      exercise: publicExercise(item.exercise)
+    })),
+    ...wordItems.map((item) => ({
+      type: "word",
+      key: `word:${item.id}`,
+      title: item.word.english,
+      detail: item.word.vocabularyGroup?.title || "Vocabulary",
+      dueAt: item.dueAt,
+      state: item.state,
+      word: {
+        ...publicWord(item.word),
+        groupTitle: item.word.vocabularyGroup?.title || ""
+      }
+    }))
+  ].slice(0, limit);
+
+  return {
+    counts: {
+      grammar: grammarCount,
+      vocabulary: wordCount,
+      mistakes: weakSpots.length,
+      total: grammarCount + wordCount + weakSpots.length
+    },
+    estimatedMinutes: Math.max(3, Math.ceil(Math.min(limit, grammarCount + wordCount + weakSpots.length) * 0.7)),
+    items,
+    weakSpots
+  };
+}
+
+function recentAchievementFromLessons(lessons) {
+  const completed = lessons
+    .filter((lesson) => lesson.progress?.[0]?.completedAt)
+    .sort((a, b) => new Date(b.progress[0].completedAt).getTime() - new Date(a.progress[0].completedAt).getTime());
+  const latest = completed[0];
+  if (!latest) return null;
+  const outcomes = Array.isArray(latest.outcomesJson) ? latest.outcomesJson : [];
+  return outcomes[0] || latest.reviewSummary || `You completed ${latest.title}.`;
+}
+
+function buildDailyPlan({ lessons, review }) {
+  const now = new Date();
+  const dueLesson = lessons
+    .filter((lesson) => isLessonReviewDue(lesson.progress[0], now))
+    .sort(
+      (a, b) =>
+        new Date(a.progress[0].reviewDueAt).getTime() - new Date(b.progress[0].reviewDueAt).getTime() ||
+        a.order - b.order
+    )[0];
+  const currentLesson =
+    lessons.find((lesson) => (lesson.progress[0]?.mastery || 0) > 0 && (lesson.progress[0]?.mastery || 0) < 100) ||
+    dueLesson ||
+    lessons.find((lesson) => (lesson.progress[0]?.mastery || 0) < 100) ||
+    null;
+  const reviewDue = review.counts.total > 0;
+  const mistakeDue = review.counts.mistakes > 0;
+
+  if (currentLesson) {
+    const currentProgress = currentLesson.progress[0];
+    const due = isLessonReviewDue(currentProgress, now);
+    return {
+      kind: due ? "lesson_review" : "lesson",
+      title: due
+        ? `Review: ${currentLesson.title}`
+        : currentProgress?.mastery
+          ? `Continue: ${currentLesson.title}`
+          : `Start: ${currentLesson.title}`,
+      reason: due
+        ? "This completed lesson is due again so it stays active."
+        : mistakeDue
+          ? "This lesson moves you forward, and your mistakes are ready afterward."
+          : "This is the best next step in your beginner path.",
+      estimatedMinutes: currentLesson.estimatedMinutes,
+      cta: "Start today's session",
+      target: { type: "lesson", id: currentLesson.id, slug: currentLesson.slug }
+    };
+  }
+
+  if (reviewDue) {
+    return {
+      kind: "review",
+      title: "Review due today",
+      reason: "Keep older vocabulary and grammar stable before adding more.",
+      estimatedMinutes: review.estimatedMinutes,
+      cta: "Start review",
+      target: { type: "review" }
+    };
+  }
+
+  return {
+    kind: "reinforcement",
+    title: "Reinforce completed Spanish",
+    reason: "A short mixed challenge will keep completed lessons active.",
+    estimatedMinutes: 5,
+    cta: "Start mixed challenge",
+    target: { type: "challenge" }
+  };
 }
 
 async function updatePracticeStats(user, xpAwarded, reason) {
@@ -722,6 +1293,7 @@ async function buildDashboard(userId) {
       exercises: { orderBy: { order: "asc" }, include: { options: true } }
     }
   });
+  const review = await buildDueReview(userId, 12);
 
   const dueReview = await prisma.reviewItem.findFirst({
     where: { userId, dueAt: { lte: new Date() } },
@@ -737,8 +1309,20 @@ async function buildDashboard(userId) {
     }
   });
 
+  const now = new Date();
+  const dueLesson = lessons
+    .filter((lesson) => isLessonReviewDue(lesson.progress[0], now))
+    .sort(
+      (a, b) =>
+        new Date(a.progress[0].reviewDueAt).getTime() - new Date(b.progress[0].reviewDueAt).getTime() ||
+        a.order - b.order
+    )[0];
   const currentLesson =
-    lessons.find((lesson) => (lesson.progress[0]?.mastery || 0) < 100) || lessons[0] || null;
+    lessons.find((lesson) => (lesson.progress[0]?.mastery || 0) > 0 && (lesson.progress[0]?.mastery || 0) < 100) ||
+    dueLesson ||
+    lessons.find((lesson) => (lesson.progress[0]?.mastery || 0) < 100) ||
+    lessons[0] ||
+    null;
 
   let practiceExercise = dueReview?.exercise || null;
   if (!practiceExercise && currentLesson) {
@@ -816,8 +1400,9 @@ async function buildDashboard(userId) {
   const reviewCount = await prisma.reviewItem.count({
     where: { userId, dueAt: { lte: new Date() } }
   });
-  const [wordReviewCount, masteredWords, totalWords] = await Promise.all([
+  const [wordReviewCount, lessonReviewCount, masteredWords, totalWords] = await Promise.all([
     prisma.wordReview.count({ where: { userId, dueAt: { lte: new Date() } } }),
+    prisma.userLessonProgress.count({ where: { userId, completedAt: { not: null }, reviewDueAt: { lte: new Date() } } }),
     prisma.wordReview.count({ where: { userId, state: ReviewState.MASTERED } }),
     prisma.word.count()
   ]);
@@ -835,38 +1420,17 @@ async function buildDashboard(userId) {
       streakDays: user.streakDays,
       reviewCount,
       wordReviewCount,
+      lessonReviewCount,
+      mistakeCount: review.counts.mistakes,
+      reviewDueToday: review.counts.total + lessonReviewCount,
       masteredWords,
       totalWords
     },
-    currentLesson: currentLesson
-      ? {
-          id: currentLesson.id,
-          slug: currentLesson.slug,
-          title: currentLesson.title,
-          summary: currentLesson.summary,
-          cefrLevel: currentLesson.cefrLevel,
-          theme: currentLesson.theme,
-          situation: currentLesson.situation,
-          imageKey: currentLesson.imageKey,
-          estimatedMinutes: currentLesson.estimatedMinutes,
-          progress: currentLesson.progress[0]?.mastery || 0,
-          topic: currentLesson.topic
-        }
-      : null,
-    lessons: lessons.map((lesson) => ({
-      id: lesson.id,
-      slug: lesson.slug,
-      title: lesson.title,
-      summary: lesson.summary,
-      cefrLevel: lesson.cefrLevel,
-      theme: lesson.theme,
-      situation: lesson.situation,
-      imageKey: lesson.imageKey,
-      estimatedMinutes: lesson.estimatedMinutes,
-      exerciseCount: lesson.exercises.length,
-      progress: lesson.progress[0]?.mastery || 0,
-      topic: lesson.topic
-    })),
+    dailyPlan: buildDailyPlan({ lessons, review }),
+    review,
+    recentAchievement: recentAchievementFromLessons(lessons),
+    currentLesson: currentLesson ? publicLessonSummary(currentLesson) : null,
+    lessons: lessons.map(publicLessonSummary),
     practiceExercise: practiceExercise ? publicExercise(practiceExercise) : null,
     challenge: activeChallenge
       ? {
@@ -914,6 +1478,13 @@ async function buildDashboard(userId) {
         description: "Pair nouns with el, la, los, and las.",
         highScore: highScoreByGame["article-match"] || 0,
         color: "blue"
+      },
+      {
+        key: "word-catcher",
+        title: "Word Catch",
+        description: "Catch the matching meaning before the timer runs out.",
+        highScore: highScoreByGame["word-catcher"] || 0,
+        color: "coral"
       }
     ],
     streakCalendar,
@@ -985,6 +1556,48 @@ app.get(
 );
 
 app.get(
+  "/api/daily-session",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const dashboard = await buildDashboard(req.user.id);
+    res.json({
+      dailyPlan: dashboard.dailyPlan,
+      review: dashboard.review,
+      currentLesson: dashboard.currentLesson,
+      recentAchievement: dashboard.recentAchievement
+    });
+  })
+);
+
+app.get(
+  "/api/review/due",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    res.json(await buildDueReview(req.user.id, Number(req.query.limit || 12)));
+  })
+);
+
+app.get(
+  "/api/mistakes/summary",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    res.json({ weakSpots: await buildMistakeSummary(req.user.id, Number(req.query.limit || 8)) });
+  })
+);
+
+app.get(
+  "/api/mistakes/review",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const weakSpots = await buildMistakeSummary(req.user.id, Number(req.query.limit || 5));
+    res.json({
+      estimatedMinutes: Math.max(3, Math.ceil(weakSpots.length * 0.8)),
+      items: weakSpots
+    });
+  })
+);
+
+app.get(
   "/api/lessons",
   requireAuth,
   asyncHandler(async (req, res) => {
@@ -998,20 +1611,7 @@ app.get(
       }
     });
     res.json({
-      lessons: lessons.map((lesson) => ({
-        id: lesson.id,
-        slug: lesson.slug,
-        title: lesson.title,
-        summary: lesson.summary,
-        cefrLevel: lesson.cefrLevel,
-        theme: lesson.theme,
-        situation: lesson.situation,
-        imageKey: lesson.imageKey,
-        estimatedMinutes: lesson.estimatedMinutes,
-        progress: lesson.progress[0]?.mastery || 0,
-        exerciseCount: lesson.exercises.length,
-        topic: lesson.topic
-      }))
+      lessons: lessons.map(publicLessonSummary)
     });
   })
 );
@@ -1037,7 +1637,37 @@ app.get(
       lesson: {
         ...lesson,
         progress: lesson.progress[0]?.mastery || 0,
+        outcomes: Array.isArray(lesson.outcomesJson) ? lesson.outcomesJson : [],
+        conceptKeys: Array.isArray(lesson.conceptKeys) ? lesson.conceptKeys : [],
+        reviewSummary: lesson.reviewSummary || "",
         exercises: lesson.exercises.map(publicExercise)
+      }
+    });
+  })
+);
+
+app.post(
+  "/api/lessons/:id/reinforcement-complete",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const lesson = await prisma.lesson.findFirst({
+      where: { id: req.params.id, isPublished: true },
+      select: { id: true }
+    });
+
+    if (!lesson) return res.status(404).json({ error: "Lesson not found" });
+
+    const score = Number.isFinite(Number(req.body.score)) ? Math.max(0, Math.min(100, Number(req.body.score))) : 100;
+    const progress = await completeLessonReinforcement(req.user.id, lesson.id, score);
+
+    res.json({
+      progress: {
+        mastery: progress.mastery,
+        completedAt: progress.completedAt,
+        reviewDueAt: progress.reviewDueAt,
+        lastReviewedAt: progress.lastReviewedAt,
+        reviewIntervalDays: progress.reviewIntervalDays,
+        lessonReviewCount: progress.lessonReviewCount
       }
     });
   })
@@ -1052,12 +1682,14 @@ app.post(
       : AttemptSource.LESSON;
     const exercise = await prisma.exercise.findUnique({
       where: { id: req.params.id },
-      include: { options: true, lesson: true }
+      include: { options: true, lesson: true, topic: true }
     });
 
     if (!exercise) return res.status(404).json({ error: "Exercise not found" });
 
-    const wasCorrect = evaluateExercise(exercise, req.body);
+    const evaluation = evaluateExerciseAnswer(exercise, req.body);
+    const wasCorrect = evaluation.correct;
+    const quality = wasCorrect ? String(req.body.quality || "good").toLowerCase() : "again";
     const previousCorrect = await prisma.attempt.findFirst({
       where: { userId: req.user.id, exerciseId: exercise.id, isCorrect: true }
     });
@@ -1074,7 +1706,12 @@ app.post(
         source,
         answerJson: {
           answer: req.body.answer || null,
-          words: Array.isArray(req.body.words) ? req.body.words : null
+          words: Array.isArray(req.body.words) ? req.body.words : null,
+          evaluation: {
+            status: evaluation.status,
+            errorCategory: evaluation.errorCategory,
+            feedbackMessage: evaluation.feedbackMessage
+          }
         },
         isCorrect: wasCorrect,
         xpAwarded
@@ -1082,23 +1719,29 @@ app.post(
     });
 
     const updatedUser = await updatePracticeStats(req.user, xpAwarded, `Exercise: ${exercise.slug}`);
-    await updateReviewItem(req.user.id, exercise.id, wasCorrect);
+    const reviewItem = await updateReviewItem(req.user.id, exercise.id, quality);
+    await recordMistakeEvent({ userId: req.user.id, exercise, source, evaluation });
     await refreshLessonProgress(req.user.id, exercise.lessonId);
     await updateChallengeProgress(req.user.id, exercise.id, source);
     await checkBadges(updatedUser, exercise, wasCorrect);
 
     res.json({
       correct: wasCorrect,
+      status: evaluation.status,
+      errorCategory: evaluation.errorCategory,
       xpAwarded,
-      explanation: exercise.explanation,
+      explanation: wasCorrect && evaluation.status === "CORRECT" ? exercise.explanation : evaluation.feedbackMessage,
+      feedbackMessage: evaluation.feedbackMessage,
       user: publicUser(updatedUser),
-      expected: expectedAnswerForExercise(exercise),
-      accepted: acceptedAnswersForExercise(exercise),
+      expected: evaluation.expected || expectedAnswerForExercise(exercise),
+      accepted: evaluation.accepted?.length ? evaluation.accepted : acceptedAnswersForExercise(exercise),
+      evaluation,
       review: {
-        state: wasCorrect ? "scheduled" : "needs_practice",
+        state: wasCorrect ? reviewItem.state : "needs_practice",
+        dueAt: reviewItem.dueAt,
         message: wasCorrect
-          ? "This item has been scheduled for spaced review."
-          : "This item will come back soon so you can strengthen it."
+          ? `Scheduled for review on ${reviewItem.dueAt.toISOString().slice(0, 10)}.`
+          : "Saved to Fix My Mistakes and scheduled for another try."
       }
     });
   })
@@ -1120,6 +1763,73 @@ app.get(
       return res.json({ ...pronunciation, sources });
     }
     res.json(pronunciation);
+  })
+);
+
+app.post(
+  "/api/pronunciation/vocabulary",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const text = String(req.body.text || "").replace(/\s+/g, " ").trim();
+    const providedEnglish = String(req.body.english || "").replace(/\s+/g, " ").trim();
+    const usefulProvidedEnglish = providedEnglish && normalizeAnswer(providedEnglish) !== "meaning not found yet";
+    if (!text) return res.status(400).json({ error: "A Spanish word or phrase is required" });
+
+    const pronunciation = usefulProvidedEnglish ? null : await resolvePronunciation(text);
+    const english = usefulProvidedEnglish ? providedEnglish : pronunciation?.bestMeaning || pronunciation?.meanings?.[0]?.text || "";
+    if (!english || normalizeAnswer(english) === normalizeAnswer(text)) {
+      return res.status(422).json({
+        error: "No reliable meaning found, so this was not saved. Check the spelling or add a clearer word."
+      });
+    }
+    const saved = await saveAudioLookupWord(req.user.id, text, english);
+
+    res.status(saved.created ? 201 : 200).json({
+      saved: true,
+      created: saved.created,
+      group: {
+        id: saved.group.id,
+        slug: saved.group.slug,
+        title: saved.group.title
+      },
+      word: {
+        ...publicWord(saved.word),
+        groupSlug: saved.group.slug,
+        groupTitle: saved.group.title,
+        review: {
+          state: saved.review.state,
+          dueAt: saved.review.dueAt,
+          correctCount: saved.review.correctCount,
+          wrongCount: saved.review.wrongCount,
+          due: saved.review.dueAt <= new Date()
+        }
+      }
+    });
+  })
+);
+
+app.get(
+  "/api/pronunciation/vocabulary/recent",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    res.json({ words: await audioLabSavedWords(req.user.id, Number(req.query.limit || 12)) });
+  })
+);
+
+app.delete(
+  "/api/pronunciation/vocabulary/:wordId",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const word = await prisma.word.findUnique({
+      where: { id: req.params.wordId },
+      include: { vocabularyGroup: true }
+    });
+    if (!word || word.vocabularyGroup.slug !== "audio-lab-saved") {
+      return res.status(404).json({ error: "Saved Audio Lab word not found" });
+    }
+
+    await prisma.word.delete({ where: { id: word.id } });
+    res.json({ ok: true });
   })
 );
 
@@ -1173,6 +1883,8 @@ app.get(
   "/api/words",
   requireAuth,
   asyncHandler(async (req, res) => {
+    await enrollCompletedLessonWordsForReview(req.user.id);
+
     const groups = await prisma.vocabularyGroup.findMany({
       orderBy: { title: "asc" },
       include: {
@@ -1196,6 +1908,8 @@ app.get(
         const review = word.reviews[0] || null;
         return {
           ...publicWord(word),
+          groupSlug: group.slug,
+          groupTitle: group.title,
           review: review
             ? {
                 state: review.state,
@@ -1262,9 +1976,11 @@ app.post(
 
     const mode = String(req.body.mode || "es-en");
     const answer = String(req.body.answer || "");
+    const qualityInput = String(req.body.quality || "").toLowerCase();
     const expected = mode === "en-es" ? word.spanish : word.english;
     const accepted = mode === "en-es" ? [word.spanish] : [word.english];
     const isCorrect = accepted.some((candidate) => normalizeAnswer(candidate) === normalizeAnswer(answer));
+    const reviewQuality = isCorrect ? qualityInput || "good" : "again";
     const xpAwarded = isCorrect ? (mode === "typing" || mode === "en-es" ? 8 : 5) : 0;
 
     await prisma.wordAttempt.create({
@@ -1278,11 +1994,27 @@ app.post(
       }
     });
 
-    const review = await updateWordReview(req.user.id, word.id, isCorrect);
+    const review = await updateWordReview(req.user.id, word.id, reviewQuality);
+    if (!isCorrect) {
+      await recordMistakeEvent({
+        userId: req.user.id,
+        word,
+        source: "WORD",
+        evaluation: {
+          correct: false,
+          submitted: answer,
+          expected,
+          errorCategory: "vocabulary",
+          feedbackMessage: `Review ${word.spanish}: ${word.english}.`
+        }
+      });
+    }
     const updatedUser = await updatePracticeStats(req.user, xpAwarded, `Word: ${word.spanish}`);
 
     res.json({
       correct: isCorrect,
+      status: isCorrect ? "CORRECT" : "INCORRECT",
+      errorCategory: isCorrect ? null : "vocabulary",
       xpAwarded,
       expected,
       word: publicWord(word),
@@ -1292,8 +2024,8 @@ app.post(
         correctCount: review.correctCount,
         wrongCount: review.wrongCount,
         message: isCorrect
-          ? "This word moved forward in your review schedule."
-          : "This word will come back soon for another retrieval attempt."
+          ? `This word moved forward in your review schedule (${reviewQuality}).`
+          : "Saved to Fix My Mistakes and queued for another retrieval attempt."
       },
       user: publicUser(updatedUser)
     });
@@ -1384,6 +2116,12 @@ app.post(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const slug = slugify(req.body.slug || req.body.title);
+    const outcomesJson = Array.isArray(req.body.outcomesJson)
+      ? req.body.outcomesJson
+      : parseTextList(req.body.outcomes);
+    const conceptKeys = Array.isArray(req.body.conceptKeys)
+      ? req.body.conceptKeys
+      : parseTextList(req.body.conceptKeysText || req.body.conceptKeys);
     const lesson = await prisma.lesson.upsert({
       where: { slug },
       update: {
@@ -1393,6 +2131,9 @@ app.post(
         theme: req.body.theme || "Grammar",
         situation: req.body.situation || "general",
         imageKey: req.body.imageKey || null,
+        outcomesJson,
+        conceptKeys,
+        reviewSummary: req.body.reviewSummary || "",
         topicId: req.body.topicId,
         estimatedMinutes: Number(req.body.estimatedMinutes || 8),
         order: Number(req.body.order || 0)
@@ -1405,6 +2146,9 @@ app.post(
         theme: req.body.theme || "Grammar",
         situation: req.body.situation || "general",
         imageKey: req.body.imageKey || null,
+        outcomesJson,
+        conceptKeys,
+        reviewSummary: req.body.reviewSummary || "",
         topicId: req.body.topicId,
         estimatedMinutes: Number(req.body.estimatedMinutes || 8),
         order: Number(req.body.order || 0)
@@ -1538,7 +2282,7 @@ async function attachFrontend() {
 
 attachFrontend().then(() => {
   const server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Vamos Gramatica is running on http://localhost:${PORT}`);
+    console.log(`Vamos Espanolo is running on http://localhost:${PORT}`);
   });
 
   const shutdown = async () => {

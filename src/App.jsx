@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart3,
   BookOpen,
   CheckCircle2,
   ChevronDown,
+  Copy,
   Flame,
   Gamepad2,
   Gift,
@@ -24,6 +25,7 @@ import {
   Sparkles,
   Star,
   Target,
+  Trash2,
   Trophy,
   Users,
   Volume2,
@@ -32,7 +34,9 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { key: "path", label: "Learn", icon: Target },
+  { key: "dashboard", label: "Today", icon: Target },
+  { key: "path", label: "Course", icon: BookOpen },
+  { key: "review", label: "Review", icon: ListChecks },
   { key: "words", label: "Words", icon: NotebookTabs },
   { key: "pronunciation", label: "Audio Lab", icon: Volume2 },
   { key: "grammar", label: "Grammar", icon: GraduationCap },
@@ -137,7 +141,13 @@ function isWordLearned(word) {
 }
 
 function isWordAttempted(word) {
-  return isWordLearned(word) || Boolean(word?.lastAttempt) || (word?.review?.wrongCount || 0) > 0;
+  return (
+    isWordLearned(word) ||
+    Boolean(word?.lastAttempt) ||
+    Boolean(word?.review?.dueAt && word?.review?.state !== "NEW") ||
+    word?.groupSlug === "audio-lab-saved" ||
+    (word?.review?.wrongCount || 0) > 0
+  );
 }
 
 function wordDueTimestamp(word) {
@@ -157,6 +167,47 @@ function sortWordsForLearning(a, b) {
 
 function shuffleWords(words) {
   return [...words].sort(() => 0.5 - Math.random());
+}
+
+function shuffleItems(items) {
+  return [...(items || [])].sort(() => 0.5 - Math.random());
+}
+
+function shuffleAwayFromOriginalOrder(items) {
+  const list = [...(items || [])];
+  if (list.length <= 1) return list;
+  const original = list.map((item) => item?.value ?? item?.id ?? item).join("|");
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const shuffled = shuffleItems(list);
+    if (shuffled.map((item) => item?.value ?? item?.id ?? item).join("|") !== original) {
+      return shuffled;
+    }
+  }
+  return [list[list.length - 1], ...list.slice(1, -1), list[0]];
+}
+
+function lessonGuideSteps(lesson) {
+  const outcomes = Array.isArray(lesson?.outcomes) ? lesson.outcomes : [];
+  const conceptKeys = Array.isArray(lesson?.conceptKeys) ? lesson.conceptKeys : [];
+  const exampleNotes = (lesson?.sentences || [])
+    .map((sentence) => sentence.note)
+    .filter(Boolean);
+  const steps = [
+    ...outcomes,
+    ...conceptKeys.map((key) => `Focus: ${String(key).replace(/-/g, " ")}.`),
+    ...exampleNotes
+  ]
+    .map((step) => String(step || "").trim())
+    .filter(Boolean)
+    .filter((step, index, list) => list.findIndex((item) => normalizeText(item) === normalizeText(step)) === index);
+
+  if (steps.length) return steps.slice(0, 8);
+  return [
+    `Read the examples for ${lesson?.title || "this lesson"} before answering.`,
+    "Say each Spanish sentence out loud once.",
+    "Notice the small pattern that repeats across the examples.",
+    "Then use the quiz to retrieve the pattern from memory."
+  ];
 }
 
 function sessionPromptMode(type, word, position, repeated = false) {
@@ -263,7 +314,7 @@ function App() {
   if (booting) {
     return (
       <div className="grid min-h-screen place-items-center bg-orange-50 text-slate-700">
-        <div className="rounded-lg bg-white px-5 py-4 shadow-soft">Loading Vamos Gramatica...</div>
+        <div className="rounded-lg bg-white px-5 py-4 shadow-soft">Loading Vamos Espanolo...</div>
       </div>
     );
   }
@@ -279,8 +330,8 @@ function AuthScreen({ error, setError, onAuthed }) {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({
     name: "",
-    email: "admin@espanolo.local",
-    password: "change-me"
+    email: "",
+    password: ""
   });
   const [busy, setBusy] = useState(false);
 
@@ -387,9 +438,7 @@ function AuthScreen({ error, setError, onAuthed }) {
             {busy ? "Working..." : mode === "login" ? "Start Learning" : "Create Account"}
           </button>
 
-          <p className="mt-4 text-center text-xs text-slate-500">
-            Seeded admin default is shown. Change it in `.env` for production.
-          </p>
+          <p className="mt-4 text-center text-xs text-slate-500">Use your account, or register a new learner profile.</p>
         </form>
       </div>
     </main>
@@ -397,7 +446,8 @@ function AuthScreen({ error, setError, onAuthed }) {
 }
 
 function LearningApp({ user, setUser }) {
-  const [active, setActive] = useState("path");
+  const [active, setActive] = useState("dashboard");
+  const [launchLessonId, setLaunchLessonId] = useState("");
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -488,6 +538,8 @@ function LearningApp({ user, setUser }) {
               dashboard={dashboard}
               refreshDashboard={refreshDashboard}
               setActive={setActive}
+              launchLessonId={launchLessonId}
+              setLaunchLessonId={setLaunchLessonId}
             />
           )}
         </main>
@@ -512,10 +564,32 @@ function LearningApp({ user, setUser }) {
   );
 }
 
-function ActiveView({ active, user, dashboard, refreshDashboard, setActive }) {
-  if (active === "path" || active === "dashboard" || active === "lessons") {
-    return <LearningPathView dashboard={dashboard} refreshDashboard={refreshDashboard} setActive={setActive} />;
+function ActiveView({ active, user, dashboard, refreshDashboard, setActive, launchLessonId, setLaunchLessonId }) {
+  if (active === "dashboard") {
+    return (
+      <DashboardView
+        dashboard={dashboard}
+        refreshDashboard={refreshDashboard}
+        setActive={setActive}
+        onStartLesson={(lessonId) => {
+          setLaunchLessonId(lessonId);
+          setActive("path");
+        }}
+      />
+    );
   }
+  if (active === "path" || active === "lessons") {
+    return (
+      <LearningPathView
+        dashboard={dashboard}
+        refreshDashboard={refreshDashboard}
+        setActive={setActive}
+        launchLessonId={launchLessonId}
+        onLaunchHandled={() => setLaunchLessonId("")}
+      />
+    );
+  }
+  if (active === "review") return <ReviewQueueView refreshDashboard={refreshDashboard} setActive={setActive} />;
   if (active === "words") return <WordLearnerView refreshDashboard={refreshDashboard} />;
   if (active === "pronunciation") return <PronunciationLookupView />;
   if (active === "grammar") return <GrammarView lessons={dashboard.lessons} />;
@@ -527,15 +601,27 @@ function ActiveView({ active, user, dashboard, refreshDashboard, setActive }) {
   return <LearningPathView dashboard={dashboard} refreshDashboard={refreshDashboard} setActive={setActive} />;
 }
 
-function LearningPathView({ dashboard, refreshDashboard, setActive }) {
+function LearningPathView({ dashboard, refreshDashboard, setActive, launchLessonId, onLaunchHandled }) {
   const orderedLessons = dashboard.lessons || [];
-  const activeLessons = orderedLessons.filter((lessonItem) => lessonItem.progress < 100);
-  const completedLessons = orderedLessons.filter((lessonItem) => lessonItem.progress >= 100);
-  const nextLesson = activeLessons[0] || completedLessons[completedLessons.length - 1] || orderedLessons[0];
+  const inProgressLessons = orderedLessons.filter((lessonItem) => lessonItem.progress > 0 && lessonItem.progress < 100);
+  const dueLessons = orderedLessons.filter((lessonItem) => lessonItem.reviewDue);
+  const freshLessons = orderedLessons.filter((lessonItem) => lessonItem.progress === 0);
+  const completedLessons = orderedLessons.filter((lessonItem) => lessonItem.progress >= 100 && !lessonItem.reviewDue);
+  const nextLesson =
+    inProgressLessons[0] || dueLessons[0] || freshLessons[0] || completedLessons[completedLessons.length - 1] || orderedLessons[0];
+  const activeLessons = orderedLessons.filter(
+    (lessonItem) => (lessonItem.progress < 100 || lessonItem.reviewDue) && lessonItem.id !== nextLesson?.id
+  );
   const [selectedId, setSelectedId] = useState("");
   const [lesson, setLesson] = useState(null);
   const [loadingLesson, setLoadingLesson] = useState(false);
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(true);
+
+  useEffect(() => {
+    if (!launchLessonId) return;
+    setSelectedId(launchLessonId);
+    onLaunchHandled?.();
+  }, [launchLessonId, onLaunchHandled]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -552,7 +638,7 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
     ? Math.round(dashboard.lessons.reduce((sum, item) => sum + item.progress, 0) / dashboard.lessons.length)
     : 0;
   const nextIndex = nextLesson ? orderedLessons.findIndex((lessonItem) => lessonItem.id === nextLesson.id) : -1;
-  const upcomingLessons = activeLessons.slice(1);
+  const upcomingLessons = activeLessons;
 
   if (selectedId) {
     return loadingLesson || !lesson ? (
@@ -579,7 +665,7 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
             </p>
             <h1 className="mt-4 max-w-3xl text-3xl font-black sm:text-4xl">One path. Finish the next lesson, then move up.</h1>
             <p className="mt-3 max-w-2xl text-sm font-semibold text-slate-300 sm:text-base">
-              Completed lessons leave the main list and move into review, so the next unfinished lesson stays easy to find.
+              Completed lessons stay available, and important ones come back automatically for reinforcement.
             </p>
           </div>
           <div className="grid w-full gap-3 sm:grid-cols-3 lg:w-[560px]">
@@ -591,7 +677,7 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
             <div className="rounded-lg bg-white/10 p-4">
               <p className="text-xs font-black uppercase tracking-wide text-slate-300">Next step</p>
               <p className="mt-2 text-2xl font-black">{nextIndex >= 0 ? `${nextIndex + 1}/${orderedLessons.length}` : "0/0"}</p>
-              <p className="mt-1 text-xs font-bold text-slate-300">{activeLessons.length ? "In progress" : "Path complete"}</p>
+              <p className="mt-1 text-xs font-bold text-slate-300">{dueLessons.length ? `${dueLessons.length} due` : "Path active"}</p>
             </div>
             <div className="rounded-lg bg-white/10 p-4">
               <p className="text-xs font-black uppercase tracking-wide text-slate-300">Completed</p>
@@ -605,17 +691,17 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
             onClick={() => setSelectedId(nextLesson.id)}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-md bg-honey-500 px-4 py-3 font-black text-white hover:bg-honey-600 sm:w-fit sm:px-6"
           >
-            <Rocket size={18} /> {activeLessons.length ? "Continue Next Lesson" : "Review Final Lesson"}
+            <Rocket size={18} /> {nextLesson.reviewDue ? "Review Due Lesson" : nextLesson.progress > 0 ? "Continue Next Lesson" : "Start Next Lesson"}
           </button>
         )}
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <section className="space-y-5">
-          {nextLesson && activeLessons.length > 0 && (
+          {nextLesson && (
             <div>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-black">Current lesson</h2>
+                <h2 className="text-lg font-black">{nextLesson.reviewDue ? "Due for review" : "Current lesson"}</h2>
                 <span className="rounded-full bg-honey-100 px-3 py-1 text-xs font-black uppercase tracking-wide text-honey-700">
                   Step {nextIndex + 1}
                 </span>
@@ -632,7 +718,7 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
           {upcomingLessons.length > 0 && (
             <div>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-black">Coming up</h2>
+                <h2 className="text-lg font-black">Coming up and due</h2>
                 <span className="text-sm font-bold text-slate-500">{upcomingLessons.length} lessons</span>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
@@ -649,14 +735,14 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
             </div>
           )}
 
-          {activeLessons.length === 0 && orderedLessons.length > 0 && (
+          {!nextLesson && orderedLessons.length > 0 && (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <AssetImage imageKey="rewards-and-progress:15" alt="Path complete" className="h-20 w-20 shrink-0" />
                 <div>
                   <h2 className="text-xl font-black text-emerald-950">All lessons are complete</h2>
                   <p className="mt-1 text-sm font-semibold text-emerald-800">
-                    Use the completed section below to review anything from the beginning.
+                    Use the completed section below to review anything again.
                   </p>
                 </div>
               </div>
@@ -672,7 +758,7 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
                 <span>
                   <span className="block text-lg font-black">Completed lessons</span>
                   <span className="mt-1 block text-sm font-semibold text-slate-500">
-                    {completedLessons.length} moved out of the main path
+                    {completedLessons.length} available any time
                   </span>
                 </span>
                 <span className="rounded-md border border-stone-200 px-3 py-2 text-sm font-black text-slate-700">
@@ -700,6 +786,7 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
           <Panel title="Path Status" icon={ListChecks}>
             <div className="grid gap-3">
               <InfoTile label="Open lessons" value={activeLessons.length} />
+              <InfoTile label="Due again" value={dueLessons.length} />
               <InfoTile label="Completed" value={completedLessons.length} />
               <InfoTile label="Average mastery" value={`${averageProgress}%`} />
             </div>
@@ -708,7 +795,7 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
                 onClick={() => setSelectedId(nextLesson.id)}
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-lagoon-500 px-4 py-3 font-black text-white hover:bg-lagoon-600"
               >
-                <Rocket size={18} /> {activeLessons.length ? "Start Next" : "Review"}
+                <Rocket size={18} /> {nextLesson.reviewDue ? "Review Due" : nextLesson.progress > 0 ? "Start Next" : "Start"}
               </button>
             )}
           </Panel>
@@ -739,8 +826,9 @@ function LearningPathView({ dashboard, refreshDashboard, setActive }) {
 
 function PathLessonCard({ lessonItem, index, state, onSelect }) {
   const done = lessonItem.progress >= 100;
+  const due = lessonItem.reviewDue;
   const current = state === "current";
-  const actionLabel = done ? "Review" : lessonItem.progress > 0 ? "Continue" : "Start";
+  const actionLabel = due ? "Review due" : done ? "Review" : lessonItem.progress > 0 ? "Continue" : "Start";
 
   return (
     <button
@@ -749,7 +837,9 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
         "group flex min-h-36 w-full flex-col rounded-lg border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-soft",
         current
           ? "border-honey-500 bg-amber-50"
-          : done
+          : due
+            ? "border-honey-300 bg-amber-50"
+            : done
             ? "border-emerald-200 bg-emerald-50"
             : "border-stone-200 bg-white hover:bg-stone-50"
       )}
@@ -760,7 +850,7 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
           <span
             className={classNames(
               "absolute -left-2 -top-2 grid h-7 w-7 place-items-center rounded-full text-xs font-black text-white",
-              done ? "bg-emerald-600" : current ? "bg-honey-600" : "bg-slate-950"
+              due ? "bg-honey-600" : done ? "bg-emerald-600" : current ? "bg-honey-600" : "bg-slate-950"
             )}
           >
             {index + 1}
@@ -780,7 +870,7 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
           <ProgressBar
             value={lessonItem.progress}
             className="flex-1"
-            color={done ? "bg-emerald-500" : current ? "bg-honey-500" : "bg-lagoon-500"}
+            color={due ? "bg-honey-500" : done ? "bg-emerald-500" : current ? "bg-honey-500" : "bg-lagoon-500"}
           />
           <span className="text-sm font-black text-slate-700">{lessonItem.progress}%</span>
         </div>
@@ -799,23 +889,40 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
   const [step, setStep] = useState(0);
   const [results, setResults] = useState([]);
   const [resultBanner, setResultBanner] = useState(null);
+  const [sessionRun, setSessionRun] = useState(0);
+  const [completionReported, setCompletionReported] = useState(false);
 
   useEffect(() => {
     setStep(0);
     setResults([]);
     setResultBanner(null);
+    setSessionRun(0);
+    setCompletionReported(false);
   }, [lesson.id]);
 
+  const overviewStep = { type: "overview" };
   const learnSteps = lesson.sentences.map((sentence, index) => ({ type: "learn", sentence, index }));
-  const practiceSteps = lesson.exercises.map((exercise, index) => ({ type: "practice", exercise, index }));
-  const steps = [...learnSteps, ...practiceSteps];
+  const randomizedExercises = useMemo(() => shuffleItems(lesson.exercises || []), [lesson.id, sessionRun]);
+  const practiceSteps = randomizedExercises.map((exercise, index) => ({ type: "practice", exercise, index }));
+  const steps = [overviewStep, ...learnSteps, ...practiceSteps];
   const current = steps[step];
   const finished = step >= steps.length;
   const correct = results.filter(Boolean).length;
+  const score = lesson.exercises.length ? Math.round((correct / lesson.exercises.length) * 100) : 100;
   const progress = steps.length ? Math.round((Math.min(step, steps.length) / steps.length) * 100) : 0;
 
+  useEffect(() => {
+    if (!finished || completionReported) return;
+    setCompletionReported(true);
+    api(`/api/lessons/${lesson.id}/reinforcement-complete`, {
+      method: "POST",
+      body: { score }
+    })
+      .then(() => refreshDashboard?.({ silent: true }))
+      .catch(() => null);
+  }, [completionReported, finished, lesson.id, refreshDashboard, score]);
+
   if (finished) {
-    const score = lesson.exercises.length ? Math.round((correct / lesson.exercises.length) * 100) : 100;
     return (
       <section className="mx-auto max-w-3xl">
         <button onClick={onBack} className="mb-4 rounded-md border border-stone-200 bg-white px-4 py-2 font-bold text-slate-600">
@@ -823,8 +930,20 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
         </button>
         <div className="rounded-lg border border-stone-200 bg-white p-6 text-center shadow-soft">
           <AssetImage imageKey="rewards-and-progress:15" alt="Complete" className="mx-auto h-28 w-28" />
-          <h1 className="mt-5 text-3xl font-black">Node complete</h1>
-          <p className="mt-2 text-slate-600">{lesson.title}</p>
+          <h1 className="mt-5 text-3xl font-black">Lesson complete</h1>
+          <p className="mt-2 text-slate-600">{lesson.reviewSummary || lesson.title}</p>
+          {!!lesson.outcomes?.length && (
+            <div className="mx-auto mt-5 max-w-md rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-left">
+              <p className="font-black text-emerald-950">You can now</p>
+              <div className="mt-2 grid gap-2">
+                {lesson.outcomes.map((outcome) => (
+                  <p key={outcome} className="flex items-start gap-2 text-sm font-bold text-emerald-800">
+                    <CheckCircle2 className="mt-0.5 shrink-0" size={16} /> {outcome}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mx-auto mt-5 max-w-sm">
             <div className="flex justify-between text-sm font-bold text-slate-500">
               <span>Recall score</span>
@@ -837,6 +956,9 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
               onClick={() => {
                 setStep(0);
                 setResults([]);
+                setResultBanner(null);
+                setCompletionReported(false);
+                setSessionRun((value) => value + 1);
               }}
               className="rounded-md border border-stone-200 px-4 py-3 font-black text-slate-700 hover:bg-stone-50"
             >
@@ -896,13 +1018,42 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
         </div>
       )}
 
-      {current.type === "learn" ? (
+      {current.type === "overview" ? (
+        <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-soft sm:p-8">
+          <div className="grid gap-5 sm:grid-cols-[150px_1fr] sm:items-center">
+            <AssetImage imageKey={lesson.imageKey} alt={lesson.title} className="aspect-square w-full max-w-[170px]" />
+            <div>
+              <p className="text-sm font-black uppercase tracking-wide text-lagoon-700">Lesson focus</p>
+              <h1 className="mt-3 text-3xl font-black text-slate-950">{lesson.title}</h1>
+              <p className="mt-3 text-base font-semibold text-slate-600">{lesson.summary}</p>
+              {!!lesson.outcomes?.length && (
+                <div className="mt-5 grid gap-2">
+                  {lesson.outcomes.map((outcome) => (
+                    <p key={outcome} className="flex items-start gap-2 text-sm font-bold text-slate-700">
+                      <Target className="mt-0.5 shrink-0 text-lagoon-600" size={16} /> {outcome}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={() => setStep((value) => value + 1)}
+            className="mt-6 w-full rounded-md bg-lagoon-500 px-5 py-4 font-black text-white hover:bg-lagoon-600"
+          >
+            Start lesson
+          </button>
+        </div>
+      ) : current.type === "learn" ? (
         <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-soft sm:p-8">
           <div className="grid gap-5 sm:grid-cols-[140px_1fr] sm:items-center">
             <AssetImage imageKey={lesson.imageKey} alt={lesson.title} className="aspect-square w-full max-w-[160px]" />
             <div>
               <p className="text-sm font-black uppercase tracking-wide text-lagoon-700">Learn {current.index + 1}/{learnSteps.length}</p>
-              <h1 className="mt-3 text-3xl font-black text-slate-950">{current.sentence.spanish}</h1>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <h1 className="text-3xl font-black text-slate-950">{current.sentence.spanish}</h1>
+                <PronunciationTools text={current.sentence.spanish} compact />
+              </div>
               <p className="mt-3 text-lg font-bold text-slate-600">{current.sentence.english}</p>
               {current.sentence.note && (
                 <div className="mt-5 rounded-lg border border-lagoon-200 bg-lagoon-50 p-4 text-lagoon-900">
@@ -961,13 +1112,26 @@ function WordLearnerView({ refreshDashboard }) {
   const [flipped, setFlipped] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
+  const [lastAnswer, setLastAnswer] = useState(null);
   const [loading, setLoading] = useState(true);
+  const wordAdvanceTimer = useRef(null);
 
   const resetCard = () => {
+    if (wordAdvanceTimer.current) {
+      window.clearTimeout(wordAdvanceTimer.current);
+      wordAdvanceTimer.current = null;
+    }
     setFlipped(false);
     setTypedAnswer("");
     setFeedback(null);
   };
+
+  useEffect(
+    () => () => {
+      if (wordAdvanceTimer.current) window.clearTimeout(wordAdvanceTimer.current);
+    },
+    []
+  );
 
   const loadWords = async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -1026,6 +1190,7 @@ function WordLearnerView({ refreshDashboard }) {
     setSessionIndex(0);
     setSessionResults([]);
     setSessionNotice("");
+    setLastAnswer(null);
   };
 
   const startQuiz = (type = studyMode) => {
@@ -1061,6 +1226,7 @@ function WordLearnerView({ refreshDashboard }) {
     setSessionResults([]);
     setSessionNotice("");
     setLastSummary(null);
+    setLastAnswer(null);
     resetCard();
   };
 
@@ -1123,22 +1289,36 @@ function WordLearnerView({ refreshDashboard }) {
     resetCard();
   };
 
-  const submitWord = async (answer, attemptMode = activeMode) => {
+  const submitWord = async (answer, attemptMode = activeMode, quality = "") => {
     if (!word) return;
     const result = await api(`/api/words/${word.id}/attempt`, {
       method: "POST",
       body: {
         mode: ["typing", "picture"].includes(attemptMode) ? "en-es" : "es-en",
-        answer
+        answer,
+        quality
       }
     });
     setFeedback(result);
+    setLastAnswer({
+      correct: result.correct,
+      spanish: word.spanish,
+      english: word.english,
+      submitted: answer || (quality ? quality : ""),
+      expected: result.expected,
+      message: result.review?.message || "",
+      xpAwarded: result.xpAwarded
+    });
     if (session) {
       setSessionResults((current) => {
         const next = [...current];
         next[sessionIndex] = Boolean(result.correct);
         return next;
       });
+      wordAdvanceTimer.current = window.setTimeout(() => {
+        wordAdvanceTimer.current = null;
+        nextCard();
+      }, result.correct ? 750 : 1250);
     } else {
       await loadWords(false);
     }
@@ -1387,6 +1567,33 @@ function WordLearnerView({ refreshDashboard }) {
           <ProgressBar value={sessionProgress} className="mt-3" />
         </div>
 
+        {lastAnswer && (
+          <div
+            className={classNames(
+              "mb-5 rounded-lg border p-4",
+              lastAnswer.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+            )}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className={classNames("text-xs font-black uppercase tracking-wide", lastAnswer.correct ? "text-emerald-700" : "text-red-700")}>
+                  Last answer
+                </p>
+                <p className="mt-1 font-black text-slate-950">
+                  {lastAnswer.spanish} = {lastAnswer.english}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-700">
+                  {lastAnswer.correct ? `Correct +${lastAnswer.xpAwarded} XP` : `Expected: ${lastAnswer.expected}`}
+                </p>
+              </div>
+              <span className={classNames("rounded-full px-3 py-1 text-sm font-black", lastAnswer.correct ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800")}>
+                {lastAnswer.correct ? "Scheduled forward" : "Queued again soon"}
+              </span>
+            </div>
+            {lastAnswer.message && <p className="mt-2 text-sm font-semibold text-slate-600">{lastAnswer.message}</p>}
+          </div>
+        )}
+
         <div className={classNames("grid gap-5", activeMode === "picture" ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1")}>
           {activeMode === "picture" && (
             <div>
@@ -1429,17 +1636,31 @@ function WordLearnerView({ refreshDashboard }) {
                     <>
                       <button
                         disabled={Boolean(feedback)}
-                        onClick={() => submitWord(word.english, "flashcard")}
-                        className="rounded-md bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700 disabled:cursor-default disabled:opacity-60"
+                        onClick={() => submitWord("", "flashcard", "again")}
+                        className="rounded-md bg-red-600 px-4 py-3 font-black text-white hover:bg-red-700 disabled:cursor-default disabled:opacity-60"
                       >
-                        I knew it
+                        Again
                       </button>
                       <button
                         disabled={Boolean(feedback)}
-                        onClick={() => submitWord("", "flashcard")}
-                        className="rounded-md bg-red-600 px-5 py-3 font-black text-white hover:bg-red-700 disabled:cursor-default disabled:opacity-60"
+                        onClick={() => submitWord(word.english, "flashcard", "hard")}
+                        className="rounded-md bg-honey-500 px-4 py-3 font-black text-white hover:bg-honey-600 disabled:cursor-default disabled:opacity-60"
                       >
-                        Again
+                        Hard
+                      </button>
+                      <button
+                        disabled={Boolean(feedback)}
+                        onClick={() => submitWord(word.english, "flashcard", "good")}
+                        className="rounded-md bg-emerald-600 px-4 py-3 font-black text-white hover:bg-emerald-700 disabled:cursor-default disabled:opacity-60"
+                      >
+                        Good
+                      </button>
+                      <button
+                        disabled={Boolean(feedback)}
+                        onClick={() => submitWord(word.english, "flashcard", "easy")}
+                        className="rounded-md bg-lagoon-600 px-4 py-3 font-black text-white hover:bg-lagoon-700 disabled:cursor-default disabled:opacity-60"
+                      >
+                        Easy
                       </button>
                     </>
                   )}
@@ -1748,17 +1969,31 @@ function WordLearnerView({ refreshDashboard }) {
                         <>
                           <button
                             disabled={Boolean(feedback)}
-                            onClick={() => submitWord(word.english, "flashcard")}
-                            className="rounded-md bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700 disabled:cursor-default disabled:opacity-60"
+                            onClick={() => submitWord("", "flashcard", "again")}
+                            className="rounded-md bg-red-600 px-4 py-3 font-black text-white hover:bg-red-700 disabled:cursor-default disabled:opacity-60"
                           >
-                            I knew it
+                            Again
                           </button>
                           <button
                             disabled={Boolean(feedback)}
-                            onClick={() => submitWord("", "flashcard")}
-                            className="rounded-md bg-red-600 px-5 py-3 font-black text-white hover:bg-red-700 disabled:cursor-default disabled:opacity-60"
+                            onClick={() => submitWord(word.english, "flashcard", "hard")}
+                            className="rounded-md bg-honey-500 px-4 py-3 font-black text-white hover:bg-honey-600 disabled:cursor-default disabled:opacity-60"
                           >
-                            Again
+                            Hard
+                          </button>
+                          <button
+                            disabled={Boolean(feedback)}
+                            onClick={() => submitWord(word.english, "flashcard", "good")}
+                            className="rounded-md bg-emerald-600 px-4 py-3 font-black text-white hover:bg-emerald-700 disabled:cursor-default disabled:opacity-60"
+                          >
+                            Good
+                          </button>
+                          <button
+                            disabled={Boolean(feedback)}
+                            onClick={() => submitWord(word.english, "flashcard", "easy")}
+                            className="rounded-md bg-lagoon-600 px-4 py-3 font-black text-white hover:bg-lagoon-700 disabled:cursor-default disabled:opacity-60"
+                          >
+                            Easy
                           </button>
                         </>
                       )}
@@ -1910,10 +2145,16 @@ function PronunciationLookupView() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [saveStatus, setSaveStatus] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [savedWords, setSavedWords] = useState([]);
+  const [recentLoading, setRecentLoading] = useState(true);
+  const [deletingWordId, setDeletingWordId] = useState("");
   const [bestAudioState, setBestAudioState] = useState("idle");
   const [sourceAudioStates, setSourceAudioStates] = useState({});
   const searchText = query.trim();
   const sources = result?.sources || [];
+  const meanings = result?.meanings || [];
   const playableCount = sources.filter((source) => source.playable).length;
   const links = result?.links || (searchText ? dictionaryLinks(searchText) : null);
 
@@ -1934,12 +2175,42 @@ function PronunciationLookupView() {
     setSourceAudioStates((current) => ({ ...current, [key]: state }));
   };
 
+  const loadRecentSaved = async () => {
+    setRecentLoading(true);
+    try {
+      const data = await api("/api/pronunciation/vocabulary/recent");
+      setSavedWords(data.words || []);
+    } finally {
+      setRecentLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRecentSaved();
+  }, []);
+
+  const deleteSavedWord = async (wordId) => {
+    setDeletingWordId(wordId);
+    setSaveError("");
+    try {
+      await api(`/api/pronunciation/vocabulary/${wordId}`, { method: "DELETE" });
+      setSavedWords((current) => current.filter((word) => word.id !== wordId));
+      setSaveStatus("Removed from Audio Lab vocabulary.");
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setDeletingWordId("");
+    }
+  };
+
   const lookup = async (event) => {
     event.preventDefault();
     if (!searchText) return;
 
     setLoading(true);
     setError("");
+    setSaveStatus("");
+    setSaveError("");
     setResult(null);
     setBestAudioState("idle");
     setSourceAudioStates({});
@@ -1947,7 +2218,21 @@ function PronunciationLookupView() {
     try {
       const params = new URLSearchParams({ text: searchText, verify: "1" });
       const pronunciation = await api(`/api/pronunciation?${params.toString()}`);
-      setResult(pronunciation);
+      let saved = null;
+      try {
+        saved = await api("/api/pronunciation/vocabulary", {
+          method: "POST",
+          body: {
+            text: pronunciation.text,
+            english: pronunciation.bestMeaning || pronunciation.meanings?.[0]?.text || ""
+          }
+        });
+        setSaveStatus(saved.created ? "Added to vocabulary review." : "Vocabulary item updated.");
+        await loadRecentSaved();
+      } catch (saveErr) {
+        setSaveError(saveErr.message);
+      }
+      setResult({ ...pronunciation, savedWord: saved?.word || null, savedGroup: saved?.group || null });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -1996,6 +2281,13 @@ function PronunciationLookupView() {
                   <p className="mt-1 text-sm font-bold text-slate-600">
                     {sources.length} match{sources.length === 1 ? "" : "es"} · {playableCount} playable
                   </p>
+                  {meanings.length > 0 && (
+                    <p className="mt-3 text-xl font-black text-lagoon-950">
+                      {result.bestMeaning || meanings[0].text}
+                    </p>
+                  )}
+                  {saveStatus && <p className="mt-2 text-sm font-bold text-emerald-700">{saveStatus}</p>}
+                  {saveError && <p className="mt-2 text-sm font-bold text-red-700">{saveError}</p>}
                 </div>
                 <button
                   type="button"
@@ -2013,6 +2305,50 @@ function PronunciationLookupView() {
                   <Volume2 size={18} />
                   {audioLabel(bestAudioState, "Best Match")}
                 </button>
+              </div>
+
+              <div className="rounded-lg border border-stone-200 bg-white p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-wide text-slate-500">Meaning</p>
+                    <h3 className="mt-1 text-2xl font-black text-slate-950">
+                      {result.bestMeaning || meanings[0]?.text || "Meaning not found yet"}
+                    </h3>
+                    {result.savedWord && (
+                      <p className="mt-2 text-sm font-bold text-slate-600">
+                        Saved in {result.savedGroup?.title || "Audio Lab Saved"} for review and memory practice.
+                      </p>
+                    )}
+                  </div>
+                  {result.savedWord && (
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard?.writeText(result.savedWord.spanish).catch(() => null)}
+                      className="inline-flex h-10 items-center gap-2 rounded-md border border-stone-200 bg-white px-3 text-sm font-black text-slate-700 hover:bg-stone-50"
+                    >
+                      <Copy size={15} /> Copy
+                    </button>
+                  )}
+                </div>
+                {meanings.length > 1 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {meanings.slice(1, 5).map((meaning) => (
+                      <span key={`${meaning.source}-${meaning.text}`} className="rounded-full bg-stone-100 px-3 py-1 text-sm font-bold text-slate-700">
+                        {meaning.text}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {!!result.wordByWord?.length && (
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    {result.wordByWord.slice(0, 6).map((item) => (
+                      <div key={`${item.query}-${item.meaning}`} className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm">
+                        <span className="font-black text-slate-950">{item.query}</span>
+                        <span className="font-semibold text-slate-600"> = {item.meaning}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {sources.length ? (
@@ -2126,33 +2462,168 @@ function PronunciationLookupView() {
             </div>
           )}
         </Panel>
+        <Panel title="Recently Saved" icon={NotebookTabs}>
+          {recentLoading ? (
+            <p className="text-sm font-semibold text-slate-600">Loading saved words...</p>
+          ) : savedWords.length ? (
+            <div className="grid gap-3">
+              {savedWords.map((word) => (
+                <div key={word.id} className="rounded-lg border border-stone-200 bg-white p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-black text-slate-950">{word.spanish}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-600">{word.english}</p>
+                      <p className="mt-1 text-xs font-bold text-lagoon-700">
+                        {word.review?.due ? "Due now" : word.review?.state || "Saved"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={deletingWordId === word.id}
+                      onClick={() => deleteSavedWord(word.id)}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-red-100 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                      title={`Remove ${word.spanish}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm font-semibold text-slate-600">Saved Audio Lab words will appear here.</p>
+          )}
+        </Panel>
       </aside>
     </div>
   );
 }
 
-function DashboardView({ dashboard, refreshDashboard, setActive }) {
+function DashboardView({ dashboard, setActive, onStartLesson }) {
+  const plan = dashboard.dailyPlan || {};
+  const review = dashboard.review || { counts: {}, weakSpots: [], estimatedMinutes: 0 };
+  const lessons = dashboard.lessons || [];
+  const completedLessons = lessons.filter((lesson) => lesson.progress >= 100).length;
+  const courseProgress = lessons.length ? Math.round((completedLessons / lessons.length) * 100) : 0;
+  const primaryTitle = plan.title || dashboard.currentLesson?.title || "Start Spanish";
+
+  const startPrimary = () => {
+    if (plan.target?.type === "lesson" && plan.target.id) {
+      onStartLesson(plan.target.id);
+      return;
+    }
+    if (plan.target?.type === "review") {
+      setActive("review");
+      return;
+    }
+    setActive("challenges");
+  };
+
   return (
-    <div className="grid gap-5 xl:grid-cols-[1fr_430px]">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
       <section className="space-y-5">
-        <HeroBand />
-        <div className="grid gap-5 xl:grid-cols-[minmax(280px,0.85fr)_1.4fr]">
-          <CurrentLessonCard lesson={dashboard.currentLesson} setActive={setActive} />
-          <PracticePanel
-            exercise={dashboard.practiceExercise}
-            source="LESSON"
-            title="Practice Time!"
-            onComplete={refreshDashboard}
-          />
+        <section className="rounded-lg border border-slate-900 bg-slate-950 p-5 text-white shadow-soft sm:p-7">
+          <div className="grid gap-6 lg:grid-cols-[1fr_250px] lg:items-end">
+            <div>
+              <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-black text-lagoon-100">
+                <Target size={16} /> Today's Spanish
+              </p>
+              <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight sm:text-5xl">{primaryTitle}</h1>
+              <p className="mt-3 max-w-2xl text-base font-semibold text-slate-300">
+                {plan.reason || "Open one focused session, practice actively, and let the app choose what comes next."}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2 text-sm font-black">
+                <span className="rounded-full bg-white/10 px-3 py-1">{plan.estimatedMinutes || dashboard.currentLesson?.estimatedMinutes || 8} min</span>
+                <span className="rounded-full bg-white/10 px-3 py-1">{review.counts?.vocabulary || 0} words due</span>
+                <span className="rounded-full bg-white/10 px-3 py-1">{review.counts?.mistakes || 0} weak spots</span>
+              </div>
+            </div>
+            <button
+              onClick={startPrimary}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-honey-500 px-5 py-4 font-black text-white hover:bg-honey-600"
+            >
+              <Rocket size={19} /> {plan.cta || "Start today's session"}
+            </button>
+          </div>
+        </section>
+
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Panel
+            title="Review Due Today"
+            icon={ListChecks}
+            action={
+              <button onClick={() => setActive("review")} className="text-sm font-black text-lagoon-700">
+                Start
+              </button>
+            }
+          >
+            <div className="grid grid-cols-3 gap-3">
+              <InfoTile label="Words" value={review.counts?.vocabulary || 0} />
+              <InfoTile label="Grammar" value={review.counts?.grammar || 0} />
+              <InfoTile label="Mistakes" value={review.counts?.mistakes || 0} />
+            </div>
+            <p className="mt-4 text-sm font-semibold text-slate-600">
+              Estimated time: {review.estimatedMinutes || 0} minutes. The queue mixes vocabulary, grammar patterns, and recent wrong answers.
+            </p>
+          </Panel>
+
+          <Panel title="Course Progress" icon={BarChart3}>
+            <div className="grid grid-cols-2 gap-3">
+              <InfoTile label="Completed" value={`${completedLessons}/${lessons.length}`} />
+              <InfoTile label="Stable Words" value={dashboard.stats.masteredWords || 0} />
+            </div>
+            <div className="mt-4">
+              <div className="mb-2 flex justify-between text-sm font-bold text-slate-600">
+                <span>Beginner path</span>
+                <span>{courseProgress}%</span>
+              </div>
+              <ProgressBar value={courseProgress} />
+            </div>
+          </Panel>
         </div>
-        <MiniGameCards games={dashboard.miniGames} onViewAll={() => setActive("games")} />
-        <WeeklyChallengeCard challenge={dashboard.challenge} onOpen={() => setActive("challenges")} />
+
+        <Panel
+          title="Fix My Mistakes"
+          icon={PenTool}
+          action={
+            <button onClick={() => setActive("review")} className="text-sm font-black text-lagoon-700">
+              Practice
+            </button>
+          }
+        >
+          {review.weakSpots?.length ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              {review.weakSpots.slice(0, 4).map((spot) => (
+                <div key={spot.key} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-black text-slate-950">{spot.title}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-600">{spot.categoryLabel}</p>
+                    </div>
+                    <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-700">{spot.count}</span>
+                  </div>
+                  <p className="mt-3 text-sm text-slate-600">{spot.feedbackMessage}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm font-semibold text-slate-600">No weak spots yet. Mistakes will appear here automatically after practice.</p>
+          )}
+        </Panel>
       </section>
 
       <aside className="space-y-5">
+        <Panel title="Recent Achievement" icon={Trophy}>
+          <div className="flex gap-4">
+            <AssetImage imageKey="rewards-and-progress:15" alt="Recent achievement" className="h-20 w-20 shrink-0" />
+            <div>
+              <p className="font-black text-slate-950">{dashboard.recentAchievement || "Complete your first lesson to unlock a practical ability."}</p>
+              <p className="mt-2 text-sm font-semibold text-slate-600">Progress means being able to use Spanish in a real situation.</p>
+            </div>
+          </div>
+        </Panel>
         <StatsCard dashboard={dashboard} />
-        <BadgesCard badges={dashboard.badges} />
-        <CefrCard level={dashboard.currentLesson?.cefrLevel || "A1"} />
+        <WeeklyChallengeCard challenge={dashboard.challenge} onOpen={() => setActive("challenges")} />
       </aside>
     </div>
   );
@@ -2232,6 +2703,14 @@ function PracticePanel({
     setHintOpen(false);
   }, [exercise?.id]);
 
+  const randomizedOptions = useMemo(() => {
+    if (!exercise?.options?.length) return [];
+    return exercise.type === "SENTENCE_BUILDER"
+      ? shuffleAwayFromOriginalOrder(exercise.options)
+      : shuffleItems(exercise.options);
+  }, [exercise?.id]);
+  const exerciseForDisplay = exercise ? { ...exercise, options: randomizedOptions } : null;
+
   if (!exercise) {
     return (
       <Panel title={title} icon={Sparkles}>
@@ -2288,7 +2767,7 @@ function PracticePanel({
         });
       }
 
-      if (autoAdvance) {
+      if (autoAdvance && result.correct) {
         window.setTimeout(() => {
           continueAfterFeedback();
         }, autoAdvanceDelay);
@@ -2349,10 +2828,10 @@ function PracticePanel({
         <div className="grid gap-0 md:grid-cols-[1fr_220px]">
           <div className="p-4">
             {isSentenceBuilder ? (
-              <SentenceBuilder exercise={exercise} words={words} setWords={setWords} disabled={locked} />
+              <SentenceBuilder exercise={exerciseForDisplay} words={words} setWords={setWords} disabled={locked} />
             ) : (
               <AnswerChoices
-                exercise={exercise}
+                exercise={exerciseForDisplay}
                 answer={answer}
                 setAnswer={setAnswer}
                 disabled={locked}
@@ -2451,7 +2930,7 @@ function PracticePanel({
             </button>
           </>
         )}
-        {locked && !autoAdvance && (
+        {locked && (!autoAdvance || !feedback.correct) && (
           <div>
             <button
               onClick={feedback.correct ? continueAfterFeedback : resetAttempt}
@@ -2474,7 +2953,7 @@ function PracticePanel({
             )}
           </div>
         )}
-        {locked && autoAdvance && (
+        {locked && autoAdvance && feedback.correct && (
           <div className="rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
             Next question loading...
           </div>
@@ -2526,7 +3005,7 @@ function PronunciationTools({ text, compact = false }) {
             className={providerButtonClass}
             title={`Play ${text} from SpanishDict audio`}
           >
-            SD
+            SpanishDict
           </button>
           <button
             type="button"
@@ -2537,6 +3016,17 @@ function PronunciationTools({ text, compact = false }) {
             LEO
           </button>
         </div>
+      )}
+      {!compact && (
+        <button
+          type="button"
+          onClick={() => navigator.clipboard?.writeText(text).catch(() => null)}
+          className={buttonClass}
+          title={`Copy ${text}`}
+        >
+          <Copy size={16} />
+          Copy
+        </button>
       )}
       <a
         href={links.spanishDict}
@@ -2890,11 +3380,31 @@ function LessonsView({ lessons, refreshDashboard }) {
               </div>
             </Panel>
 
+            <Panel title="Lesson Guide" icon={ListChecks}>
+              <div className="grid gap-3 md:grid-cols-2">
+                {lessonGuideSteps(lesson).map((step, index) => (
+                  <div key={`${lesson.id}-guide-${index}`} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                    <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">Step {index + 1}</p>
+                    <p className="mt-2 font-bold text-slate-800">{step}</p>
+                  </div>
+                ))}
+              </div>
+              {lesson.reviewSummary && (
+                <div className="mt-4 rounded-lg border border-lagoon-100 bg-lagoon-50 p-4">
+                  <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">What should stick</p>
+                  <p className="mt-2 font-bold text-lagoon-950">{lesson.reviewSummary}</p>
+                </div>
+              )}
+            </Panel>
+
             <Panel title="Examples" icon={NotebookTabs}>
               <div className="grid gap-3">
                 {lesson.sentences.map((sentence) => (
                   <div key={sentence.id} className="rounded-lg border border-stone-200 p-4">
-                    <p className="font-extrabold">{sentence.spanish}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-extrabold">{sentence.spanish}</p>
+                      <PronunciationTools text={sentence.spanish} compact />
+                    </div>
                     <p className="text-sm text-slate-600">{sentence.english}</p>
                     {sentence.note && <p className="mt-2 text-sm text-lagoon-700">{sentence.note}</p>}
                   </div>
@@ -2981,6 +3491,7 @@ function MiniGamesView({ dashboard, refreshDashboard }) {
 
   const startGame = async (game) => {
     setActiveGame(game);
+    if (game.key === "word-catcher") return;
     setLoading(true);
     try {
       const lessonDetails = await Promise.all(dashboard.lessons.map((lesson) => api(`/api/lessons/${lesson.id}`)));
@@ -3017,7 +3528,9 @@ function MiniGamesView({ dashboard, refreshDashboard }) {
         ))}
       </div>
 
-      {activeGame && (
+      {activeGame?.key === "word-catcher" ? (
+        <WordCatcherGame game={activeGame} refreshDashboard={refreshDashboard} />
+      ) : activeGame && (
         <PracticePanel
           title={loading ? "Loading Game..." : activeGame.title}
           exercise={exercise}
@@ -3030,6 +3543,171 @@ function MiniGamesView({ dashboard, refreshDashboard }) {
   );
 }
 
+function WordCatcherGame({ game, refreshDashboard }) {
+  const [words, setWords] = useState([]);
+  const [round, setRound] = useState(0);
+  const [target, setTarget] = useState(null);
+  const [choices, setChoices] = useState([]);
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [timeLeft, setTimeLeft] = useState(10);
+  const [message, setMessage] = useState("");
+  const [finished, setFinished] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const pickRound = (sourceWords = words, nextRound = round) => {
+    const usable = sourceWords.filter((word) => word.spanish && word.english);
+    if (usable.length < 4) return;
+    const nextTarget = usable[Math.floor(Math.random() * usable.length)];
+    const distractors = shuffleItems(usable.filter((word) => word.id !== nextTarget.id)).slice(0, 3);
+    setTarget(nextTarget);
+    setChoices(shuffleItems([nextTarget, ...distractors]));
+    setTimeLeft(10);
+    setResolving(false);
+    setMessage(`Round ${nextRound + 1}: catch the meaning.`);
+  };
+
+  const finishGame = async (finalScore = score) => {
+    setFinished(true);
+    setSaving(true);
+    try {
+      await api(`/api/minigames/${game.key}/score`, {
+        method: "POST",
+        body: { score: finalScore }
+      });
+      await refreshDashboard?.({ silent: true });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const nextRound = (nextScore = score, nextLives = lives) => {
+    if (nextRoundNumber(round) >= 10 || nextLives <= 0) {
+      finishGame(nextScore);
+      return;
+    }
+    const updatedRound = round + 1;
+    setRound(updatedRound);
+    pickRound(words, updatedRound);
+  };
+
+  const answer = (choice) => {
+    if (finished || resolving || !target) return;
+    setResolving(true);
+    if (choice.id === target.id) {
+      const gained = 100 + timeLeft * 10;
+      const nextScore = score + gained;
+      setScore(nextScore);
+      setMessage(`Correct: ${target.spanish} = ${target.english}. +${gained}`);
+      window.setTimeout(() => nextRound(nextScore, lives), 650);
+    } else {
+      const nextLives = lives - 1;
+      setLives(nextLives);
+      setMessage(`Not that one. ${target.spanish} means ${target.english}.`);
+      window.setTimeout(() => nextRound(score, nextLives), 900);
+    }
+  };
+
+  useEffect(() => {
+    api("/api/words").then((data) => {
+      const allWords = data.groups.flatMap((group) =>
+        group.words.map((word) => ({
+          ...word,
+          imageKey: word.imageKey || group.imageKey
+        }))
+      );
+      const usable = shuffleItems(allWords).slice(0, 60);
+      setWords(usable);
+      pickRound(usable, 0);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (finished || resolving || !target) return undefined;
+    const timer = window.setInterval(() => {
+      setTimeLeft((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          const nextLives = lives - 1;
+          setLives(nextLives);
+          setMessage(`Time. ${target.spanish} means ${target.english}.`);
+          window.setTimeout(() => nextRound(score, nextLives), 850);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [finished, resolving, target?.id, lives, score, round]);
+
+  const restart = () => {
+    setRound(0);
+    setScore(0);
+    setLives(3);
+    setFinished(false);
+    setMessage("");
+    pickRound(words, 0);
+  };
+
+  if (!target) {
+    return <Panel title="Word Catch" icon={Gamepad2}>Loading words...</Panel>;
+  }
+
+  return (
+    <Panel title="Word Catch" icon={Gamepad2}>
+      <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
+        <div className="rounded-lg border border-slate-900 bg-slate-950 p-5 text-white">
+          <p className="text-xs font-black uppercase tracking-wide text-lagoon-100">Catch this word</p>
+          <h2 className="mt-3 text-4xl font-black">{target.spanish}</h2>
+          <AssetImage imageKey={target.imageKey} alt={target.spanish} className="mt-5 aspect-square w-full" />
+          <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+            <InfoTile label="Score" value={score} />
+            <InfoTile label="Lives" value={lives} />
+            <InfoTile label="Time" value={timeLeft} />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="font-black text-slate-950">{message || "Catch the correct meaning."}</p>
+            <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-lagoon-700">
+              {Math.min(round + 1, 10)} / 10
+            </span>
+          </div>
+          <div className="grid min-h-[270px] gap-3 sm:grid-cols-2">
+            {choices.map((choice, index) => (
+              <button
+                key={`${choice.id}-${index}`}
+                disabled={finished || saving || resolving}
+                onClick={() => answer(choice)}
+                className="rounded-lg border border-stone-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-coral-300 hover:shadow-md disabled:opacity-60"
+              >
+                <p className="text-xs font-black uppercase tracking-wide text-slate-500">Option {index + 1}</p>
+                <p className="mt-2 text-2xl font-black text-slate-950">{choice.english}</p>
+              </button>
+            ))}
+          </div>
+
+          {finished && (
+            <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-xl font-black text-emerald-950">Final score: {score}</p>
+              <p className="mt-1 text-sm font-bold text-slate-700">{saving ? "Saving score..." : "Score saved."}</p>
+              <button onClick={restart} className="mt-4 rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600">
+                Play Again
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function nextRoundNumber(round) {
+  return round + 1;
+}
+
 function ChallengesView({ challenge, refreshDashboard }) {
   return (
     <div className="space-y-5">
@@ -3040,6 +3718,214 @@ function ChallengesView({ challenge, refreshDashboard }) {
         <Panel title="Challenges" icon={Trophy}>No active challenge is available.</Panel>
       )}
     </div>
+  );
+}
+
+function ReviewQueueView({ refreshDashboard }) {
+  const [review, setReview] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  const loadReview = async () => {
+    setLoading(true);
+    try {
+      const data = await api("/api/review/due");
+      setReview(data);
+      setSelectedItem((current) => {
+        if (current && data.items.some((item) => item.key === current.key)) return current;
+        return data.items[0] || null;
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReview();
+  }, []);
+
+  if (loading || !review) return <Panel title="Review">Loading your review queue...</Panel>;
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[390px_1fr]">
+      <section className="space-y-5">
+        <Panel title="Review Due" icon={ListChecks}>
+          <div className="grid grid-cols-3 gap-3">
+            <InfoTile label="Words" value={review.counts.vocabulary} />
+            <InfoTile label="Grammar" value={review.counts.grammar} />
+            <InfoTile label="Mistakes" value={review.counts.mistakes} />
+          </div>
+          <p className="mt-4 text-sm font-semibold text-slate-600">
+            Estimated time: {review.estimatedMinutes} minutes.
+          </p>
+        </Panel>
+
+        <Panel title="Queue" icon={NotebookTabs}>
+          {review.items.length ? (
+            <div className="space-y-3">
+              {review.items.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setSelectedItem(item)}
+                  className={classNames(
+                    "w-full rounded-lg border p-4 text-left",
+                    selectedItem?.key === item.key ? "border-lagoon-500 bg-lagoon-50" : "border-stone-200 bg-white hover:bg-stone-50"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-black text-slate-950">{item.title}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-600">{item.detail}</p>
+                    </div>
+                    <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-black uppercase text-slate-600">
+                      {item.type}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm font-semibold text-slate-600">Nothing is due right now. Continue the course to create future reviews.</p>
+          )}
+        </Panel>
+      </section>
+
+      <section>
+        {selectedItem?.exercise ? (
+          <PracticePanel
+            title="Fix My Mistakes"
+            exercise={selectedItem.exercise}
+            source="REVIEW"
+            autoAdvance
+            onComplete={async () => {
+              await loadReview();
+              await refreshDashboard?.({ silent: true });
+            }}
+          />
+        ) : selectedItem?.word ? (
+          <ReviewWordCard
+            item={selectedItem}
+            onComplete={async () => {
+              await loadReview();
+              await refreshDashboard?.({ silent: true });
+            }}
+          />
+        ) : (
+          <Panel title="Vocabulary Review" icon={NotebookTabs}>
+            <p className="text-sm font-semibold text-slate-600">Select a review item from the queue.</p>
+          </Panel>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function ReviewWordCard({ item, onComplete }) {
+  const word = item.word;
+  const [answer, setAnswer] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setAnswer("");
+    setFeedback(null);
+  }, [word?.id]);
+
+  const submit = async () => {
+    if (!word || !answer.trim() || feedback) return;
+    setBusy(true);
+    try {
+      const result = await api(`/api/words/${word.id}/attempt`, {
+        method: "POST",
+        body: {
+          mode: "en-es",
+          answer
+        }
+      });
+      setFeedback(result);
+      if (result.correct) {
+        window.setTimeout(() => {
+          onComplete?.();
+        }, 900);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!word) {
+    return (
+      <Panel title="Vocabulary Review" icon={NotebookTabs}>
+        <p className="text-sm font-semibold text-slate-600">Select a word from the queue.</p>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel
+      title="Vocabulary Review"
+      icon={NotebookTabs}
+      action={<span className="rounded-full bg-lagoon-50 px-3 py-1 text-xs font-black text-lagoon-700">{item.state || "Review"}</span>}
+    >
+      <div className="grid gap-5 md:grid-cols-[170px_1fr]">
+        <AssetImage imageKey={word.imageKey} alt={word.spanish} className="aspect-square w-full" />
+        <div>
+          <p className="text-xs font-black uppercase tracking-wide text-slate-500">{word.groupTitle || "Words"}</p>
+          <h2 className="mt-2 text-3xl font-black text-slate-950">{word.english}</h2>
+          <p className="mt-2 text-sm font-semibold text-slate-600">Type the Spanish word or phrase.</p>
+          <input
+            value={answer}
+            disabled={Boolean(feedback)}
+            onChange={(event) => setAnswer(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                submit();
+              }
+            }}
+            className="mt-5 w-full rounded-md border border-stone-200 px-4 py-4 text-xl font-bold outline-none focus:border-lagoon-500 disabled:bg-stone-100"
+            placeholder="Spanish answer"
+          />
+          {!feedback && (
+            <button
+              disabled={!answer.trim() || busy}
+              onClick={submit}
+              className="mt-4 rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600 disabled:opacity-50"
+            >
+              {busy ? "Checking..." : "Check Answer"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {feedback && (
+        <div className={classNames("mt-5 rounded-lg border p-4", feedback.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50")}>
+          <p className={classNames("font-black", feedback.correct ? "text-emerald-900" : "text-red-900")}>
+            {feedback.correct ? `Correct +${feedback.xpAwarded} XP` : "Not yet"}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-slate-700">
+            Correct answer: <span className="font-black">{feedback.expected}</span>
+          </p>
+          <p className="mt-1 text-sm font-semibold text-slate-600">{feedback.review?.message}</p>
+          {!feedback.correct && (
+            <button
+              onClick={() => {
+                setAnswer("");
+                setFeedback(null);
+              }}
+              className="mt-4 rounded-md bg-red-600 px-5 py-3 font-black text-white hover:bg-red-700"
+            >
+              Try Again
+            </button>
+          )}
+          {feedback.correct && (
+            <div className="mt-4 rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
+              Moving to the next due item...
+            </div>
+          )}
+        </div>
+      )}
+    </Panel>
   );
 }
 
@@ -3072,7 +3958,18 @@ function AdminView({ refreshDashboard }) {
   const [content, setContent] = useState(null);
   const [message, setMessage] = useState("");
   const [topicForm, setTopicForm] = useState({ title: "", description: "", cefrLevel: "A1", imageKey: "" });
-  const [lessonForm, setLessonForm] = useState({ title: "", summary: "", cefrLevel: "A1", theme: "Grammar", situation: "general", topicId: "", imageKey: "" });
+  const [lessonForm, setLessonForm] = useState({
+    title: "",
+    summary: "",
+    cefrLevel: "A1",
+    theme: "Grammar",
+    situation: "general",
+    topicId: "",
+    imageKey: "",
+    outcomes: "",
+    conceptKeysText: "",
+    reviewSummary: ""
+  });
   const [exerciseForm, setExerciseForm] = useState({
     lessonId: "",
     type: "MULTIPLE_CHOICE",
@@ -3080,6 +3977,11 @@ function AdminView({ refreshDashboard }) {
     instruction: "",
     questionText: "",
     correctAnswer: "",
+    acceptedAnswers: "",
+    alternatives: "",
+    answerGoal: "",
+    accentStrict: false,
+    requiresArticle: false,
     explanation: "",
     imageKey: "",
     options: "soy:true, estoy:false"
@@ -3115,6 +4017,20 @@ function AdminView({ refreshDashboard }) {
       const [value, truthy] = item.split(":").map((part) => part.trim());
       return { text: value, value, isCorrect: truthy === "true" };
     });
+  const parsedAcceptedAnswers = exerciseForm.acceptedAnswers
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const parsedAlternatives = exerciseForm.alternatives
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((answer) => ({ answer }));
+  const validationFields = {
+    goal: exerciseForm.answerGoal || undefined,
+    accentStrict: Boolean(exerciseForm.accentStrict),
+    requiresArticle: Boolean(exerciseForm.requiresArticle)
+  };
 
   return (
     <div className="space-y-5">
@@ -3157,6 +4073,9 @@ function AdminView({ refreshDashboard }) {
             <TextInput label="Theme" value={lessonForm.theme} onChange={(theme) => setLessonForm({ ...lessonForm, theme })} />
             <TextInput label="Situation" value={lessonForm.situation} onChange={(situation) => setLessonForm({ ...lessonForm, situation })} />
           </div>
+          <TextInput label="Outcomes" value={lessonForm.outcomes} onChange={(outcomes) => setLessonForm({ ...lessonForm, outcomes })} />
+          <TextInput label="Concept keys" value={lessonForm.conceptKeysText} onChange={(conceptKeysText) => setLessonForm({ ...lessonForm, conceptKeysText })} />
+          <TextInput label="Review summary" value={lessonForm.reviewSummary} onChange={(reviewSummary) => setLessonForm({ ...lessonForm, reviewSummary })} />
           <TextInput label="Image key" value={lessonForm.imageKey} onChange={(imageKey) => setLessonForm({ ...lessonForm, imageKey })} />
         </AdminForm>
 
@@ -3169,8 +4088,13 @@ function AdminView({ refreshDashboard }) {
               options: parsedOptions,
               answerJson:
                 exerciseForm.type === "SENTENCE_BUILDER"
-                  ? { correctWords: exerciseForm.correctAnswer.split(/\s+/).filter(Boolean) }
-                  : { correct: exerciseForm.correctAnswer, accepted: [exerciseForm.correctAnswer] }
+                  ? { correctWords: exerciseForm.correctAnswer.split(/\s+/).filter(Boolean), ...validationFields }
+                  : {
+                      correct: exerciseForm.correctAnswer,
+                      accepted: [exerciseForm.correctAnswer, ...parsedAcceptedAnswers].filter(Boolean),
+                      alternatives: parsedAlternatives,
+                      ...validationFields
+                    }
             })
           }
         >
@@ -3195,6 +4119,27 @@ function AdminView({ refreshDashboard }) {
           <TextInput label="Prompt" value={exerciseForm.prompt} onChange={(prompt) => setExerciseForm({ ...exerciseForm, prompt })} />
           <TextInput label="Question" value={exerciseForm.questionText} onChange={(questionText) => setExerciseForm({ ...exerciseForm, questionText })} />
           <TextInput label="Correct answer" value={exerciseForm.correctAnswer} onChange={(correctAnswer) => setExerciseForm({ ...exerciseForm, correctAnswer })} />
+          <TextInput label="Accepted answers" value={exerciseForm.acceptedAnswers} onChange={(acceptedAnswers) => setExerciseForm({ ...exerciseForm, acceptedAnswers })} />
+          <TextInput label="Alternatives" value={exerciseForm.alternatives} onChange={(alternatives) => setExerciseForm({ ...exerciseForm, alternatives })} />
+          <TextInput label="Validation goal" value={exerciseForm.answerGoal} onChange={(answerGoal) => setExerciseForm({ ...exerciseForm, answerGoal })} />
+          <label className="flex items-center justify-between rounded-md border border-stone-200 px-3 py-3 text-sm font-bold text-slate-700">
+            Strict accents
+            <input
+              type="checkbox"
+              checked={exerciseForm.accentStrict}
+              onChange={(event) => setExerciseForm({ ...exerciseForm, accentStrict: event.target.checked })}
+              className="h-5 w-5 accent-lagoon-500"
+            />
+          </label>
+          <label className="flex items-center justify-between rounded-md border border-stone-200 px-3 py-3 text-sm font-bold text-slate-700">
+            Requires article
+            <input
+              type="checkbox"
+              checked={exerciseForm.requiresArticle}
+              onChange={(event) => setExerciseForm({ ...exerciseForm, requiresArticle: event.target.checked })}
+              className="h-5 w-5 accent-lagoon-500"
+            />
+          </label>
           <TextInput label="Options" value={exerciseForm.options} onChange={(options) => setExerciseForm({ ...exerciseForm, options })} />
           <TextInput label="Explanation" value={exerciseForm.explanation} onChange={(explanation) => setExerciseForm({ ...exerciseForm, explanation })} />
           <TextInput label="Image key" value={exerciseForm.imageKey} onChange={(imageKey) => setExerciseForm({ ...exerciseForm, imageKey })} />
@@ -3380,7 +4325,7 @@ function Logo({ large = false, compact = false }) {
       {!compact && (
         <div>
           <div className={classNames("font-black leading-none text-coral-500", large ? "text-4xl" : "text-3xl")}>Vamos!</div>
-          <div className="text-xs font-black uppercase tracking-[0.22em] text-lagoon-600">Gramatica</div>
+          <div className="text-xs font-black uppercase tracking-[0.22em] text-lagoon-600">Espanolo</div>
         </div>
       )}
     </div>

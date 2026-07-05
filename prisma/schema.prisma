@@ -59,6 +59,7 @@ model User {
   groupMembers     GroupMember[]
   lessonProgress   UserLessonProgress[]
   miniGameScores   MiniGameScore[]
+  mistakeEvents    MistakeEvent[]
   reviewItems      ReviewItem[]
   sessions         Session[]
   wordAttempts     WordAttempt[]
@@ -78,17 +79,18 @@ model Session {
 }
 
 model GrammarTopic {
-  id          String     @id @default(cuid())
-  slug        String     @unique
-  title       String
-  description String
-  cefrLevel   String
-  imageKey    String?
-  order       Int        @default(0)
-  createdAt   DateTime   @default(now())
-  exercises   Exercise[]
-  lessons     Lesson[]
-  sentences   Sentence[]
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  title         String
+  description   String
+  cefrLevel     String
+  imageKey      String?
+  order         Int            @default(0)
+  createdAt     DateTime       @default(now())
+  exercises     Exercise[]
+  lessons       Lesson[]
+  mistakeEvents MistakeEvent[]
+  sentences     Sentence[]
 }
 
 model VocabularyGroup {
@@ -104,17 +106,18 @@ model VocabularyGroup {
 }
 
 model Word {
-  id             String          @id @default(cuid())
-  spanish        String
-  english        String
-  partOfSpeech   String
-  gender         String?
-  example        String?
-  imageKey       String?
-  groupId        String
-  attempts       WordAttempt[]
+  id              String          @id @default(cuid())
+  spanish         String
+  english         String
+  partOfSpeech    String
+  gender          String?
+  example         String?
+  imageKey        String?
+  groupId         String
+  attempts        WordAttempt[]
+  mistakeEvents   MistakeEvent[]
   vocabularyGroup VocabularyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  reviews        WordReview[]
+  reviews         WordReview[]
 
   @@index([groupId])
 }
@@ -156,14 +159,14 @@ model WordReview {
 }
 
 model Sentence {
-  id        String        @id @default(cuid())
-  spanish   String
-  english   String
-  note      String?
-  lessonId  String?
-  topicId   String?
-  lesson    Lesson?       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  topic     GrammarTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  id       String        @id @default(cuid())
+  spanish  String
+  english  String
+  note     String?
+  lessonId String?
+  topicId  String?
+  lesson   Lesson?       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  topic    GrammarTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
   @@index([lessonId])
   @@index([topicId])
@@ -178,6 +181,9 @@ model Lesson {
   theme            String
   situation        String
   imageKey         String?
+  outcomesJson     Json?
+  conceptKeys      Json?
+  reviewSummary    String?
   order            Int                  @default(0)
   estimatedMinutes Int                  @default(8)
   isPublished      Boolean              @default(true)
@@ -185,6 +191,7 @@ model Lesson {
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   exercises        Exercise[]
+  mistakeEvents    MistakeEvent[]
   progress         UserLessonProgress[]
   sentences        Sentence[]
   topic            GrammarTopic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
@@ -212,6 +219,7 @@ model Exercise {
   attempts           Attempt[]
   challengeExercises ChallengeExercise[]
   lesson             Lesson              @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  mistakeEvents      MistakeEvent[]
   options            ExerciseOption[]
   reviewItems        ReviewItem[]
   topic              GrammarTopic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
@@ -233,16 +241,16 @@ model ExerciseOption {
 }
 
 model Attempt {
-  id        String        @id @default(cuid())
-  userId    String
+  id         String        @id @default(cuid())
+  userId     String
   exerciseId String
-  source    AttemptSource @default(LESSON)
+  source     AttemptSource @default(LESSON)
   answerJson Json
-  isCorrect Boolean
-  xpAwarded Int           @default(0)
-  createdAt DateTime      @default(now())
-  exercise  Exercise      @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isCorrect  Boolean
+  xpAwarded  Int           @default(0)
+  createdAt  DateTime      @default(now())
+  exercise   Exercise      @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([exerciseId])
@@ -256,30 +264,63 @@ model UserLessonProgress {
   totalExercises     Int       @default(0)
   mastery            Int       @default(0)
   completedAt        DateTime?
+  reviewDueAt        DateTime?
+  lastReviewedAt     DateTime?
+  reviewIntervalDays Int       @default(3)
+  lessonReviewCount  Int       @default(0)
   updatedAt          DateTime  @updatedAt
   lesson             Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@index([lessonId])
+  @@index([userId, reviewDueAt])
 }
 
 model ReviewItem {
-  id           String      @id @default(cuid())
-  userId       String
-  exerciseId   String
-  state        ReviewState @default(LEARNING)
-  intervalDays Int         @default(1)
-  ease         Float       @default(2.3)
-  dueAt        DateTime
+  id            String      @id @default(cuid())
+  userId        String
+  exerciseId    String
+  state         ReviewState @default(LEARNING)
+  intervalDays  Int         @default(1)
+  ease          Float       @default(2.3)
+  dueAt         DateTime
   lastAttemptAt DateTime?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  exercise      Exercise   @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  exercise      Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, exerciseId])
   @@index([userId, dueAt])
+}
+
+model MistakeEvent {
+  id              String        @id @default(cuid())
+  userId          String
+  exerciseId      String?
+  wordId          String?
+  lessonId        String?
+  topicId         String?
+  source          String        @default("LESSON")
+  submittedAnswer String
+  correctAnswer   String
+  errorCategory   String
+  feedbackMessage String
+  weakSpotKey     String
+  occurrenceCount Int           @default(1)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  lastOccurredAt  DateTime      @default(now())
+  exercise        Exercise?     @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  lesson          Lesson?       @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  topic           GrammarTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word            Word?         @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lastOccurredAt])
+  @@index([userId, errorCategory])
+  @@index([weakSpotKey])
 }
 
 model XpEvent {
@@ -375,13 +416,13 @@ model LearningGroup {
 }
 
 model GroupMember {
-  id        String        @id @default(cuid())
-  userId    String
-  groupId   String
-  role      String        @default("member")
-  joinedAt  DateTime      @default(now())
-  group     LearningGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String        @id @default(cuid())
+  userId   String
+  groupId  String
+  role     String        @default("member")
+  joinedAt DateTime      @default(now())
+  group    LearningGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, groupId])
 }
