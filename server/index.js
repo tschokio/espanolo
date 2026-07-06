@@ -1204,7 +1204,7 @@ function buildDailyPlan({ lessons, review }) {
           ? `Continue: ${currentLesson.title}`
           : `Start: ${currentLesson.title}`,
       reason: due
-        ? "This completed lesson is due again so it stays active."
+        ? "Review this completed lesson."
         : mistakeDue
           ? "This lesson moves you forward, and your mistakes are ready afterward."
           : "This is the best next step in your beginner path.",

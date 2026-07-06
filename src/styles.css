@@ -11,6 +11,11 @@ html {
   background: #fafaf9;
 }
 
+html[data-theme="dark"] {
+  background: #0f172a;
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
   font-family:
@@ -38,3 +43,150 @@ textarea {
   resize: vertical;
 }
 
+html[data-theme="dark"] body {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .app-shell {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+}
+
+html[data-theme="dark"] .app-auth-screen {
+  background: radial-gradient(circle at top left, #312e81 0%, #0f172a 42%, #020617 100%) !important;
+}
+
+html[data-theme="dark"] :is(.bg-white, .bg-white\/90, .bg-white\/70) {
+  background-color: rgb(17 24 39 / 0.96) !important;
+}
+
+html[data-theme="dark"] .bg-white\/10 {
+  background-color: rgb(255 255 255 / 0.08) !important;
+}
+
+html[data-theme="dark"] :is(.bg-stone-50, .bg-slate-50, .bg-orange-50) {
+  background-color: #1e293b !important;
+}
+
+html[data-theme="dark"] :is(.bg-stone-100, .bg-stone-200, .bg-slate-100) {
+  background-color: #334155 !important;
+}
+
+html[data-theme="dark"] :is(.bg-lagoon-50, .bg-sky-50) {
+  background-color: #083344 !important;
+}
+
+html[data-theme="dark"] .bg-lagoon-100 {
+  background-color: #164e63 !important;
+}
+
+html[data-theme="dark"] :is(.bg-coral-50, .bg-red-50) {
+  background-color: #3b1114 !important;
+}
+
+html[data-theme="dark"] :is(.bg-emerald-50, .bg-green-50) {
+  background-color: #052e24 !important;
+}
+
+html[data-theme="dark"] :is(.bg-honey-50, .bg-honey-100, .bg-amber-50, .bg-yellow-50) {
+  background-color: #2f220c !important;
+}
+
+html[data-theme="dark"] :is(
+  .text-slate-950,
+  .text-slate-900,
+  .text-slate-800,
+  .text-stone-900,
+  .text-stone-800
+) {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] :is(.text-slate-700, .text-stone-700) {
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] :is(.text-slate-600, .text-stone-600) {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] :is(.text-slate-500, .text-stone-500, .text-stone-400) {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] :is(.text-lagoon-900, .text-lagoon-800, .text-lagoon-700, .text-lagoon-600) {
+  color: #67e8f9 !important;
+}
+
+html[data-theme="dark"] :is(.text-coral-600, .text-coral-500) {
+  color: #fb7185 !important;
+}
+
+html[data-theme="dark"] :is(.text-red-900, .text-red-800, .text-red-700) {
+  color: #fca5a5 !important;
+}
+
+html[data-theme="dark"] :is(.text-emerald-950, .text-emerald-900, .text-emerald-800, .text-emerald-700) {
+  color: #86efac !important;
+}
+
+html[data-theme="dark"] :is(.text-honey-900, .text-honey-700, .text-amber-900) {
+  color: #fcd34d !important;
+}
+
+html[data-theme="dark"] :is(.text-sky-800, .text-sky-700) {
+  color: #7dd3fc !important;
+}
+
+html[data-theme="dark"] :is(
+  .border-stone-100,
+  .border-stone-200,
+  .border-stone-300,
+  .border-slate-200,
+  .border-white,
+  .border-white\/70,
+  .border-white\/80,
+  .border-orange-100
+) {
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] :is(.border-lagoon-100, .border-lagoon-200, .border-sky-200) {
+  border-color: #155e75 !important;
+}
+
+html[data-theme="dark"] :is(.border-coral-300, .border-red-100, .border-red-200) {
+  border-color: #7f1d1d !important;
+}
+
+html[data-theme="dark"] :is(.border-emerald-200, .border-emerald-300) {
+  border-color: #047857 !important;
+}
+
+html[data-theme="dark"] :is(.border-honey-200, .border-amber-100) {
+  border-color: #854d0e !important;
+}
+
+html[data-theme="dark"] :is(input:not([type="checkbox"]), select, textarea) {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] :is(input:not([type="checkbox"]), select, textarea):disabled {
+  background-color: #1e293b;
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] ::placeholder {
+  color: #64748b;
+}
+
+html[data-theme="dark"] :is(.shadow-soft, .shadow-sm) {
+  box-shadow: 0 18px 55px rgb(0 0 0 / 0.28) !important;
+}
+
+html[data-theme="dark"] :is(.hover\:bg-stone-50:hover, .hover\:bg-stone-100:hover, .hover\:bg-white:hover) {
+  background-color: #1f2937 !important;
+}

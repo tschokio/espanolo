@@ -14,6 +14,7 @@ import {
   ListChecks,
   LogOut,
   Medal,
+  Moon,
   NotebookTabs,
   PenTool,
   Plus,
@@ -23,6 +24,7 @@ import {
   Shield,
   Sparkles,
   Star,
+  Sun,
   Target,
   Trash2,
   Trophy,
@@ -49,6 +51,8 @@ function primaryNavKey(active) {
   if (["admin"].includes(active)) return "manage";
   return active || "learn";
 }
+
+const THEME_STORAGE_KEY = "vamos-espanolo-theme";
 
 const imageSheets = {
   "body-and-health": { src: "/images/body-and-health.webp", grid: 4 },
@@ -104,6 +108,40 @@ const api = async (path, options = {}) => {
 
 function classNames(...values) {
   return values.filter(Boolean).join(" ");
+}
+
+function getInitialTheme() {
+  if (typeof window === "undefined") return "light";
+  try {
+    const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === "dark" || saved === "light") return saved;
+  } catch {
+    return "light";
+  }
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function useThemeMode() {
+  const [theme, setTheme] = useState(getInitialTheme);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+    root.classList.toggle("dark", theme === "dark");
+    root.style.colorScheme = theme;
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Ignore storage failures; the active theme still applies for this session.
+    }
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#0f172a" : "#fff7ed");
+  }, [theme]);
+
+  return {
+    theme,
+    setTheme,
+    toggleTheme: () => setTheme((current) => (current === "dark" ? "light" : "dark"))
+  };
 }
 
 function normalizeText(value) {
@@ -313,7 +351,29 @@ function playPronunciationClip(text, setAudioState, provider = "", sourceText = 
   if (playback?.catch) playback.catch(resetAfterError);
 }
 
+function ThemeToggle({ theme, onToggle, showLabel = false }) {
+  const isDark = theme === "dark";
+  const Icon = isDark ? Sun : Moon;
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      title={isDark ? "Use light mode" : "Use dark mode"}
+      aria-label={isDark ? "Use light mode" : "Use dark mode"}
+      className={classNames(
+        "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-200 bg-white font-black text-slate-700 hover:bg-stone-100",
+        showLabel ? "px-3" : "w-11 px-0"
+      )}
+    >
+      <Icon size={19} />
+      {showLabel && <span>{isDark ? "Light" : "Dark"}</span>}
+    </button>
+  );
+}
+
 function App() {
+  const { theme, setTheme, toggleTheme } = useThemeMode();
   const [user, setUser] = useState(null);
   const [booting, setBooting] = useState(true);
   const [authError, setAuthError] = useState("");
@@ -334,13 +394,13 @@ function App() {
   }
 
   if (!user) {
-    return <AuthScreen error={authError} setError={setAuthError} onAuthed={setUser} />;
+    return <AuthScreen error={authError} setError={setAuthError} onAuthed={setUser} theme={theme} toggleTheme={toggleTheme} />;
   }
 
-  return <LearningApp user={user} setUser={setUser} />;
+  return <LearningApp user={user} setUser={setUser} theme={theme} setTheme={setTheme} toggleTheme={toggleTheme} />;
 }
 
-function AuthScreen({ error, setError, onAuthed }) {
+function AuthScreen({ error, setError, onAuthed, theme, toggleTheme }) {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({
     name: "",
@@ -367,8 +427,11 @@ function AuthScreen({ error, setError, onAuthed }) {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff7ed,#ecfeff_45%,#ffffff)] px-4 py-8">
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1fr_430px]">
+    <main className="app-auth-screen min-h-screen bg-[radial-gradient(circle_at_top_left,#fff7ed,#ecfeff_45%,#ffffff)] px-4 py-8">
+      <div className="mx-auto mb-4 flex max-w-6xl justify-end">
+        <ThemeToggle theme={theme} onToggle={toggleTheme} showLabel />
+      </div>
+      <div className="mx-auto grid min-h-[calc(100vh-7rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1fr_430px]">
         <section className="max-w-2xl">
           <Logo large />
           <h1 className="mt-8 text-4xl font-extrabold leading-tight text-slate-950 sm:text-6xl">
@@ -459,7 +522,7 @@ function AuthScreen({ error, setError, onAuthed }) {
   );
 }
 
-function LearningApp({ user, setUser }) {
+function LearningApp({ user, setUser, theme, setTheme, toggleTheme }) {
   const [active, setActive] = useState("learn");
   const [launchLessonId, setLaunchLessonId] = useState("");
   const [dashboard, setDashboard] = useState(null);
@@ -494,7 +557,7 @@ function LearningApp({ user, setUser }) {
   const activeNav = primaryNavKey(active);
 
   return (
-    <div className="min-h-screen bg-stone-50 text-slate-900">
+    <div className="app-shell min-h-screen bg-stone-50 text-slate-900">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-stone-200 bg-white lg:block">
         <div className="flex h-full flex-col">
           <div className="border-b border-stone-100 p-6">
@@ -524,8 +587,9 @@ function LearningApp({ user, setUser }) {
             <div className="lg:hidden">
               <Logo compact />
             </div>
-            <div className="flex items-center gap-3">
-              <button className="grid h-11 w-11 place-items-center rounded-md border border-stone-200 bg-white text-coral-500">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ThemeToggle theme={theme} onToggle={toggleTheme} />
+              <button className="hidden h-11 w-11 place-items-center rounded-md border border-stone-200 bg-white text-coral-500 sm:grid">
                 <Gift size={21} />
               </button>
               <div className="flex items-center gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2">
@@ -555,6 +619,8 @@ function LearningApp({ user, setUser }) {
               setActive={setActive}
               launchLessonId={launchLessonId}
               setLaunchLessonId={setLaunchLessonId}
+              theme={theme}
+              setTheme={setTheme}
             />
           )}
         </main>
@@ -579,7 +645,7 @@ function LearningApp({ user, setUser }) {
   );
 }
 
-function ActiveView({ active, user, dashboard, refreshDashboard, setActive, launchLessonId, setLaunchLessonId }) {
+function ActiveView({ active, user, dashboard, refreshDashboard, setActive, launchLessonId, setLaunchLessonId, theme, setTheme }) {
   if (["learn", "dashboard", "path", "lessons", "grammar"].includes(active)) {
     return (
       <LearningWorkspace
@@ -606,10 +672,10 @@ function ActiveView({ active, user, dashboard, refreshDashboard, setActive, laun
     );
   }
   if (["profile", "progress", "settings"].includes(active)) {
-    return <ProfileWorkspace initialTab={active === "settings" ? "settings" : "progress"} user={user} dashboard={dashboard} />;
+    return <ProfileWorkspace initialTab={active === "settings" ? "settings" : "progress"} user={user} dashboard={dashboard} theme={theme} setTheme={setTheme} />;
   }
   if ((active === "manage" || active === "admin") && user.role === "ADMIN") {
-    return <ManageWorkspace user={user} refreshDashboard={refreshDashboard} />;
+    return <ManageWorkspace user={user} refreshDashboard={refreshDashboard} theme={theme} setTheme={setTheme} />;
   }
   return <LearningWorkspace dashboard={dashboard} refreshDashboard={refreshDashboard} setActive={setActive} launchLessonId={launchLessonId} setLaunchLessonId={setLaunchLessonId} />;
 }
@@ -725,7 +791,7 @@ function WordsWorkspace({ initialTab = "memory", dashboard, refreshDashboard }) 
           { label: "Mastered", value: dashboard?.stats?.masteredWords || 0 }
         ]}
       >
-        Memory practice and Audio Lab feed the same vocabulary system: saved audio words become reviewable words.
+        Practice vocabulary, memory, and audio in one place.
       </WorkspaceSummary>
       <WorkspaceTabs
         active={tab}
@@ -758,7 +824,7 @@ function PlayWorkspace({ initialTab = "games", dashboard, refreshDashboard }) {
           { label: "XP", value: dashboard.stats.xp.toLocaleString() }
         ]}
       >
-        Mini games and the weekly challenge now sit together as reinforcement after lesson and review work.
+        Mini games and weekly challenges.
       </WorkspaceSummary>
       <WorkspaceTabs
         active={tab}
@@ -777,7 +843,7 @@ function PlayWorkspace({ initialTab = "games", dashboard, refreshDashboard }) {
   );
 }
 
-function ProfileWorkspace({ initialTab = "progress", user, dashboard }) {
+function ProfileWorkspace({ initialTab = "progress", user, dashboard, theme, setTheme }) {
   const [tab, setTab] = useState(initialTab);
 
   useEffect(() => {
@@ -795,7 +861,7 @@ function ProfileWorkspace({ initialTab = "progress", user, dashboard }) {
           { label: "XP", value: dashboard.stats.xp.toLocaleString() }
         ]}
       >
-        Progress, badges, leaderboard position, and learner settings are collected here.
+        Progress, badges, leaderboard, and settings.
       </WorkspaceSummary>
       <WorkspaceTabs
         active={tab}
@@ -805,12 +871,12 @@ function ProfileWorkspace({ initialTab = "progress", user, dashboard }) {
           { key: "settings", label: "Settings", icon: Settings }
         ]}
       />
-      {tab === "settings" ? <SettingsView user={user} /> : <ProgressView dashboard={dashboard} />}
+      {tab === "settings" ? <SettingsView user={user} theme={theme} setTheme={setTheme} /> : <ProgressView dashboard={dashboard} />}
     </div>
   );
 }
 
-function ManageWorkspace({ user, refreshDashboard }) {
+function ManageWorkspace({ user, refreshDashboard, theme, setTheme }) {
   return (
     <div className="space-y-5">
       <WorkspaceSummary
@@ -822,10 +888,10 @@ function ManageWorkspace({ user, refreshDashboard }) {
           { label: "Settings", value: "Included" }
         ]}
       >
-        Content tools, deployment status, and account settings live together here.
+        Admin tools, deployment status, and account settings.
       </WorkspaceSummary>
       <AdminView refreshDashboard={refreshDashboard} />
-      <SettingsView user={user} />
+      <SettingsView user={user} theme={theme} setTheme={setTheme} />
     </div>
   );
 }
@@ -4445,10 +4511,10 @@ function ReviewQueueView({ refreshDashboard }) {
                   <ListChecks size={16} /> Review
                 </p>
                 <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight sm:text-5xl">
-                  One quiz. No answer list.
+                  Review
                 </h1>
                 <p className="mt-3 max-w-2xl text-base font-semibold text-slate-300">
-                  Review now runs as a focused quiz. You answer first; the correct answer appears only after submission.
+                  Answer due words, grammar, and mistakes one question at a time.
                 </p>
               </div>
               <button
@@ -4469,7 +4535,7 @@ function ReviewQueueView({ refreshDashboard }) {
                 <InfoTile label="Mistakes" value={review.counts.mistakes} />
               </div>
               <p className="mt-4 text-sm font-semibold text-slate-600">
-                Estimated time: {review.estimatedMinutes} minutes. Questions are mixed into one session so you do not pre-read the answers.
+                Estimated time: {review.estimatedMinutes} minutes.
               </p>
             </Panel>
           ) : (
@@ -5040,13 +5106,34 @@ function SystemStatusPanel({ system }) {
   );
 }
 
-function SettingsView({ user }) {
+function SettingsView({ user, theme, setTheme }) {
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <Panel title="Profile" icon={Users}>
         <InfoTile label="Name" value={user.name} />
         <InfoTile label="Email" value={user.email} />
         <InfoTile label="Role" value={user.role} />
+      </Panel>
+      <Panel title="Appearance" icon={theme === "dark" ? Moon : Sun}>
+        <div className="flex rounded-lg border border-stone-200 bg-stone-50 p-1 text-sm font-black">
+          {[
+            { value: "light", label: "Light", icon: Sun },
+            { value: "dark", label: "Dark", icon: Moon }
+          ].map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setTheme(option.value)}
+              className={classNames(
+                "inline-flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-3",
+                theme === option.value ? "bg-white text-coral-600 shadow-sm" : "text-slate-600 hover:bg-white"
+              )}
+            >
+              <option.icon size={17} />
+              {option.label}
+            </button>
+          ))}
+        </div>
       </Panel>
       <Panel title="Learning Preferences" icon={Settings}>
         <div className="grid gap-3">
