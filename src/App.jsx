@@ -3215,6 +3215,7 @@ function FeedbackFact({ label, value, good = false }) {
 
 function QuizResultBanner({ result, className = "" }) {
   if (!result) return null;
+  const isSubmissionError = Boolean(result.submissionError);
   return (
     <div
       className={classNames(
@@ -3234,11 +3235,15 @@ function QuizResultBanner({ result, className = "" }) {
         </div>
         <div className="min-w-0">
           <p className="font-black">
-            {result.correct ? `Correct +${result.xpAwarded || 0} XP` : "Not correct"}
+            {isSubmissionError ? "Could not check answer" : result.correct ? `Correct +${result.xpAwarded || 0} XP` : "Not correct"}
           </p>
-          <p className="mt-1 text-sm">
-            Correct answer: <span className="font-black">{result.expected || "—"}</span>
-          </p>
+          {isSubmissionError ? (
+            <p className="mt-1 text-sm">{result.explanation || "Try again."}</p>
+          ) : (
+            <p className="mt-1 text-sm">
+              Correct answer: <span className="font-black">{result.expected || "—"}</span>
+            </p>
+          )}
           {result.submitted && (
             <p className="mt-1 text-xs font-bold opacity-80">
               Your answer: <span className="font-black">{result.submitted}</span>
@@ -4371,23 +4376,19 @@ function ChallengesView({ challenge, refreshDashboard }) {
 function ReviewQueueView({ refreshDashboard }) {
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [sessionItems, setSessionItems] = useState([]);
+  const [index, setIndex] = useState(0);
+  const [results, setResults] = useState([]);
   const [lastResult, setLastResult] = useState(null);
+  const [finished, setFinished] = useState(false);
 
-  const loadReview = async (options = {}) => {
-    setLoading(true);
+  const loadReview = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const data = await api("/api/review/due");
       setReview(data);
-      setSelectedItem((current) => {
-        if (options.skipKey) {
-          return data.items.find((item) => item.key !== options.skipKey) || data.items[0] || null;
-        }
-        if (current && data.items.some((item) => item.key === current.key)) return current;
-        return data.items[0] || null;
-      });
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -4397,95 +4398,212 @@ function ReviewQueueView({ refreshDashboard }) {
 
   if (loading || !review) return <Panel title="Review">Loading your review queue...</Panel>;
 
-  return (
-    <div className="grid gap-5 xl:grid-cols-[390px_1fr]">
-      <section className="space-y-5">
-        <Panel title="Review Due" icon={ListChecks}>
-          <div className="grid grid-cols-3 gap-3">
-            <InfoTile label="Words" value={review.counts.vocabulary} />
-            <InfoTile label="Grammar" value={review.counts.grammar} />
-            <InfoTile label="Mistakes" value={review.counts.mistakes} />
-          </div>
-          <p className="mt-4 text-sm font-semibold text-slate-600">
-            Estimated time: {review.estimatedMinutes} minutes.
-          </p>
-        </Panel>
+  const reviewItems = review.items || [];
+  const inSession = sessionItems.length > 0 && !finished;
+  const currentItem = inSession ? sessionItems[index] : null;
+  const attempted = results.filter((result) => result !== undefined).length;
+  const correct = results.filter(Boolean).length;
+  const progress = sessionItems.length ? Math.round((attempted / sessionItems.length) * 100) : 0;
 
-        <Panel title="Queue" icon={NotebookTabs}>
-          {review.items.length ? (
-            <div className="space-y-3">
-              {review.items.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => setSelectedItem(item)}
-                  className={classNames(
-                    "w-full rounded-lg border p-4 text-left",
-                    selectedItem?.key === item.key ? "border-lagoon-500 bg-lagoon-50" : "border-stone-200 bg-white hover:bg-stone-50"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-black text-slate-950">{item.title}</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-600">{item.detail}</p>
-                    </div>
-                    <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-black uppercase text-slate-600">
-                      {item.type}
-                    </span>
-                  </div>
-                </button>
-              ))}
+  const startReview = () => {
+    setSessionItems(shuffleItems(reviewItems));
+    setIndex(0);
+    setResults([]);
+    setLastResult(null);
+    setFinished(false);
+  };
+
+  const recordResult = (result) => {
+    setLastResult(result);
+    if (result.submissionError) return;
+    setResults((currentResults) => {
+      const next = [...currentResults];
+      next[index] = Boolean(result.correct);
+      return next;
+    });
+  };
+
+  const advance = async () => {
+    if (index + 1 >= sessionItems.length) {
+      setFinished(true);
+      await loadReview(false);
+      await refreshDashboard?.({ silent: true });
+      return;
+    }
+    setIndex((value) => value + 1);
+    await refreshDashboard?.({ silent: true });
+  };
+
+  if (!inSession && !finished) {
+    return (
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="space-y-5">
+          <section className="rounded-lg border border-slate-900 bg-slate-950 p-5 text-white shadow-soft sm:p-7">
+            <div className="grid gap-6 lg:grid-cols-[1fr_240px] lg:items-end">
+              <div>
+                <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-black text-lagoon-100">
+                  <ListChecks size={16} /> Review
+                </p>
+                <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight sm:text-5xl">
+                  One quiz. No answer list.
+                </h1>
+                <p className="mt-3 max-w-2xl text-base font-semibold text-slate-300">
+                  Review now runs as a focused quiz. You answer first; the correct answer appears only after submission.
+                </p>
+              </div>
+              <button
+                disabled={!reviewItems.length}
+                onClick={startReview}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-honey-500 px-5 py-4 font-black text-white hover:bg-honey-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Rocket size={19} /> Start Review
+              </button>
             </div>
-          ) : (
-            <p className="text-sm font-semibold text-slate-600">Nothing is due right now. Continue the course to create future reviews.</p>
-          )}
-        </Panel>
-      </section>
+          </section>
 
-      <section>
-        <QuizResultBanner result={lastResult} className="mb-4" />
-        {selectedItem?.exercise ? (
-          <PracticePanel
-            title="Fix My Mistakes"
-            exercise={selectedItem.exercise}
-            source="REVIEW"
-            autoAdvance
-            autoAdvanceOnWrong
-            autoSubmitChoices
-            onResult={setLastResult}
-            onComplete={async () => {
-              await loadReview({ skipKey: selectedItem.key });
-              await refreshDashboard?.({ silent: true });
-            }}
-          />
-        ) : selectedItem?.word ? (
-          <ReviewWordCard
-            item={selectedItem}
-            onResult={setLastResult}
-            onComplete={async () => {
-              await loadReview({ skipKey: selectedItem.key });
-              await refreshDashboard?.({ silent: true });
-            }}
-          />
-        ) : (
-          <Panel title="Vocabulary Review" icon={NotebookTabs}>
-            <p className="text-sm font-semibold text-slate-600">Select a review item from the queue.</p>
+          {reviewItems.length ? (
+            <Panel title="What Will Be Tested" icon={Target}>
+              <div className="grid gap-3 md:grid-cols-3">
+                <InfoTile label="Words" value={review.counts.vocabulary} />
+                <InfoTile label="Grammar" value={review.counts.grammar} />
+                <InfoTile label="Mistakes" value={review.counts.mistakes} />
+              </div>
+              <p className="mt-4 text-sm font-semibold text-slate-600">
+                Estimated time: {review.estimatedMinutes} minutes. Questions are mixed into one session so you do not pre-read the answers.
+              </p>
+            </Panel>
+          ) : (
+            <Panel title="Nothing Due" icon={CheckCircle2}>
+              <p className="text-sm font-semibold text-slate-600">
+                No review is due right now. Continue the course or words practice to create future review items.
+              </p>
+            </Panel>
+          )}
+        </section>
+
+        <aside className="space-y-5">
+          <Panel title="Review Rules" icon={Shield}>
+            <div className="grid gap-3 text-sm font-bold text-slate-700">
+              <div className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3">Answers stay hidden until you submit.</div>
+              <div className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3">Wrong answers are shown, then queued again for practice.</div>
+              <div className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3">Vocabulary uses active recall: type the Spanish.</div>
+            </div>
           </Panel>
-        )}
-      </section>
-    </div>
+
+          {!!review.weakSpots?.length && (
+            <Panel title="Weak Areas" icon={PenTool}>
+              <div className="grid gap-2">
+                {review.weakSpots.slice(0, 4).map((spot) => (
+                  <div key={spot.key} className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3">
+                    <p className="font-black text-slate-950">{spot.title}</p>
+                    <p className="mt-1 text-xs font-bold text-slate-500">{spot.categoryLabel}</p>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+        </aside>
+      </div>
+    );
+  }
+
+  if (finished) {
+    const score = sessionItems.length ? Math.round((correct / sessionItems.length) * 100) : 0;
+    return (
+      <div className="mx-auto max-w-3xl space-y-5">
+        <QuizResultBanner result={lastResult} />
+        <Panel title="Review Complete" icon={Trophy}>
+          <div className="grid gap-4 md:grid-cols-[120px_1fr] md:items-center">
+            <AssetImage imageKey="rewards-and-progress:15" alt="Review complete" className="h-28 w-28" />
+            <div>
+              <h2 className="text-3xl font-black text-slate-950">{correct}/{sessionItems.length} correct</h2>
+              <p className="mt-2 font-semibold text-slate-600">Your review schedule has been updated.</p>
+              <ProgressBar value={score} className="mt-4" color={score >= 80 ? "bg-emerald-500" : "bg-honey-500"} />
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button
+                  onClick={() => {
+                    setSessionItems([]);
+                    setFinished(false);
+                    setLastResult(null);
+                  }}
+                  className="rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600"
+                >
+                  Back to review
+                </button>
+                {!!review.items?.length && (
+                  <button
+                    onClick={startReview}
+                    className="rounded-md border border-stone-200 bg-white px-5 py-3 font-black text-slate-700 hover:bg-stone-50"
+                  >
+                    Review remaining
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </Panel>
+      </div>
+    );
+  }
+
+  return (
+    <section className="mx-auto max-w-4xl space-y-4">
+      <QuizResultBanner result={lastResult} />
+      <Panel title="Review Session" icon={ListChecks}>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-black text-lagoon-900">
+          <span>Question {index + 1}/{sessionItems.length}</span>
+          <span>{attempted}/{sessionItems.length} answered</span>
+        </div>
+        <ProgressBar value={progress} className="mt-3" />
+      </Panel>
+
+      {currentItem?.exercise ? (
+        <PracticePanel
+          key={currentItem.key}
+          title={currentItem.type === "mistake" ? "Fix the mistake" : "Grammar review"}
+          exercise={currentItem.exercise}
+          source="REVIEW"
+          autoAdvance
+          autoAdvanceOnWrong
+          autoSubmitChoices
+          onResult={recordResult}
+          onComplete={advance}
+        />
+      ) : currentItem?.word ? (
+        <ReviewWordQuizCard
+          key={currentItem.key}
+          item={currentItem}
+          onResult={recordResult}
+          onComplete={advance}
+        />
+      ) : (
+        <Panel title="Review" icon={ListChecks}>
+          <p className="text-sm font-semibold text-slate-600">This review item is unavailable.</p>
+        </Panel>
+      )}
+    </section>
   );
 }
 
-function ReviewWordCard({ item, onComplete, onResult }) {
+function ReviewWordQuizCard({ item, onComplete, onResult }) {
   const word = item.word;
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [busy, setBusy] = useState(false);
+  const advanceTimer = useRef(null);
 
   useEffect(() => {
+    if (advanceTimer.current) {
+      window.clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
     setAnswer("");
     setFeedback(null);
   }, [word?.id]);
+
+  useEffect(() => () => {
+    if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
+  }, []);
 
   const submit = async () => {
     if (!word || !answer.trim() || feedback) return;
@@ -4501,9 +4619,14 @@ function ReviewWordCard({ item, onComplete, onResult }) {
       const resultWithAnswer = { ...result, submitted: answer };
       setFeedback(resultWithAnswer);
       onResult?.(resultWithAnswer);
-      window.setTimeout(() => {
+      advanceTimer.current = window.setTimeout(() => {
+        advanceTimer.current = null;
         onComplete?.();
       }, result.correct ? 900 : 1400);
+    } catch (err) {
+      const result = { correct: false, submissionError: true, submitted: answer, expected: "", explanation: err.message };
+      setFeedback(result);
+      onResult?.(result);
     } finally {
       setBusy(false);
     }
@@ -4512,60 +4635,81 @@ function ReviewWordCard({ item, onComplete, onResult }) {
   if (!word) {
     return (
       <Panel title="Vocabulary Review" icon={NotebookTabs}>
-        <p className="text-sm font-semibold text-slate-600">Select a word from the queue.</p>
+        <p className="text-sm font-semibold text-slate-600">This word is unavailable.</p>
       </Panel>
     );
   }
 
   return (
     <Panel
-      title="Vocabulary Review"
+      title="Word Recall"
       icon={NotebookTabs}
       action={<span className="rounded-full bg-lagoon-50 px-3 py-1 text-xs font-black text-lagoon-700">{item.state || "Review"}</span>}
     >
-      <div className="grid gap-5 md:grid-cols-[170px_1fr]">
-        <AssetImage imageKey={word.imageKey} alt={word.spanish} className="aspect-square w-full" />
-        <div>
-          <p className="text-xs font-black uppercase tracking-wide text-slate-500">{word.groupTitle || "Words"}</p>
-          <h2 className="mt-2 text-3xl font-black text-slate-950">{word.english}</h2>
-          <p className="mt-2 text-sm font-semibold text-slate-600">Type the Spanish word or phrase.</p>
-          <input
-            value={answer}
-            disabled={Boolean(feedback)}
-            onChange={(event) => setAnswer(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                submit();
-              }
-            }}
-            className="mt-5 w-full rounded-md border border-stone-200 px-4 py-4 text-xl font-bold outline-none focus:border-lagoon-500 disabled:bg-stone-100"
-            placeholder="Spanish answer"
-          />
-          {!feedback && (
-            <button
-              disabled={!answer.trim() || busy}
-              onClick={submit}
-              className="mt-4 rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600 disabled:opacity-50"
-            >
-              {busy ? "Checking..." : "Check Answer"}
-            </button>
-          )}
-        </div>
+      <div className="rounded-lg border border-stone-200 bg-stone-50 p-5">
+        <p className="text-xs font-black uppercase tracking-wide text-slate-500">{word.groupTitle || "Vocabulary"}</p>
+        <h2 className="mt-3 text-4xl font-black text-slate-950">{word.english}</h2>
+        <p className="mt-2 text-sm font-semibold text-slate-600">Type the Spanish word or phrase. The Spanish answer stays hidden until you submit.</p>
+        <input
+          value={answer}
+          disabled={Boolean(feedback)}
+          onChange={(event) => setAnswer(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              submit();
+            }
+          }}
+          className="mt-5 w-full rounded-md border border-stone-200 bg-white px-4 py-4 text-xl font-bold outline-none focus:border-lagoon-500 disabled:bg-stone-100"
+          placeholder="Spanish answer"
+        />
+        {!feedback && (
+          <button
+            disabled={!answer.trim() || busy}
+            onClick={() => submit()}
+            className="mt-4 rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600 disabled:opacity-50"
+          >
+            {busy ? "Checking..." : "Check Answer"}
+          </button>
+        )}
       </div>
+
+      {feedback && !feedback.submissionError && word.imageKey && (
+        <div className="mt-5 grid gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:grid-cols-[110px_1fr] sm:items-center">
+          <AssetImage imageKey={word.imageKey} alt={word.spanish} className="aspect-square w-full" />
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-emerald-700">Answer revealed</p>
+            <p className="mt-1 text-xl font-black text-emerald-950">{word.spanish}</p>
+            {word.example && <p className="mt-2 text-sm font-semibold text-slate-700">{word.example}</p>}
+          </div>
+        </div>
+      )}
 
       {feedback && (
         <div className={classNames("mt-5 rounded-lg border p-4", feedback.correct ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50")}>
           <p className={classNames("font-black", feedback.correct ? "text-emerald-900" : "text-red-900")}>
-            {feedback.correct ? `Correct +${feedback.xpAwarded} XP` : "Not yet"}
+            {feedback.submissionError ? "Could not check the answer" : feedback.correct ? `Correct +${feedback.xpAwarded} XP` : "Not yet"}
           </p>
-          <p className="mt-1 text-sm font-semibold text-slate-700">
-            Correct answer: <span className="font-black">{feedback.expected}</span>
+          {feedback.expected && (
+            <p className="mt-1 text-sm font-semibold text-slate-700">
+              Correct answer: <span className="font-black">{feedback.expected}</span>
+            </p>
+          )}
+          <p className="mt-1 text-sm font-semibold text-slate-600">
+            {feedback.submissionError ? feedback.explanation : feedback.review?.message}
           </p>
-          <p className="mt-1 text-sm font-semibold text-slate-600">{feedback.review?.message}</p>
-          <div className="mt-4 rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
-            Moving to the next due item...
-          </div>
+          {feedback.submissionError ? (
+            <button
+              onClick={() => setFeedback(null)}
+              className="mt-4 rounded-md bg-red-600 px-4 py-2 font-bold text-white hover:bg-red-700"
+            >
+              Try Again
+            </button>
+          ) : (
+            <div className="mt-4 rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
+              Moving to the next due item...
+            </div>
+          )}
         </div>
       )}
     </Panel>
