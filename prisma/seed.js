@@ -472,7 +472,7 @@ const lessons = [
     imageKey: "people-and-family:1",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns", "useful-phrases"],
-    order: 0,
+    order: 10,
     estimatedMinutes: 8,
     outcomes: [
       "You can introduce yourself.",
@@ -498,7 +498,7 @@ const lessons = [
     imageKey: "people-and-family:1",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns"],
-    order: 1,
+    order: 20,
     estimatedMinutes: 4,
     sentences: [
       ["yo", "I", "Use yo when you talk about yourself."],
@@ -517,7 +517,7 @@ const lessons = [
     imageKey: "grammar-scenes:1",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns", "classroom-basics"],
-    order: 2,
+    order: 30,
     estimatedMinutes: 5,
     sentences: [
       ["soy", "I am", "Soy is the I-form of ser."],
@@ -535,7 +535,7 @@ const lessons = [
     imageKey: "grammar-scenes:5",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["emotions-and-states", "places-around-town"],
-    order: 3,
+    order: 40,
     estimatedMinutes: 5,
     sentences: [
       ["estoy", "I am", "Estoy is the I-form of estar."],
@@ -553,13 +553,39 @@ const lessons = [
     imageKey: "grammar-scenes:4",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns", "places-around-town", "emotions-and-states"],
-    order: 4,
+    order: 50,
     estimatedMinutes: 6,
     sentences: [
       ["es", "he/she/it is", "Es comes from ser and is used for identity or traits."],
       ["está", "he/she/it is", "Está comes from estar and is used for state or location."],
       ["Ella es profesora.", "She is a teacher.", "Identity uses es."],
       ["Ella está en casa.", "She is at home.", "Location uses está."]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-absolute-start",
+    title: "A1.0 Absolute Start Checkpoint",
+    summary: "Test first pronouns, soy, estoy, es, está, and a basic introduction.",
+    cefrLevel: "A1",
+    theme: "Checkpoint",
+    situation: "first conversation",
+    imageKey: "people-and-family:1",
+    topicSlug: "absolute-basics",
+    vocabularySlugs: ["people-and-pronouns", "useful-phrases", "places-around-town"],
+    order: 55,
+    estimatedMinutes: 8,
+    outcomes: [
+      "You can introduce yourself with soy or me llamo.",
+      "You can separate identity from location.",
+      "You can answer a first basic greeting."
+    ],
+    conceptKeys: ["checkpoint", "absolute-basics", "ser-identity", "estar-location"],
+    reviewSummary: "You checked the first A1 building blocks: pronouns, soy, estoy, es, está, and name phrases.",
+    sentences: [
+      ["Soy Ana.", "I am Ana.", "Use soy for identity."],
+      ["Estoy en casa.", "I am at home.", "Use estoy for location."],
+      ["Ella es profesora.", "She is a teacher.", "Use es for identity."],
+      ["Ella está en casa.", "She is at home.", "Use está for location."]
     ]
   },
   {
@@ -572,7 +598,7 @@ const lessons = [
     imageKey: "grammar-scenes:1",
     topicSlug: "ser-estar",
     vocabularySlugs: ["classroom-basics", "places-around-town"],
-    order: 5,
+    order: 60,
     estimatedMinutes: 8,
     sentences: [
       ["Yo soy estudiante.", "I am a student.", "Ser describes identity or profession."],
@@ -590,7 +616,7 @@ const lessons = [
     imageKey: "classroom-basics:3",
     topicSlug: "articles-gender",
     vocabularySlugs: ["classroom-basics", "places-around-town"],
-    order: 6,
+    order: 70,
     estimatedMinutes: 7,
     sentences: [
       ["El libro es nuevo.", "The book is new.", "Libro is masculine singular."],
@@ -608,7 +634,7 @@ const lessons = [
     imageKey: "daily-actions:1",
     topicSlug: "present-tense-ar",
     vocabularySlugs: ["daily-actions"],
-    order: 7,
+    order: 80,
     estimatedMinutes: 9,
     sentences: [
       ["Yo hablo español.", "I speak Spanish.", "Yo uses the -o ending."],
@@ -627,7 +653,7 @@ const lessons = [
     imageKey: "emotions-and-states:1",
     topicSlug: "estar-emotions",
     vocabularySlugs: ["emotions-and-states"],
-    order: 8,
+    order: 90,
     estimatedMinutes: 8,
     sentences: [
       ["Estoy feliz hoy.", "I am happy today.", "Use estar for feelings that can change."],
@@ -635,6 +661,32 @@ const lessons = [
       ["Estamos nerviosos.", "We are nervous.", "Estamos matches nosotros."],
       ["El estudiante está enfermo.", "The student is sick.", "Use estar for temporary health states."],
       ["Ana está nerviosa.", "Ana is nervous.", "Use está with Ana because she is one person."]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-core-grammar",
+    title: "A1.1 Core Grammar Checkpoint",
+    summary: "Check ser, estar, articles, regular -ar forms, and feeling sentences.",
+    cefrLevel: "A1",
+    theme: "Checkpoint",
+    situation: "core grammar review",
+    imageKey: "grammar-scenes:1",
+    topicSlug: "ser-estar",
+    vocabularySlugs: ["classroom-basics", "daily-actions", "emotions-and-states"],
+    order: 95,
+    estimatedMinutes: 9,
+    outcomes: [
+      "You can choose ser or estar for basic meanings.",
+      "You can match el, la, and los with common nouns.",
+      "You can produce a simple -ar verb form."
+    ],
+    conceptKeys: ["checkpoint", "ser-estar", "articles", "present-tense-ar", "estar-emotions"],
+    reviewSummary: "You checked the first grammar layer: identity, location, articles, -ar verbs, and feelings.",
+    sentences: [
+      ["Yo soy estudiante.", "I am a student.", "Use soy for identity."],
+      ["El libro es nuevo.", "The book is new.", "Libro uses el."],
+      ["Yo hablo español.", "I speak Spanish.", "Yo uses the -o ending."],
+      ["Estoy feliz hoy.", "I am happy today.", "Use estar for current feelings."]
     ]
   },
   {
@@ -647,7 +699,7 @@ const lessons = [
     imageKey: "food-and-ordering:17",
     topicSlug: "ordering-food",
     vocabularySlugs: ["food-and-ordering"],
-    order: 9,
+    order: 100,
     estimatedMinutes: 9,
     sentences: [
       ["Quiero un café, por favor.", "I want a coffee, please.", "Use un before masculine singular café."],
@@ -666,7 +718,7 @@ const lessons = [
     imageKey: "travel-and-survival:1",
     topicSlug: "travel-questions",
     vocabularySlugs: ["travel-and-survival", "places-around-town"],
-    order: 10,
+    order: 110,
     estimatedMinutes: 9,
     sentences: [
       ["¿Dónde está el hotel?", "Where is the hotel?", "Dónde asks for location."],
@@ -685,7 +737,7 @@ const lessons = [
     imageKey: "grammar-scenes:13",
     topicSlug: "location-prepositions",
     vocabularySlugs: ["classroom-basics", "home-and-objects", "places-around-town"],
-    order: 11,
+    order: 120,
     estimatedMinutes: 9,
     sentences: [
       ["El libro está en la mesa.", "The book is on the table.", "Use estar for object location."],
@@ -704,7 +756,7 @@ const lessons = [
     imageKey: "grammar-scenes:8",
     topicSlug: "plural-agreement",
     vocabularySlugs: ["classroom-basics", "people-and-pronouns"],
-    order: 12,
+    order: 130,
     estimatedMinutes: 8,
     sentences: [
       ["Los estudiantes están en clase.", "The students are in class.", "Los marks masculine or mixed plural."],
@@ -723,7 +775,7 @@ const lessons = [
     imageKey: "grammar-scenes:11",
     topicSlug: "question-words",
     vocabularySlugs: ["useful-phrases", "travel-and-survival"],
-    order: 13,
+    order: 140,
     estimatedMinutes: 8,
     sentences: [
       ["¿Qué quieres?", "What do you want?", "Qué asks what."],
@@ -742,7 +794,7 @@ const lessons = [
     imageKey: "grammar-scenes:12",
     topicSlug: "negation-basics",
     vocabularySlugs: ["useful-phrases", "daily-actions"],
-    order: 14,
+    order: 150,
     estimatedMinutes: 7,
     sentences: [
       ["No entiendo.", "I do not understand.", "No goes before the verb."],
@@ -761,13 +813,39 @@ const lessons = [
     imageKey: "travel-and-survival:5",
     topicSlug: "tener-necesitar",
     vocabularySlugs: ["travel-and-survival", "useful-phrases", "home-and-objects"],
-    order: 15,
+    order: 160,
     estimatedMinutes: 9,
     sentences: [
       ["Tengo un mapa.", "I have a map.", "Tengo means I have."],
       ["Necesito ayuda.", "I need help.", "Necesito is useful when stuck."],
       ["Necesito las llaves.", "I need the keys.", "Las marks plural feminine."],
       ["Tenemos una mesa.", "We have a table.", "Tenemos means we have."]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-survival-spanish",
+    title: "A1.2 Survival Spanish Checkpoint",
+    summary: "Check food, travel, location, questions, negation, tener, and necesitar.",
+    cefrLevel: "A1",
+    theme: "Checkpoint",
+    situation: "travel survival",
+    imageKey: "travel-and-survival:1",
+    topicSlug: "travel-questions",
+    vocabularySlugs: ["food-and-ordering", "travel-and-survival", "places-around-town", "useful-phrases"],
+    order: 165,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can ask where an important place is.",
+      "You can say what you need in a travel situation.",
+      "You can make a simple negative sentence."
+    ],
+    conceptKeys: ["checkpoint", "travel-questions", "negation", "tener-necesitar", "location"],
+    reviewSummary: "You checked survival Spanish for food, travel, locations, questions, and practical needs.",
+    sentences: [
+      ["¿Dónde está el hotel?", "Where is the hotel?", "Use dónde está for location questions."],
+      ["Necesito un taxi.", "I need a taxi.", "Necesito is a practical need verb."],
+      ["No tengo un mapa.", "I do not have a map.", "No goes before the verb."],
+      ["Quiero un café, por favor.", "I want a coffee, please.", "A practical café request."]
     ]
   },
   {
@@ -780,7 +858,7 @@ const lessons = [
     imageKey: "daily-actions:7",
     topicSlug: "present-tense-ar",
     vocabularySlugs: ["daily-actions", "people-and-pronouns"],
-    order: 16,
+    order: 170,
     estimatedMinutes: 9,
     sentences: [
       ["Yo compro pan.", "I buy bread.", "Comprar is a regular -ar verb."],
@@ -799,7 +877,7 @@ const lessons = [
     imageKey: "fruit-and-produce:21",
     topicSlug: "ordering-food",
     vocabularySlugs: ["fruit-and-produce", "food-and-ordering"],
-    order: 17,
+    order: 180,
     estimatedMinutes: 8,
     sentences: [
       ["Quiero una manzana.", "I want an apple.", "Una matches feminine singular manzana."],
@@ -818,7 +896,7 @@ const lessons = [
     imageKey: "food-and-ordering:19",
     topicSlug: "ordering-food",
     vocabularySlugs: ["food-and-ordering", "useful-phrases"],
-    order: 18,
+    order: 190,
     estimatedMinutes: 9,
     sentences: [
       ["Un café, por favor.", "A coffee, please.", "A short polite order is enough."],
@@ -837,7 +915,7 @@ const lessons = [
     imageKey: "daily-actions:15",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["useful-phrases"],
-    order: 19,
+    order: 200,
     estimatedMinutes: 5,
     sentences: [
       ["Por favor.", "Please.", "Use por favor to make a request polite."],
@@ -856,13 +934,39 @@ const lessons = [
     imageKey: "daily-actions:6",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["useful-phrases"],
-    order: 20,
+    order: 210,
     estimatedMinutes: 5,
     sentences: [
       ["Más despacio.", "More slowly.", "Use más despacio when someone speaks too fast."],
       ["Más despacio, por favor.", "More slowly, please.", "Add por favor to make the request polite."],
       ["No entiendo.", "I do not understand.", "Use this when you are lost."],
       ["No entiendo, más despacio.", "I do not understand, more slowly.", "Combine repair phrases in one sentence."]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-daily-life",
+    title: "A1.3 Daily Life Checkpoint",
+    summary: "Check daily actions, market phrases, restaurant requests, and repair phrases.",
+    cefrLevel: "A1",
+    theme: "Checkpoint",
+    situation: "daily errands",
+    imageKey: "food-and-ordering:19",
+    topicSlug: "ordering-food",
+    vocabularySlugs: ["daily-actions", "fruit-and-produce", "food-and-ordering", "useful-phrases"],
+    order: 215,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can produce a simple daily action.",
+      "You can order or ask about food politely.",
+      "You can use repair phrases when you do not understand."
+    ],
+    conceptKeys: ["checkpoint", "daily-actions", "ordering-food", "conversation-repair"],
+    reviewSummary: "You checked daily-life actions, market and restaurant phrases, and repair language.",
+    sentences: [
+      ["Compro pan.", "I buy bread.", "Comprar becomes compro for yo."],
+      ["Quiero una manzana.", "I want an apple.", "Una matches manzana."],
+      ["Un café, por favor.", "A coffee, please.", "A short polite order works."],
+      ["No entiendo, más despacio, por favor.", "I do not understand, more slowly please.", "Use this when speech is too fast."]
     ]
   },
   {
@@ -875,7 +979,7 @@ const lessons = [
     imageKey: "people-and-family:3",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns", "classroom-basics"],
-    order: 21,
+    order: 220,
     estimatedMinutes: 6,
     sentences: [
       ["Soy estudiante.", "I am a student.", "Soy is enough when the subject is I."],
@@ -894,7 +998,7 @@ const lessons = [
     imageKey: "travel-and-survival:5",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["useful-phrases", "people-and-pronouns"],
-    order: 22,
+    order: 230,
     estimatedMinutes: 5,
     sentences: [
       ["Soy de Austria.", "I am from Austria.", "Use soy de for origin."],
@@ -913,7 +1017,7 @@ const lessons = [
     imageKey: "classroom-basics:3",
     topicSlug: "articles-gender",
     vocabularySlugs: ["classroom-basics", "places-around-town"],
-    order: 23,
+    order: 240,
     estimatedMinutes: 6,
     sentences: [
       ["El libro.", "The book.", "Libro uses el."],
@@ -932,7 +1036,7 @@ const lessons = [
     imageKey: "classroom-basics:6",
     topicSlug: "articles-gender",
     vocabularySlugs: ["classroom-basics", "places-around-town"],
-    order: 24,
+    order: 250,
     estimatedMinutes: 6,
     sentences: [
       ["La silla.", "The chair.", "Silla uses la."],
@@ -951,7 +1055,7 @@ const lessons = [
     imageKey: "food-and-ordering:3",
     topicSlug: "articles-gender",
     vocabularySlugs: ["food-and-ordering", "classroom-basics"],
-    order: 25,
+    order: 260,
     estimatedMinutes: 6,
     sentences: [
       ["Un café.", "A coffee.", "Café uses un."],
@@ -970,7 +1074,7 @@ const lessons = [
     imageKey: "places-around-town:7",
     topicSlug: "location-prepositions",
     vocabularySlugs: ["places-around-town", "home-and-objects"],
-    order: 26,
+    order: 270,
     estimatedMinutes: 6,
     sentences: [
       ["Estoy en casa.", "I am at home.", "Estoy en gives your current location."],
@@ -989,7 +1093,7 @@ const lessons = [
     imageKey: "places-around-town:4",
     topicSlug: "location-prepositions",
     vocabularySlugs: ["places-around-town", "travel-and-survival"],
-    order: 27,
+    order: 280,
     estimatedMinutes: 6,
     sentences: [
       ["La tienda está cerca.", "The store is nearby.", "Use está for location."],
@@ -1008,13 +1112,39 @@ const lessons = [
     imageKey: "grammar-scenes:12",
     topicSlug: "negation-basics",
     vocabularySlugs: ["useful-phrases", "daily-actions"],
-    order: 28,
+    order: 290,
     estimatedMinutes: 6,
     sentences: [
       ["No entiendo.", "I do not understand.", "No goes before entiendo."],
       ["No hablo español.", "I do not speak Spanish.", "No goes before hablo."],
       ["No soy estudiante.", "I am not a student.", "No goes before soy."],
       ["Ella no trabaja hoy.", "She does not work today.", "No stays before the conjugated verb."]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-building-blocks",
+    title: "A1.4 Building Blocks Checkpoint",
+    summary: "Check identity, origin, articles, location, and simple negation.",
+    cefrLevel: "A1",
+    theme: "Checkpoint",
+    situation: "basic sentence control",
+    imageKey: "grammar-scenes:12",
+    topicSlug: "negation-basics",
+    vocabularySlugs: ["people-and-pronouns", "classroom-basics", "places-around-town", "useful-phrases"],
+    order: 295,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can say where you are from.",
+      "You can choose common articles one at a time.",
+      "You can negate a simple identity sentence."
+    ],
+    conceptKeys: ["checkpoint", "identity", "articles", "location", "negation"],
+    reviewSummary: "You checked the core sentence blocks: identity, origin, articles, location, and no before the verb.",
+    sentences: [
+      ["Soy de Austria.", "I am from Austria.", "Use soy de for origin."],
+      ["La tienda está abierta.", "The store is open.", "La matches tienda."],
+      ["Estoy en el café.", "I am in the café.", "Use estoy en for location."],
+      ["No soy estudiante.", "I am not a student.", "No goes before soy."]
     ]
   },
   {
@@ -1027,7 +1157,7 @@ const lessons = [
     imageKey: "food-and-ordering:2",
     topicSlug: "ordering-food",
     vocabularySlugs: ["food-and-ordering", "fruit-and-produce"],
-    order: 29,
+    order: 300,
     estimatedMinutes: 6,
     sentences: [
       ["Quiero agua.", "I want water.", "Quiero can be followed directly by a noun."],
@@ -1046,7 +1176,7 @@ const lessons = [
     imageKey: "travel-and-survival:5",
     topicSlug: "tener-necesitar",
     vocabularySlugs: ["travel-and-survival", "home-and-objects", "useful-phrases"],
-    order: 30,
+    order: 310,
     estimatedMinutes: 6,
     sentences: [
       ["Necesito ayuda.", "I need help.", "A survival phrase for getting unstuck."],
@@ -1065,7 +1195,7 @@ const lessons = [
     imageKey: "city-transport:12",
     topicSlug: "tener-necesitar",
     vocabularySlugs: ["travel-and-survival", "home-and-objects"],
-    order: 31,
+    order: 320,
     estimatedMinutes: 6,
     sentences: [
       ["Tengo un mapa.", "I have a map.", "Tengo means I have."],
@@ -1084,7 +1214,7 @@ const lessons = [
     imageKey: "travel-and-survival:1",
     topicSlug: "question-words",
     vocabularySlugs: ["travel-and-survival", "places-around-town"],
-    order: 32,
+    order: 330,
     estimatedMinutes: 6,
     sentences: [
       ["¿Dónde está el hotel?", "Where is the hotel?", "Dónde asks where."],
@@ -1103,7 +1233,7 @@ const lessons = [
     imageKey: "grammar-scenes:11",
     topicSlug: "question-words",
     vocabularySlugs: ["food-and-ordering", "useful-phrases"],
-    order: 33,
+    order: 340,
     estimatedMinutes: 6,
     sentences: [
       ["¿Qué quieres?", "What do you want?", "Qué asks what."],
@@ -1122,7 +1252,7 @@ const lessons = [
     imageKey: "food-and-ordering:18",
     topicSlug: "question-words",
     vocabularySlugs: ["food-and-ordering", "fruit-and-produce", "useful-phrases"],
-    order: 34,
+    order: 350,
     estimatedMinutes: 6,
     sentences: [
       ["¿Cuánto cuesta?", "How much does it cost?", "A complete useful question."],
@@ -1141,7 +1271,7 @@ const lessons = [
     imageKey: "daily-actions:1",
     topicSlug: "present-tense-ar",
     vocabularySlugs: ["daily-actions", "food-and-ordering"],
-    order: 35,
+    order: 360,
     estimatedMinutes: 7,
     sentences: [
       ["Yo hablo español.", "I speak Spanish.", "Yo uses the -o ending."],
@@ -1160,7 +1290,7 @@ const lessons = [
     imageKey: "daily-actions:2",
     topicSlug: "present-tense-ar",
     vocabularySlugs: ["daily-actions", "people-and-pronouns"],
-    order: 36,
+    order: 370,
     estimatedMinutes: 7,
     sentences: [
       ["Tú hablas español.", "You speak Spanish.", "Tú uses the -as ending."],
@@ -1179,7 +1309,7 @@ const lessons = [
     imageKey: "people-and-family:16",
     topicSlug: "present-tense-ar",
     vocabularySlugs: ["daily-actions", "people-and-pronouns"],
-    order: 37,
+    order: 380,
     estimatedMinutes: 7,
     sentences: [
       ["Nosotros hablamos español.", "We speak Spanish.", "Nosotros uses -amos."],
@@ -1198,7 +1328,7 @@ const lessons = [
     imageKey: "emotions-and-states:1",
     topicSlug: "estar-emotions",
     vocabularySlugs: ["emotions-and-states"],
-    order: 38,
+    order: 390,
     estimatedMinutes: 6,
     sentences: [
       ["Estoy feliz.", "I am happy.", "Use estoy for a current feeling."],
@@ -1219,7 +1349,7 @@ const lessons = [
     imageKey: "home-objects:1",
     topicSlug: "location-prepositions",
     vocabularySlugs: ["home-and-objects", "classroom-basics"],
-    order: 39,
+    order: 400,
     estimatedMinutes: 7,
     sentences: [
       ["El libro está en la mesa.", "The book is on the table.", "Use estar for object location."],
@@ -1238,7 +1368,7 @@ const lessons = [
     imageKey: "grammar-scenes:8",
     topicSlug: "plural-agreement",
     vocabularySlugs: ["classroom-basics", "people-and-pronouns", "fruit-and-produce"],
-    order: 40,
+    order: 410,
     estimatedMinutes: 7,
     sentences: [
       ["Los estudiantes.", "The students.", "Los marks masculine or mixed plural."],
@@ -1248,22 +1378,57 @@ const lessons = [
     ]
   },
   {
+    slug: "checkpoint-a1-verb-frames",
+    title: "A1.5 Verb Frames Checkpoint",
+    summary: "Check quiero, necesito, tengo, question frames, -ar verb forms, feelings, location, and plurals.",
+    cefrLevel: "A1",
+    theme: "Checkpoint",
+    situation: "mixed A1 frames",
+    imageKey: "grammar-scenes:10",
+    topicSlug: "present-tense-ar",
+    vocabularySlugs: ["food-and-ordering", "travel-and-survival", "daily-actions", "home-and-objects", "classroom-basics"],
+    order: 415,
+    estimatedMinutes: 12,
+    outcomes: [
+      "You can use quiero, necesito, and tengo in useful sentences.",
+      "You can ask a simple location or price question.",
+      "You can produce common regular -ar forms."
+    ],
+    conceptKeys: ["checkpoint", "verb-frames", "question-words", "present-tense-ar", "plural-agreement"],
+    reviewSummary: "You checked A1 verb frames, question frames, -ar forms, location, feelings, and plural articles.",
+    sentences: [
+      ["Quiero un café, por favor.", "I want a coffee, please.", "Quiero can introduce a food or drink request."],
+      ["Tengo una mochila.", "I have a backpack.", "Tengo states possession."],
+      ["Nosotros hablamos español.", "We speak Spanish.", "Nosotros uses the -amos ending."],
+      ["El libro está en la mesa.", "The book is on the table.", "Use estar for location."]
+    ]
+  },
+  {
     slug: "checkpoint-a1-foundations",
-    title: "A1 Foundations Checkpoint",
-    summary: "Mix identity, location, articles, verbs, food, and travel in one review checkpoint.",
+    title: "Final A1 Foundations Checkpoint",
+    summary: "Mix identity, location, articles, verbs, food, travel, health, numbers, descriptions, and weather.",
     cefrLevel: "A1",
     theme: "Checkpoint",
     situation: "mixed review",
     imageKey: "grammar-scenes:1",
     topicSlug: "question-words",
-    vocabularySlugs: ["classroom-basics", "daily-actions", "food-and-ordering", "travel-and-survival", "useful-phrases"],
-    order: 41,
-    estimatedMinutes: 12,
+    vocabularySlugs: ["classroom-basics", "daily-actions", "food-and-ordering", "travel-and-survival", "useful-phrases", "body-and-health", "numbers-and-colors", "weather-and-time"],
+    order: 495,
+    estimatedMinutes: 16,
+    outcomes: [
+      "You can produce mixed A1 sentences without seeing the answer list first.",
+      "You can combine identity, location, needs, and daily-life language.",
+      "You can handle basic health, color, number, and weather statements."
+    ],
+    conceptKeys: ["checkpoint", "a1-final", "ser-estar", "articles", "questions", "health", "weather"],
+    reviewSummary: "You completed the final A1 checkpoint across identity, location, food, travel, repair phrases, health, numbers, descriptions, and weather.",
     sentences: [
       ["Yo soy estudiante y estoy en la biblioteca.", "I am a student and I am in the library.", "Mix ser for identity and estar for location."],
       ["Quiero un café, por favor.", "I want a coffee, please.", "Use un with café."],
       ["¿Dónde está la estación?", "Where is the station?", "Travel question frame."],
-      ["No entiendo, más despacio por favor.", "I do not understand, more slowly please.", "Conversation repair phrase."]
+      ["No entiendo, más despacio, por favor.", "I do not understand, more slowly please.", "Conversation repair phrase."],
+      ["Me duele la cabeza.", "My head hurts.", "Use me duele with one thing that hurts."],
+      ["Hace sol en el parque.", "It is sunny in the park.", "Hace sol describes sunny weather."]
     ]
   },
   {
@@ -1276,7 +1441,7 @@ const lessons = [
     imageKey: "body-and-health:6",
     topicSlug: "tener-necesitar",
     vocabularySlugs: ["body-and-health"],
-    order: 42,
+    order: 430,
     estimatedMinutes: 6,
     sentences: [
       ["La cabeza.", "The head.", "Cabeza uses la."],
@@ -1295,7 +1460,7 @@ const lessons = [
     imageKey: "body-and-health:7",
     topicSlug: "tener-necesitar",
     vocabularySlugs: ["body-and-health", "useful-phrases"],
-    order: 43,
+    order: 440,
     estimatedMinutes: 7,
     sentences: [
       ["Me duele la cabeza.", "My head hurts.", "Use me duele with one thing that hurts."],
@@ -1314,13 +1479,39 @@ const lessons = [
     imageKey: "body-and-health:10",
     topicSlug: "tener-necesitar",
     vocabularySlugs: ["body-and-health", "food-and-ordering", "weather-and-time"],
-    order: 44,
+    order: 450,
     estimatedMinutes: 7,
     sentences: [
       ["Tengo hambre.", "I am hungry.", "Spanish uses tengo with hunger."],
       ["Tengo sed.", "I am thirsty.", "Spanish uses tengo with thirst."],
       ["Tengo frío.", "I am cold.", "Spanish uses tengo with cold."],
       ["Tengo calor.", "I am hot.", "Spanish uses tengo with heat."]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-health-and-states",
+    title: "A1.6 Health and Body States Checkpoint",
+    summary: "Check body words, me duele, necesito, and common tengo states.",
+    cefrLevel: "A1",
+    theme: "Checkpoint",
+    situation: "pharmacy or doctor",
+    imageKey: "body-and-health:7",
+    topicSlug: "tener-necesitar",
+    vocabularySlugs: ["body-and-health", "useful-phrases", "food-and-ordering", "weather-and-time"],
+    order: 455,
+    estimatedMinutes: 9,
+    outcomes: [
+      "You can name basic body parts with the right article.",
+      "You can say what hurts.",
+      "You can express hunger, thirst, heat, and cold with tengo."
+    ],
+    conceptKeys: ["checkpoint", "health", "tener-states", "me-duele"],
+    reviewSummary: "You checked body words, me duele, necesito, and common states with tengo.",
+    sentences: [
+      ["La cabeza.", "The head.", "Cabeza uses la."],
+      ["Me duele la cabeza.", "My head hurts.", "Use me duele for one hurting body part."],
+      ["Necesito un doctor.", "I need a doctor.", "Use necesito for practical needs."],
+      ["Tengo hambre.", "I am hungry.", "Spanish uses tengo with hunger."]
     ]
   },
   {
@@ -1333,7 +1524,7 @@ const lessons = [
     imageKey: "numbers-and-colors:5",
     topicSlug: "plural-agreement",
     vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "classroom-basics"],
-    order: 45,
+    order: 460,
     estimatedMinutes: 7,
     sentences: [
       ["Tengo uno.", "I have one.", "Uno means one."],
@@ -1352,7 +1543,7 @@ const lessons = [
     imageKey: "numbers-and-colors:16",
     topicSlug: "articles-gender",
     vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "clothing-basics"],
-    order: 46,
+    order: 470,
     estimatedMinutes: 8,
     sentences: [
       ["La manzana es roja.", "The apple is red.", "Roja agrees with manzana."],
@@ -1371,7 +1562,7 @@ const lessons = [
     imageKey: "nature-and-animals:10",
     topicSlug: "location-prepositions",
     vocabularySlugs: ["nature-and-animals", "places-around-town"],
-    order: 47,
+    order: 480,
     estimatedMinutes: 7,
     sentences: [
       ["El árbol está en el parque.", "The tree is in the park.", "Use estar for location."],
@@ -1390,7 +1581,7 @@ const lessons = [
     imageKey: "nature-and-animals:6",
     topicSlug: "question-words",
     vocabularySlugs: ["weather-and-time", "nature-and-animals"],
-    order: 48,
+    order: 490,
     estimatedMinutes: 7,
     sentences: [
       ["Hace sol en el parque.", "It is sunny in the park.", "Hace sol describes sunny weather."],
@@ -1409,7 +1600,7 @@ const lessons = [
     imageKey: "a2-daily-routine:1",
     topicSlug: "daily-routine-time",
     vocabularySlugs: ["a2-daily-routine", "weather-and-time"],
-    order: 49,
+    order: 520,
     estimatedMinutes: 9,
     outcomes: [
       "You can describe a normal morning and evening.",
@@ -1435,7 +1626,7 @@ const lessons = [
     imageKey: "a2-daily-routine:4",
     topicSlug: "daily-routine-time",
     vocabularySlugs: ["a2-daily-routine"],
-    order: 50,
+    order: 530,
     estimatedMinutes: 10,
     outcomes: [
       "You can use me before a reflexive verb in the yo form.",
@@ -1462,7 +1653,7 @@ const lessons = [
     imageKey: "a2-daily-routine:15",
     topicSlug: "daily-routine-time",
     vocabularySlugs: ["a2-daily-routine", "weather-and-time"],
-    order: 51,
+    order: 540,
     estimatedMinutes: 8,
     outcomes: [
       "You can place actions in the morning, afternoon, or night.",
@@ -1488,7 +1679,7 @@ const lessons = [
     imageKey: "a2-daily-routine:12",
     topicSlug: "daily-routine-time",
     vocabularySlugs: ["a2-daily-routine", "daily-actions"],
-    order: 52,
+    order: 550,
     estimatedMinutes: 10,
     outcomes: [
       "You can combine several routine actions in order.",
@@ -1514,7 +1705,7 @@ const lessons = [
     imageKey: "a2-daily-routine:15",
     topicSlug: "daily-routine-time",
     vocabularySlugs: ["a2-daily-routine"],
-    order: 53,
+    order: 560,
     estimatedMinutes: 12,
     outcomes: [
       "You can produce routine sentences with correct reflexive me.",
@@ -2829,6 +3020,608 @@ const exercises = [
     ]
   },
   {
+    slug: "checkpoint-a1-absolute-soy-ana",
+    lessonSlug: "checkpoint-a1-absolute-start",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A1.0 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I am Ana.",
+    answerJson: { correct: "Soy Ana.", accepted: ["soy ana", "soy ana."] },
+    explanation: "Use soy for identity: Soy Ana.",
+    difficulty: 1,
+    order: 1,
+    xpReward: 14,
+    imageKey: "people-and-family:1",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-absolute-ella-esta",
+    lessonSlug: "checkpoint-a1-absolute-start",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.CLOZE,
+    prompt: "A1.0 checkpoint.",
+    instruction: "Use estar for location.",
+    questionText: "Ella ____ en casa.",
+    answerJson: { correct: "está", accepted: ["esta", "está"] },
+    explanation: "Use está for where someone is: Ella está en casa.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 12,
+    imageKey: "places-around-town:7",
+    options: [
+      ["está", "está", true],
+      ["es", "es", false],
+      ["soy", "soy", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-absolute-intro-builder",
+    lessonSlug: "checkpoint-a1-absolute-start",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "A1.0 checkpoint.",
+    instruction: "Build the introduction.",
+    questionText: "Hello, my name is Ana.",
+    answerJson: { correctWords: ["Hola", ",", "me", "llamo", "Ana", "."] },
+    explanation: "A natural first introduction is Hola, me llamo Ana.",
+    difficulty: 1,
+    order: 3,
+    xpReward: 16,
+    imageKey: "people-and-family:1",
+    options: [
+      ["Hola", "Hola", false],
+      [",", ",", false],
+      ["me", "me", false],
+      ["llamo", "llamo", false],
+      ["Ana", "Ana", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-absolute-dialogue-name",
+    lessonSlug: "checkpoint-a1-absolute-start",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "A1.0 checkpoint.",
+    instruction: "Type a natural answer.",
+    questionText: "Hola, ¿cómo te llamas?",
+    answerJson: {
+      correct: "Me llamo Ana.",
+      accepted: ["me llamo ana", "me llamo ana.", "soy ana", "soy ana."]
+    },
+    explanation: "Answer with your name: Me llamo Ana.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "people-and-family:1",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-core-soy-estudiante",
+    lessonSlug: "checkpoint-a1-core-grammar",
+    topicSlug: "ser-estar",
+    type: ExerciseType.CLOZE,
+    prompt: "A1.1 checkpoint.",
+    instruction: "Use ser for identity.",
+    questionText: "Yo ____ estudiante.",
+    answerJson: { correct: "soy", accepted: ["soy"] },
+    explanation: "Identity uses ser: Yo soy estudiante.",
+    difficulty: 1,
+    order: 1,
+    xpReward: 12,
+    imageKey: "grammar-scenes:1",
+    options: [
+      ["soy", "soy", true],
+      ["estoy", "estoy", false],
+      ["es", "es", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-core-el-libro",
+    lessonSlug: "checkpoint-a1-core-grammar",
+    topicSlug: "articles-gender",
+    type: ExerciseType.ARTICLE_MATCH,
+    prompt: "A1.1 checkpoint.",
+    instruction: "Choose the article.",
+    questionText: "____ libro",
+    answerJson: { correct: "el", accepted: ["el"] },
+    explanation: "Libro is masculine singular, so it uses el.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 12,
+    imageKey: "classroom-basics:3",
+    options: [
+      ["el", "el", true],
+      ["la", "la", false],
+      ["los", "los", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-core-hablo",
+    lessonSlug: "checkpoint-a1-core-grammar",
+    topicSlug: "present-tense-ar",
+    type: ExerciseType.CONJUGATION,
+    prompt: "A1.1 checkpoint.",
+    instruction: "Write the yo form.",
+    questionText: "Yo ____ español. (hablar)",
+    answerJson: { correct: "hablo", accepted: ["hablo"] },
+    explanation: "For yo, hablar becomes hablo.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 16,
+    imageKey: "daily-actions:1",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-core-estoy-feliz",
+    lessonSlug: "checkpoint-a1-core-grammar",
+    topicSlug: "estar-emotions",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A1.1 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I am happy today.",
+    answerJson: { correct: "Estoy feliz hoy.", accepted: ["estoy feliz hoy", "estoy feliz hoy."] },
+    explanation: "Use estoy for a current feeling: Estoy feliz hoy.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "emotions-and-states:1",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-survival-need-taxi",
+    lessonSlug: "checkpoint-a1-survival-spanish",
+    topicSlug: "travel-questions",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "A1.2 checkpoint.",
+    instruction: "Build the travel sentence.",
+    questionText: "I need a taxi.",
+    answerJson: { correctWords: ["Necesito", "un", "taxi", "."] },
+    explanation: "Necesito un taxi is a practical travel sentence.",
+    difficulty: 1,
+    order: 1,
+    xpReward: 16,
+    imageKey: "city-transport:3",
+    options: [
+      ["Necesito", "Necesito", false],
+      ["un", "un", false],
+      ["taxi", "taxi", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-survival-hotel",
+    lessonSlug: "checkpoint-a1-survival-spanish",
+    topicSlug: "travel-questions",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A1.2 checkpoint.",
+    instruction: "Translate the question.",
+    questionText: "Where is the hotel?",
+    answerJson: { correct: "¿Dónde está el hotel?", accepted: ["donde esta el hotel", "donde esta el hotel?"] },
+    explanation: "Use dónde está for where is: ¿Dónde está el hotel?",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "travel-and-survival:2",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-survival-no-map",
+    lessonSlug: "checkpoint-a1-survival-spanish",
+    topicSlug: "negation-basics",
+    type: ExerciseType.TRANSFORMATION,
+    prompt: "A1.2 checkpoint.",
+    instruction: "Make the sentence negative.",
+    questionText: "Tengo un mapa.",
+    answerJson: { correct: "No tengo un mapa.", accepted: ["no tengo un mapa", "no tengo un mapa."] },
+    explanation: "No goes before tengo: No tengo un mapa.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "travel-and-survival:5",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-survival-cafe-reply",
+    lessonSlug: "checkpoint-a1-survival-spanish",
+    topicSlug: "ordering-food",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "A1.2 checkpoint.",
+    instruction: "Type a polite answer.",
+    questionText: "En un café: ¿Qué quieres?",
+    answerJson: {
+      correct: "Quiero un café, por favor.",
+      accepted: ["quiero un cafe por favor", "quiero un cafe, por favor", "un cafe por favor", "un cafe, por favor"]
+    },
+    explanation: "A polite answer is Quiero un café, por favor.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "food-and-ordering:17",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-daily-compro",
+    lessonSlug: "checkpoint-a1-daily-life",
+    topicSlug: "present-tense-ar",
+    type: ExerciseType.CONJUGATION,
+    prompt: "A1.3 checkpoint.",
+    instruction: "Write the yo form.",
+    questionText: "Yo ____ pan. (comprar)",
+    answerJson: { correct: "compro", accepted: ["compro"] },
+    explanation: "For yo, comprar becomes compro.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 16,
+    imageKey: "daily-actions:4",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-daily-una-manzana",
+    lessonSlug: "checkpoint-a1-daily-life",
+    topicSlug: "ordering-food",
+    type: ExerciseType.ARTICLE_MATCH,
+    prompt: "A1.3 checkpoint.",
+    instruction: "Choose the article.",
+    questionText: "Quiero ____ manzana.",
+    answerJson: { correct: "una", accepted: ["una"] },
+    explanation: "Manzana is feminine singular, so use una.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 12,
+    imageKey: "fruit-and-produce:1",
+    options: [
+      ["una", "una", true],
+      ["un", "un", false],
+      ["unos", "unos", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-daily-coffee-order",
+    lessonSlug: "checkpoint-a1-daily-life",
+    topicSlug: "ordering-food",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "A1.3 checkpoint.",
+    instruction: "Build the order.",
+    questionText: "A coffee, please.",
+    answerJson: { correctWords: ["Un", "café", "por", "favor", "."] },
+    explanation: "A short polite order is Un café, por favor.",
+    difficulty: 1,
+    order: 3,
+    xpReward: 16,
+    imageKey: "food-and-ordering:19",
+    options: [
+      ["Un", "Un", false],
+      ["café", "café", false],
+      ["por", "por", false],
+      ["favor", "favor", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-daily-repair",
+    lessonSlug: "checkpoint-a1-daily-life",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A1.3 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I do not understand, more slowly please.",
+    answerJson: {
+      correct: "No entiendo, más despacio, por favor.",
+      accepted: ["no entiendo mas despacio por favor", "no entiendo, mas despacio, por favor", "no entiendo mas despacio por favor."]
+    },
+    explanation: "Use No entiendo, más despacio, por favor when speech is too fast.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "daily-actions:6",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-blocks-origin",
+    lessonSlug: "checkpoint-a1-building-blocks",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A1.4 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I am from Austria.",
+    answerJson: { correct: "Soy de Austria.", accepted: ["soy de austria", "soy de austria."] },
+    explanation: "Origin uses soy de: Soy de Austria.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 18,
+    imageKey: "travel-and-survival:5",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-blocks-la-tienda",
+    lessonSlug: "checkpoint-a1-building-blocks",
+    topicSlug: "articles-gender",
+    type: ExerciseType.ARTICLE_MATCH,
+    prompt: "A1.4 checkpoint.",
+    instruction: "Choose the article.",
+    questionText: "____ tienda",
+    answerJson: { correct: "la", accepted: ["la"] },
+    explanation: "Tienda is feminine singular, so use la.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 12,
+    imageKey: "places-around-town:2",
+    options: [
+      ["la", "la", true],
+      ["el", "el", false],
+      ["los", "los", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-blocks-cafe-location",
+    lessonSlug: "checkpoint-a1-building-blocks",
+    topicSlug: "location-prepositions",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A1.4 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I am in the café.",
+    answerJson: { correct: "Estoy en el café.", accepted: ["estoy en el cafe", "estoy en el cafe."] },
+    explanation: "Use estoy en for location: Estoy en el café.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "places-around-town:9",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-blocks-no-soy",
+    lessonSlug: "checkpoint-a1-building-blocks",
+    topicSlug: "negation-basics",
+    type: ExerciseType.TRANSFORMATION,
+    prompt: "A1.4 checkpoint.",
+    instruction: "Make the sentence negative.",
+    questionText: "Soy estudiante.",
+    answerJson: { correct: "No soy estudiante.", accepted: ["no soy estudiante", "no soy estudiante."] },
+    explanation: "No goes before soy: No soy estudiante.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "grammar-scenes:12",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-frames-un-cafe",
+    lessonSlug: "checkpoint-a1-verb-frames",
+    topicSlug: "ordering-food",
+    type: ExerciseType.CLOZE,
+    prompt: "A1.5 checkpoint.",
+    instruction: "Choose the article.",
+    questionText: "Quiero ____ café, por favor.",
+    answerJson: { correct: "un", accepted: ["un"] },
+    explanation: "Café is masculine singular, so use un.",
+    difficulty: 1,
+    order: 1,
+    xpReward: 12,
+    imageKey: "food-and-ordering:17",
+    options: [
+      ["un", "un", true],
+      ["una", "una", false],
+      ["las", "las", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-frames-backpack",
+    lessonSlug: "checkpoint-a1-verb-frames",
+    topicSlug: "tener-necesitar",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A1.5 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I have a backpack.",
+    answerJson: { correct: "Tengo una mochila.", accepted: ["tengo una mochila", "tengo una mochila."] },
+    explanation: "Use tengo for I have, and una with mochila.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "classroom-basics:8",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-frames-price-question",
+    lessonSlug: "checkpoint-a1-verb-frames",
+    topicSlug: "question-words",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "A1.5 checkpoint.",
+    instruction: "Build the price question.",
+    questionText: "How much does the bread cost?",
+    answerJson: { correctWords: ["Cuánto", "cuesta", "el", "pan", "?"] },
+    explanation: "Use cuánto cuesta to ask price: ¿Cuánto cuesta el pan?",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "food-and-ordering:3",
+    options: [
+      ["Cuánto", "Cuánto", false],
+      ["cuesta", "cuesta", false],
+      ["el", "el", false],
+      ["pan", "pan", false],
+      ["?", "?", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-frames-hablamos",
+    lessonSlug: "checkpoint-a1-verb-frames",
+    topicSlug: "present-tense-ar",
+    type: ExerciseType.CONJUGATION,
+    prompt: "A1.5 checkpoint.",
+    instruction: "Write the nosotros form.",
+    questionText: "Nosotros ____ español. (hablar)",
+    answerJson: { correct: "hablamos", accepted: ["hablamos"] },
+    explanation: "Nosotros uses -amos: hablamos.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "people-and-family:16",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-frames-book-table",
+    lessonSlug: "checkpoint-a1-verb-frames",
+    topicSlug: "location-prepositions",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A1.5 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "The book is on the table.",
+    answerJson: { correct: "El libro está en la mesa.", accepted: ["el libro esta en la mesa", "el libro esta en la mesa."] },
+    explanation: "Use estar for object location: El libro está en la mesa.",
+    difficulty: 2,
+    order: 5,
+    xpReward: 18,
+    imageKey: "home-objects:1",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-health-la-cabeza",
+    lessonSlug: "checkpoint-a1-health-and-states",
+    topicSlug: "tener-necesitar",
+    type: ExerciseType.ARTICLE_MATCH,
+    prompt: "A1.6 checkpoint.",
+    instruction: "Choose the article.",
+    questionText: "____ cabeza",
+    answerJson: { correct: "la", accepted: ["la"] },
+    explanation: "Cabeza uses la.",
+    difficulty: 1,
+    order: 1,
+    xpReward: 12,
+    imageKey: "body-and-health:6",
+    options: [
+      ["la", "la", true],
+      ["el", "el", false],
+      ["los", "los", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-health-head-hurts",
+    lessonSlug: "checkpoint-a1-health-and-states",
+    topicSlug: "tener-necesitar",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A1.6 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "My head hurts.",
+    answerJson: { correct: "Me duele la cabeza.", accepted: ["me duele la cabeza", "me duele la cabeza."] },
+    explanation: "Use me duele with one body part: Me duele la cabeza.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "body-and-health:7",
+    options: []
+  },
+  {
+    slug: "checkpoint-a1-health-hunger",
+    lessonSlug: "checkpoint-a1-health-and-states",
+    topicSlug: "tener-necesitar",
+    type: ExerciseType.CLOZE,
+    prompt: "A1.6 checkpoint.",
+    instruction: "Choose the state word.",
+    questionText: "Tengo ____.",
+    answerJson: { correct: "hambre", accepted: ["hambre"] },
+    explanation: "Tengo hambre means I am hungry.",
+    difficulty: 1,
+    order: 3,
+    xpReward: 12,
+    imageKey: "body-and-health:10",
+    options: [
+      ["hambre", "hambre", true],
+      ["cabeza", "cabeza", false],
+      ["doctor", "doctor", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a1-health-doctor-reply",
+    lessonSlug: "checkpoint-a1-health-and-states",
+    topicSlug: "tener-necesitar",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "A1.6 checkpoint.",
+    instruction: "Type a practical answer.",
+    questionText: "En la farmacia: ¿Qué necesita?",
+    answerJson: {
+      correct: "Necesito un doctor.",
+      accepted: ["necesito un doctor", "necesito un doctor.", "necesito ayuda", "necesito ayuda."]
+    },
+    explanation: "A practical answer is Necesito un doctor.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "body-and-health:12",
+    options: []
+  },
+  {
+    slug: "checkpoint-final-a1-head-hurts",
+    lessonSlug: "checkpoint-a1-foundations",
+    topicSlug: "tener-necesitar",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Final A1 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "My head hurts.",
+    answerJson: { correct: "Me duele la cabeza.", accepted: ["me duele la cabeza", "me duele la cabeza."] },
+    explanation: "Use me duele with one body part: Me duele la cabeza.",
+    difficulty: 2,
+    order: 5,
+    xpReward: 20,
+    imageKey: "body-and-health:7",
+    options: []
+  },
+  {
+    slug: "checkpoint-final-a1-sunny-park",
+    lessonSlug: "checkpoint-a1-foundations",
+    topicSlug: "question-words",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Final A1 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "It is sunny in the park.",
+    answerJson: { correct: "Hace sol en el parque.", accepted: ["hace sol en el parque", "hace sol en el parque."] },
+    explanation: "Hace sol describes sunny weather: Hace sol en el parque.",
+    difficulty: 2,
+    order: 6,
+    xpReward: 20,
+    imageKey: "weather-and-time:1",
+    options: []
+  },
+  {
+    slug: "checkpoint-final-a1-apple-red",
+    lessonSlug: "checkpoint-a1-foundations",
+    topicSlug: "articles-gender",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Final A1 checkpoint.",
+    instruction: "Build the description.",
+    questionText: "The apple is red.",
+    answerJson: { correctWords: ["La", "manzana", "es", "roja", "."] },
+    explanation: "Manzana is feminine, so use la and roja.",
+    difficulty: 2,
+    order: 7,
+    xpReward: 20,
+    imageKey: "fruit-and-produce:1",
+    options: [
+      ["La", "La", false],
+      ["manzana", "manzana", false],
+      ["es", "es", false],
+      ["roja", "roja", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "checkpoint-final-a1-two-apples",
+    lessonSlug: "checkpoint-a1-foundations",
+    topicSlug: "plural-agreement",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Final A1 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I have two apples.",
+    answerJson: { correct: "Tengo dos manzanas.", accepted: ["tengo dos manzanas", "tengo dos manzanas."] },
+    explanation: "Use dos with plural manzanas: Tengo dos manzanas.",
+    difficulty: 2,
+    order: 8,
+    xpReward: 20,
+    imageKey: "fruit-and-produce:1",
+    options: []
+  },
+  {
     slug: "a2-routine-despierto",
     lessonSlug: "a2-daily-routine-overview",
     topicSlug: "daily-routine-time",
@@ -3360,6 +4153,42 @@ const assetPrompts = [
   }
 ];
 
+function slugifyText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function sentenceCase(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
+function normalizeSeedLesson(lesson) {
+  const themeKey = slugifyText(lesson.theme);
+  const conceptKeys = lesson.conceptKeys?.length
+    ? lesson.conceptKeys
+    : [...new Set([lesson.topicSlug, themeKey, lesson.cefrLevel?.toLowerCase()].filter(Boolean))];
+  const outcomes = lesson.outcomes?.length
+    ? lesson.outcomes
+    : [
+        `You can recognize the main ${lesson.theme.toLowerCase()} pattern.`,
+        `You can use one model sentence for ${lesson.situation}.`,
+        "You can answer an active recall check before seeing the answer."
+      ];
+
+  return {
+    ...lesson,
+    outcomes,
+    conceptKeys,
+    reviewSummary: lesson.reviewSummary || `You practiced ${sentenceCase(lesson.summary)}`
+  };
+}
+
 async function upsertExercise(exercise, lessonBySlug, topicBySlug) {
   const lesson = lessonBySlug.get(exercise.lessonSlug);
   const topic = topicBySlug.get(exercise.topicSlug);
@@ -3471,7 +4300,8 @@ async function main() {
   const groupRecords = await prisma.vocabularyGroup.findMany();
   const groupBySlug = new Map(groupRecords.map((group) => [group.slug, group]));
 
-  for (const lesson of lessons) {
+  for (const lessonInput of lessons) {
+    const lesson = normalizeSeedLesson(lessonInput);
     const topic = topicBySlug.get(lesson.topicSlug);
     const savedLesson = await prisma.lesson.upsert({
       where: { slug: lesson.slug },

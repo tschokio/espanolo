@@ -587,8 +587,8 @@ const curriculumUnits = [
     phase: "A1 Foundation",
     description: "Tiny words, first identity sentences, and the first ser/estar split.",
     order: 1,
-    startOrder: 0,
-    endOrder: 4
+    startOrder: 10,
+    endOrder: 55
   },
   {
     slug: "a1-1-core-grammar",
@@ -597,8 +597,8 @@ const curriculumUnits = [
     phase: "A1 Foundation",
     description: "Ser, estar, articles, first verbs, and feelings.",
     order: 2,
-    startOrder: 5,
-    endOrder: 8
+    startOrder: 60,
+    endOrder: 95
   },
   {
     slug: "a1-2-survival-spanish",
@@ -607,8 +607,8 @@ const curriculumUnits = [
     phase: "A1 Practical",
     description: "Food, travel, location, questions, negation, and useful needs.",
     order: 3,
-    startOrder: 9,
-    endOrder: 15
+    startOrder: 100,
+    endOrder: 165
   },
   {
     slug: "a1-3-daily-life",
@@ -617,8 +617,8 @@ const curriculumUnits = [
     phase: "A1 Practical",
     description: "Daily actions, market phrases, restaurant conversation, and repair phrases.",
     order: 4,
-    startOrder: 16,
-    endOrder: 20
+    startOrder: 170,
+    endOrder: 215
   },
   {
     slug: "a1-4-building-blocks",
@@ -627,28 +627,38 @@ const curriculumUnits = [
     phase: "A1 Precision",
     description: "Identity, articles, location frames, and simple negation one pattern at a time.",
     order: 5,
-    startOrder: 21,
-    endOrder: 28
+    startOrder: 220,
+    endOrder: 295
   },
   {
-    slug: "a1-5-frames-and-checkpoint",
+    slug: "a1-5-verb-frames",
     label: "A1.5",
-    title: "Frames and Checkpoint",
+    title: "Verb Frames",
     phase: "A1 Mastery",
-    description: "Ordering, questions, verb forms, feelings, location, plurals, and the A1 checkpoint.",
+    description: "Ordering, needs, possession, question frames, verb forms, feelings, location, and plurals.",
     order: 6,
-    startOrder: 29,
-    endOrder: 41
+    startOrder: 300,
+    endOrder: 415
   },
   {
-    slug: "a1-6-practical-world",
+    slug: "a1-6-health-and-states",
     label: "A1.6",
-    title: "Practical World",
+    title: "Health and Body States",
     phase: "A1 Expansion",
-    description: "Health, body states, numbers, colors, nature, and weather.",
+    description: "Body words, me duele, hunger, thirst, hot, and cold.",
     order: 7,
-    startOrder: 42,
-    endOrder: 48
+    startOrder: 430,
+    endOrder: 455
+  },
+  {
+    slug: "a1-7-descriptions-and-weather",
+    label: "A1.7",
+    title: "Descriptions and Weather",
+    phase: "A1 Expansion",
+    description: "Numbers, colors, nature, weather, and the final A1 checkpoint.",
+    order: 8,
+    startOrder: 460,
+    endOrder: 495
   },
   {
     slug: "a2-1-daily-routine",
@@ -656,9 +666,9 @@ const curriculumUnits = [
     title: "Daily Routine and Time",
     phase: "A2 Foundation",
     description: "Routine, reflexive verbs, time, frequency, and simple schedule talk.",
-    order: 8,
-    startOrder: 49,
-    endOrder: 53
+    order: 9,
+    startOrder: 520,
+    endOrder: 560
   },
   {
     slug: "a2-2-verb-frames",
@@ -666,7 +676,7 @@ const curriculumUnits = [
     title: "Irregular Verbs and Useful Frames",
     phase: "Planned A2",
     description: "Ir, hacer, decir, venir, poder, querer, tener que, and ir a.",
-    order: 9,
+    order: 10,
     planned: true
   },
   {
@@ -675,7 +685,7 @@ const curriculumUnits = [
     title: "Preferences and Past Events",
     phase: "Planned A2",
     description: "Gustar, object pronouns, preterite, imperfect, and practical scenarios.",
-    order: 10,
+    order: 11,
     planned: true
   },
   {
@@ -684,7 +694,7 @@ const curriculumUnits = [
     title: "Intermediate Bridge",
     phase: "Planned B1",
     description: "Past tense control, opinions, reading, listening, and guided production.",
-    order: 11,
+    order: 12,
     planned: true
   }
 ];
@@ -698,6 +708,9 @@ function publicCurriculumUnit(unit, lessons = []) {
   const completedCount = lessons.filter((lesson) => lesson.progress >= 100 && !lesson.reviewDue).length;
   const dueCount = lessons.filter((lesson) => lesson.reviewDue).length;
   const inProgressCount = lessons.filter((lesson) => lesson.progress > 0 && lesson.progress < 100).length;
+  const checkpointLessons = lessons.filter((lesson) => lesson.isCheckpoint);
+  const checkpointCompletedCount = checkpointLessons.filter((lesson) => lesson.progress >= 100 && !lesson.reviewDue).length;
+  const checkpointDueCount = checkpointLessons.filter((lesson) => lesson.reviewDue).length;
   const averageProgress = lessonCount
     ? Math.round(lessons.reduce((sum, lesson) => sum + lesson.progress, 0) / lessonCount)
     : 0;
@@ -714,6 +727,9 @@ function publicCurriculumUnit(unit, lessons = []) {
     completedCount,
     dueCount,
     inProgressCount,
+    checkpointCount: checkpointLessons.length,
+    checkpointCompletedCount,
+    checkpointDueCount,
     averageProgress,
     status: unit.planned
       ? "planned"

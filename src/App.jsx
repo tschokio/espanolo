@@ -1096,7 +1096,8 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
   const [selectedId, setSelectedId] = useState("");
   const [lesson, setLesson] = useState(null);
   const [loadingLesson, setLoadingLesson] = useState(false);
-  const [showCompleted, setShowCompleted] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [expandedUnits, setExpandedUnits] = useState({});
 
   useEffect(() => {
     if (!launchLessonId) return;
@@ -1125,11 +1126,25 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
     : curriculumUnits.find((unit) => unit.lessonCount > 0 && unit.status !== "complete");
   const activeUnitGroups = curriculumUnits
     .filter((unit) => !unit.planned && unit.lessonCount > 0)
-    .map((unit) => ({
-      ...unit,
-      lessons: orderedLessons.filter((lessonItem) => lessonItem.unit?.slug === unit.slug)
-    }));
+    .map((unit) => {
+      const unitLessons = orderedLessons.filter((lessonItem) => lessonItem.unit?.slug === unit.slug);
+      const checkpointLesson = unitLessons.find((lessonItem) => lessonItem.isCheckpoint) || null;
+      const coreLessons = unitLessons.filter((lessonItem) => !lessonItem.isCheckpoint);
+      const openLesson = unitLessons.find((lessonItem) => lessonItem.reviewDue || lessonItem.progress < 100) || checkpointLesson || unitLessons[0];
+      return {
+        ...unit,
+        lessons: unitLessons,
+        coreLessons,
+        checkpointLesson,
+        nextActionLesson: openLesson
+      };
+    });
   const plannedUnits = curriculumUnits.filter((unit) => unit.planned);
+
+  useEffect(() => {
+    if (!currentUnit?.slug) return;
+    setExpandedUnits((current) => (current[currentUnit.slug] ? current : { ...current, [currentUnit.slug]: true }));
+  }, [currentUnit?.slug]);
 
   if (selectedId) {
     return loadingLesson || !lesson ? (
@@ -1152,11 +1167,11 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-lagoon-100">
-              <Target size={16} /> Easiest to hardest
+              <Target size={16} /> Unit path
             </p>
-            <h1 className="mt-4 max-w-3xl text-3xl font-black sm:text-4xl">One path. Finish the next lesson, then move up.</h1>
+            <h1 className="mt-4 max-w-3xl text-3xl font-black sm:text-4xl">Follow the unit, pass the checkpoint, then move up.</h1>
             <p className="mt-3 max-w-2xl text-sm font-semibold text-slate-300 sm:text-base">
-              Completed lessons stay available, and important ones come back automatically for reinforcement.
+              Each unit now ends with a mixed check, and completed lessons stay available when you need reinforcement.
             </p>
           </div>
           <div className="grid w-full gap-3 sm:grid-cols-3 lg:w-[560px]">
@@ -1215,34 +1230,16 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
               </div>
               <div className="space-y-4">
                 {activeUnitGroups.map((unit) => (
-                  <section key={unit.slug} className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">{unit.label} · {unit.phase}</p>
-                        <h3 className="mt-1 text-xl font-black text-slate-950">{unit.title}</h3>
-                        <p className="mt-1 text-sm font-semibold text-slate-600">{unit.description}</p>
-                      </div>
-                      <div className="grid min-w-[210px] gap-2 text-sm font-black text-slate-700">
-                        <div className="flex items-center justify-between gap-3">
-                          <span>{unit.completedCount}/{unit.lessonCount} complete</span>
-                          <span>{unit.averageProgress}%</span>
-                        </div>
-                        <ProgressBar value={unit.averageProgress} color={unit.status === "complete" ? "bg-emerald-500" : unit.dueCount ? "bg-honey-500" : "bg-lagoon-500"} />
-                        {!!unit.dueCount && <span className="text-xs text-honey-700">{unit.dueCount} due again</span>}
-                      </div>
-                    </div>
-                    <div className="mt-4 grid gap-3 md:grid-cols-2">
-                      {unit.lessons.map((lessonItem) => (
-                        <PathLessonCard
-                          key={lessonItem.id}
-                          lessonItem={lessonItem}
-                          index={orderedLessons.findIndex((item) => item.id === lessonItem.id)}
-                          state={nextLesson?.id === lessonItem.id ? "current" : "upcoming"}
-                          onSelect={() => setSelectedId(lessonItem.id)}
-                        />
-                      ))}
-                    </div>
-                  </section>
+                  <CourseUnitCard
+                    key={unit.slug}
+                    unit={unit}
+                    isCurrent={currentUnit?.slug === unit.slug}
+                    isExpanded={Boolean(expandedUnits[unit.slug])}
+                    nextLessonId={nextLesson?.id}
+                    orderedLessons={orderedLessons}
+                    onToggle={() => setExpandedUnits((current) => ({ ...current, [unit.slug]: !current[unit.slug] }))}
+                    onSelectLesson={(lessonId) => setSelectedId(lessonId)}
+                  />
                 ))}
               </div>
             </div>
@@ -1344,6 +1341,138 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
         </aside>
       </div>
     </div>
+  );
+}
+
+function CourseUnitCard({ unit, isCurrent, isExpanded, nextLessonId, orderedLessons, onToggle, onSelectLesson }) {
+  const checkpoint = unit.checkpointLesson;
+  const coreComplete = unit.coreLessons.filter((lessonItem) => lessonItem.progress >= 100 && !lessonItem.reviewDue).length;
+  const checkpointStatus = !checkpoint
+    ? "No checkpoint"
+    : checkpoint.reviewDue
+      ? "Due again"
+      : checkpoint.progress >= 100
+        ? "Passed"
+        : checkpoint.progress > 0
+          ? "In progress"
+          : "Waiting";
+  const nextAction = unit.nextActionLesson;
+  const actionLabel = nextAction?.reviewDue
+    ? "Review due"
+    : nextAction?.isCheckpoint
+      ? nextAction.progress >= 100
+        ? "Review checkpoint"
+        : "Start checkpoint"
+      : nextAction?.progress > 0
+        ? "Continue"
+        : "Start";
+  const statusTone =
+    unit.status === "complete"
+      ? "border-emerald-200 bg-emerald-50"
+      : unit.dueCount
+        ? "border-honey-300 bg-honey-50"
+        : isCurrent
+          ? "border-lagoon-300 bg-lagoon-50"
+          : "border-stone-200 bg-white";
+
+  return (
+    <section className={classNames("rounded-lg border p-4 shadow-sm sm:p-5", statusTone)}>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-lagoon-700">{unit.label}</span>
+            <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-slate-700">{unit.phase}</span>
+            {isCurrent && <span className="rounded-full bg-honey-500 px-2 py-1 text-xs font-black text-white">Current</span>}
+          </div>
+          <h3 className="mt-3 text-xl font-black text-slate-950">{unit.title}</h3>
+          <p className="mt-1 text-sm font-semibold text-slate-600">{unit.description}</p>
+          <div className="mt-4 grid gap-2 text-sm font-bold text-slate-700 sm:grid-cols-3">
+            <span>{coreComplete}/{unit.coreLessons.length} lessons</span>
+            <span>{checkpointStatus}</span>
+            <span>{unit.averageProgress}% mastery</span>
+          </div>
+          <ProgressBar
+            value={unit.averageProgress}
+            className="mt-3"
+            color={unit.status === "complete" ? "bg-emerald-500" : unit.dueCount ? "bg-honey-500" : "bg-lagoon-500"}
+          />
+        </div>
+        <div className="grid gap-3">
+          {nextAction ? (
+            <button
+              onClick={() => onSelectLesson(nextAction.id)}
+              className="rounded-md bg-slate-950 px-4 py-3 text-left font-black text-white hover:bg-slate-800"
+            >
+              <span className="block text-xs uppercase tracking-wide text-lagoon-100">{actionLabel}</span>
+              <span className="mt-1 block">{nextAction.title}</span>
+            </button>
+          ) : (
+            <div className="rounded-md border border-stone-200 bg-white px-4 py-3 text-sm font-bold text-slate-600">No lesson available.</div>
+          )}
+          <button
+            onClick={onToggle}
+            className="flex items-center justify-between gap-3 rounded-md border border-stone-200 bg-white px-4 py-3 text-sm font-black text-slate-700 hover:border-lagoon-300"
+          >
+            <span>{isExpanded ? "Hide lesson list" : "Show lesson list"}</span>
+            <ChevronDown size={17} className={classNames("transition", isExpanded && "rotate-180")} />
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="mt-4 divide-y divide-stone-200 border-t border-stone-200">
+          {unit.lessons.map((lessonItem) => (
+            <CourseLessonRow
+              key={lessonItem.id}
+              lessonItem={lessonItem}
+              index={orderedLessons.findIndex((item) => item.id === lessonItem.id)}
+              isNext={nextLessonId === lessonItem.id}
+              onSelect={() => onSelectLesson(lessonItem.id)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CourseLessonRow({ lessonItem, index, isNext, onSelect }) {
+  const done = lessonItem.progress >= 100 && !lessonItem.reviewDue;
+  const checkpoint = lessonItem.isCheckpoint;
+  const actionLabel = lessonItem.reviewDue
+    ? "Review due"
+    : done
+      ? "Review"
+      : checkpoint
+        ? "Checkpoint"
+        : lessonItem.progress > 0
+          ? "Continue"
+          : "Start";
+
+  return (
+    <button onClick={onSelect} className="flex w-full items-center gap-3 py-3 text-left hover:bg-white/70 sm:gap-4">
+      <span
+        className={classNames(
+          "grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-black text-white",
+          lessonItem.reviewDue ? "bg-honey-600" : done ? "bg-emerald-600" : isNext ? "bg-lagoon-600" : checkpoint ? "bg-coral-500" : "bg-slate-800"
+        )}
+      >
+        {index + 1}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-black text-slate-950">{lessonItem.title}</p>
+          {checkpoint && <span className="rounded-full bg-coral-50 px-2 py-0.5 text-[11px] font-black text-coral-700">Checkpoint</span>}
+          {isNext && <span className="rounded-full bg-lagoon-50 px-2 py-0.5 text-[11px] font-black text-lagoon-700">Next</span>}
+        </div>
+        <p className="mt-1 line-clamp-1 text-sm font-semibold text-slate-600">{lessonItem.summary}</p>
+      </div>
+      <div className="hidden w-28 shrink-0 sm:block">
+        <ProgressBar value={lessonItem.progress} color={done ? "bg-emerald-500" : lessonItem.reviewDue ? "bg-honey-500" : "bg-lagoon-500"} />
+        <p className="mt-1 text-right text-xs font-black text-slate-500">{lessonItem.progress}%</p>
+      </div>
+      <span className="shrink-0 text-sm font-black text-lagoon-700">{actionLabel}</span>
+    </button>
   );
 }
 
