@@ -1382,7 +1382,7 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="font-bold text-slate-500">
-            {lessonItem.completedExercises || 0}/{lessonItem.exerciseCount || lessonItem.totalExercises || 0} checks · {lessonItem.estimatedMinutes} min
+            {lessonItem.completedExercises || 0}/{lessonItem.exerciseCount || lessonItem.totalExercises || 0} checks mastered · {lessonItem.estimatedMinutes} min
           </span>
           <span className="font-black text-lagoon-700 group-hover:text-lagoon-900">{actionLabel}</span>
         </div>
@@ -1418,6 +1418,8 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
   const correct = results.filter(Boolean).length;
   const score = lesson.exercises.length ? Math.round((correct / lesson.exercises.length) * 100) : 100;
   const progress = steps.length ? Math.round((Math.min(step, steps.length) / steps.length) * 100) : 0;
+  const masteredChecks = lesson.completedExercises || 0;
+  const totalChecks = lesson.exerciseCount || lesson.totalExercises || lesson.exercises.length || 0;
 
   useEffect(() => {
     if (!finished || completionReported) return;
@@ -1515,6 +1517,18 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
                       <Target className="mt-0.5 shrink-0 text-lagoon-600" size={16} /> {outcome}
                     </p>
                   ))}
+                </div>
+              )}
+              {!!totalChecks && (
+                <div className="mt-5 rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex items-center justify-between gap-3 text-sm font-black text-slate-700">
+                    <span>Current checks mastered</span>
+                    <span>{masteredChecks}/{totalChecks}</span>
+                  </div>
+                  <ProgressBar value={totalChecks ? Math.round((masteredChecks / totalChecks) * 100) : 0} className="mt-3" />
+                  <p className="mt-3 text-sm font-semibold text-slate-600">
+                    A check counts here only after that exact exercise has been answered correctly at least once.
+                  </p>
                 </div>
               )}
             </div>
