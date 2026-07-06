@@ -33,18 +33,22 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { key: "dashboard", label: "Today", icon: Target },
-  { key: "path", label: "Course", icon: BookOpen },
-  { key: "review", label: "Review", icon: ListChecks },
+  { key: "learn", label: "Learn", icon: BookOpen },
   { key: "words", label: "Words", icon: NotebookTabs },
-  { key: "pronunciation", label: "Audio Lab", icon: Volume2 },
-  { key: "grammar", label: "Grammar", icon: GraduationCap },
-  { key: "games", label: "Mini Games", icon: Gamepad2 },
-  { key: "challenges", label: "Challenges", icon: Trophy },
-  { key: "progress", label: "Progress", icon: BarChart3 },
-  { key: "admin", label: "Admin", icon: Shield, adminOnly: true },
-  { key: "settings", label: "Settings", icon: Settings }
+  { key: "review", label: "Review", icon: ListChecks },
+  { key: "play", label: "Play", icon: Gamepad2 },
+  { key: "profile", label: "Profile", icon: Users },
+  { key: "manage", label: "Manage", icon: Shield, adminOnly: true }
 ];
+
+function primaryNavKey(active) {
+  if (["dashboard", "path", "lessons", "grammar"].includes(active)) return "learn";
+  if (["pronunciation"].includes(active)) return "words";
+  if (["games", "challenges"].includes(active)) return "play";
+  if (["progress", "settings"].includes(active)) return "profile";
+  if (["admin"].includes(active)) return "manage";
+  return active || "learn";
+}
 
 const imageSheets = {
   "body-and-health": { src: "/images/body-and-health.webp", grid: 4 },
@@ -456,7 +460,7 @@ function AuthScreen({ error, setError, onAuthed }) {
 }
 
 function LearningApp({ user, setUser }) {
-  const [active, setActive] = useState("dashboard");
+  const [active, setActive] = useState("learn");
   const [launchLessonId, setLaunchLessonId] = useState("");
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -487,6 +491,7 @@ function LearningApp({ user, setUser }) {
   };
 
   const nav = navItems.filter((item) => !item.adminOnly || user.role === "ADMIN");
+  const activeNav = primaryNavKey(active);
 
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900">
@@ -497,7 +502,7 @@ function LearningApp({ user, setUser }) {
           </div>
           <nav className="flex-1 space-y-1 p-4">
             {nav.map((item) => (
-              <NavButton key={item.key} item={item} active={active === item.key} onClick={() => setActive(item.key)} />
+              <NavButton key={item.key} item={item} active={activeNav === item.key} onClick={() => setActive(item.key)} />
             ))}
           </nav>
           <div className="m-4 rounded-lg border border-orange-100 bg-orange-50 p-4">
@@ -555,14 +560,14 @@ function LearningApp({ user, setUser }) {
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-stone-200 bg-white px-2 py-2 lg:hidden">
-        {nav.slice(0, 5).map((item) => (
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex gap-1 overflow-x-auto border-t border-stone-200 bg-white px-2 py-2 lg:hidden">
+        {nav.map((item) => (
           <button
             key={item.key}
             onClick={() => setActive(item.key)}
             className={classNames(
-              "flex flex-col items-center gap-1 rounded-md px-1 py-2 text-[11px] font-semibold",
-              active === item.key ? "bg-coral-50 text-coral-600" : "text-slate-500"
+              "flex min-w-[68px] flex-1 flex-col items-center gap-1 rounded-md px-1 py-2 text-[11px] font-semibold",
+              activeNav === item.key ? "bg-coral-50 text-coral-600" : "text-slate-500"
             )}
           >
             <item.icon size={19} />
@@ -575,40 +580,254 @@ function LearningApp({ user, setUser }) {
 }
 
 function ActiveView({ active, user, dashboard, refreshDashboard, setActive, launchLessonId, setLaunchLessonId }) {
-  if (active === "dashboard") {
+  if (["learn", "dashboard", "path", "lessons", "grammar"].includes(active)) {
     return (
-      <DashboardView
-        dashboard={dashboard}
-        refreshDashboard={refreshDashboard}
-        setActive={setActive}
-        onStartLesson={(lessonId) => {
-          setLaunchLessonId(lessonId);
-          setActive("path");
-        }}
-      />
-    );
-  }
-  if (active === "path" || active === "lessons") {
-    return (
-      <LearningPathView
+      <LearningWorkspace
+        initialTab={active === "path" || active === "lessons" ? "course" : active === "grammar" ? "grammar" : "today"}
         dashboard={dashboard}
         refreshDashboard={refreshDashboard}
         setActive={setActive}
         launchLessonId={launchLessonId}
-        onLaunchHandled={() => setLaunchLessonId("")}
+        setLaunchLessonId={setLaunchLessonId}
       />
     );
   }
   if (active === "review") return <ReviewQueueView refreshDashboard={refreshDashboard} setActive={setActive} />;
-  if (active === "words") return <WordLearnerView refreshDashboard={refreshDashboard} />;
-  if (active === "pronunciation") return <PronunciationLookupView />;
-  if (active === "grammar") return <GrammarView lessons={dashboard.lessons} />;
-  if (active === "games") return <MiniGamesView dashboard={dashboard} refreshDashboard={refreshDashboard} />;
-  if (active === "challenges") return <ChallengesView challenge={dashboard.challenge} refreshDashboard={refreshDashboard} />;
-  if (active === "progress") return <ProgressView dashboard={dashboard} />;
-  if (active === "admin" && user.role === "ADMIN") return <AdminView refreshDashboard={refreshDashboard} />;
-  if (active === "settings") return <SettingsView user={user} />;
-  return <LearningPathView dashboard={dashboard} refreshDashboard={refreshDashboard} setActive={setActive} />;
+  if (["words", "pronunciation"].includes(active)) {
+    return <WordsWorkspace initialTab={active === "pronunciation" ? "audio" : "memory"} dashboard={dashboard} refreshDashboard={refreshDashboard} />;
+  }
+  if (["play", "games", "challenges"].includes(active)) {
+    return (
+      <PlayWorkspace
+        initialTab={active === "challenges" ? "challenge" : "games"}
+        dashboard={dashboard}
+        refreshDashboard={refreshDashboard}
+      />
+    );
+  }
+  if (["profile", "progress", "settings"].includes(active)) {
+    return <ProfileWorkspace initialTab={active === "settings" ? "settings" : "progress"} user={user} dashboard={dashboard} />;
+  }
+  if ((active === "manage" || active === "admin") && user.role === "ADMIN") {
+    return <ManageWorkspace user={user} refreshDashboard={refreshDashboard} />;
+  }
+  return <LearningWorkspace dashboard={dashboard} refreshDashboard={refreshDashboard} setActive={setActive} launchLessonId={launchLessonId} setLaunchLessonId={setLaunchLessonId} />;
+}
+
+function WorkspaceTabs({ tabs, active, onChange }) {
+  return (
+    <div className="mb-5 flex flex-wrap gap-2 rounded-lg border border-stone-200 bg-white p-2 shadow-sm">
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          onClick={() => onChange(tab.key)}
+          className={classNames(
+            "inline-flex items-center gap-2 rounded-md px-4 py-3 text-sm font-black",
+            active === tab.key ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-stone-100"
+          )}
+        >
+          <tab.icon size={17} />
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function LearningWorkspace({ initialTab = "today", dashboard, refreshDashboard, setActive, launchLessonId, setLaunchLessonId }) {
+  const [tab, setTab] = useState(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
+
+  useEffect(() => {
+    if (!launchLessonId) return;
+    setTab("course");
+  }, [launchLessonId]);
+
+  return (
+    <div>
+      <WorkspaceTabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { key: "today", label: "Today", icon: Target },
+          { key: "course", label: "Course", icon: BookOpen },
+          { key: "grammar", label: "Grammar Map", icon: GraduationCap }
+        ]}
+      />
+      {tab === "today" ? (
+        <DashboardView
+          dashboard={dashboard}
+          refreshDashboard={refreshDashboard}
+          setActive={setActive}
+          onStartLesson={(lessonId) => {
+            setLaunchLessonId(lessonId);
+            setTab("course");
+          }}
+        />
+      ) : tab === "course" ? (
+        <LearningPathView
+          dashboard={dashboard}
+          refreshDashboard={refreshDashboard}
+          setActive={setActive}
+          launchLessonId={launchLessonId}
+          onLaunchHandled={() => setLaunchLessonId("")}
+        />
+      ) : (
+        <GrammarView lessons={dashboard.lessons} />
+      )}
+    </div>
+  );
+}
+
+function WorkspaceSummary({ title, icon: Icon, children, metrics = [] }) {
+  return (
+    <section className="mb-5 rounded-lg border border-slate-900 bg-slate-950 p-5 text-white shadow-soft">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-black text-lagoon-100">
+            {Icon && <Icon size={16} />} {title}
+          </p>
+          <div className="mt-3 max-w-2xl text-sm font-semibold text-slate-300">{children}</div>
+        </div>
+        {!!metrics.length && (
+          <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[360px]">
+            {metrics.map((metric) => (
+              <div key={metric.label} className="rounded-lg bg-white/10 px-4 py-3">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-300">{metric.label}</p>
+                <p className="mt-1 text-xl font-black">{metric.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function WordsWorkspace({ initialTab = "memory", dashboard, refreshDashboard }) {
+  const [tab, setTab] = useState(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
+
+  return (
+    <div>
+      <WorkspaceSummary
+        title="Words"
+        icon={NotebookTabs}
+        metrics={[
+          { label: "Total", value: dashboard?.stats?.totalWords || 0 },
+          { label: "Due", value: dashboard?.stats?.wordReviewCount || 0 },
+          { label: "Mastered", value: dashboard?.stats?.masteredWords || 0 }
+        ]}
+      >
+        Memory practice and Audio Lab feed the same vocabulary system: saved audio words become reviewable words.
+      </WorkspaceSummary>
+      <WorkspaceTabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { key: "memory", label: "Words & Memory", icon: NotebookTabs },
+          { key: "audio", label: "Audio Lab", icon: Volume2 }
+        ]}
+      />
+      {tab === "audio" ? <PronunciationLookupView /> : <WordLearnerView refreshDashboard={refreshDashboard} />}
+    </div>
+  );
+}
+
+function PlayWorkspace({ initialTab = "games", dashboard, refreshDashboard }) {
+  const [tab, setTab] = useState(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
+
+  return (
+    <div>
+      <WorkspaceSummary
+        title="Play"
+        icon={Gamepad2}
+        metrics={[
+          { label: "Challenge", value: dashboard.challenge ? `${dashboard.challenge.progress}/${dashboard.challenge.targetCount}` : "0/0" },
+          { label: "Games", value: dashboard.miniGames?.length || 0 },
+          { label: "XP", value: dashboard.stats.xp.toLocaleString() }
+        ]}
+      >
+        Mini games and the weekly challenge now sit together as reinforcement after lesson and review work.
+      </WorkspaceSummary>
+      <WorkspaceTabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { key: "games", label: "Mini Games", icon: Gamepad2 },
+          { key: "challenge", label: "Challenge", icon: Trophy }
+        ]}
+      />
+      {tab === "challenge" ? (
+        <ChallengesView challenge={dashboard.challenge} refreshDashboard={refreshDashboard} />
+      ) : (
+        <MiniGamesView dashboard={dashboard} refreshDashboard={refreshDashboard} />
+      )}
+    </div>
+  );
+}
+
+function ProfileWorkspace({ initialTab = "progress", user, dashboard }) {
+  const [tab, setTab] = useState(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
+
+  return (
+    <div>
+      <WorkspaceSummary
+        title="Profile"
+        icon={Users}
+        metrics={[
+          { label: "Level", value: dashboard.stats.level },
+          { label: "Streak", value: dashboard.stats.streakDays },
+          { label: "XP", value: dashboard.stats.xp.toLocaleString() }
+        ]}
+      >
+        Progress, badges, leaderboard position, and learner settings are collected here.
+      </WorkspaceSummary>
+      <WorkspaceTabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { key: "progress", label: "Progress", icon: BarChart3 },
+          { key: "settings", label: "Settings", icon: Settings }
+        ]}
+      />
+      {tab === "settings" ? <SettingsView user={user} /> : <ProgressView dashboard={dashboard} />}
+    </div>
+  );
+}
+
+function ManageWorkspace({ user, refreshDashboard }) {
+  return (
+    <div className="space-y-5">
+      <WorkspaceSummary
+        title="Manage"
+        icon={Shield}
+        metrics={[
+          { label: "Role", value: user.role },
+          { label: "Admin", value: "Tools" },
+          { label: "Settings", value: "Included" }
+        ]}
+      >
+        Content tools, deployment status, and account settings live together here.
+      </WorkspaceSummary>
+      <AdminView refreshDashboard={refreshDashboard} />
+      <SettingsView user={user} />
+    </div>
+  );
 }
 
 function LearningPathView({ dashboard, refreshDashboard, setActive, launchLessonId, onLaunchHandled }) {
@@ -810,22 +1029,17 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
             )}
           </Panel>
 
-          <Panel title="Other Practice" icon={NotebookTabs}>
-            <div className="space-y-3">
-              <button
-                onClick={() => setActive("words")}
-                className="flex w-full items-center justify-between rounded-md border border-stone-200 bg-white px-4 py-3 text-left font-black text-slate-700 hover:bg-stone-50"
-              >
-                Words
-                <NotebookTabs size={18} className="text-lagoon-600" />
-              </button>
-              <button
-                onClick={() => setActive("grammar")}
-                className="flex w-full items-center justify-between rounded-md border border-stone-200 bg-white px-4 py-3 text-left font-black text-slate-700 hover:bg-stone-50"
-              >
-                Grammar
-                <GraduationCap size={18} className="text-lagoon-600" />
-              </button>
+          <Panel title="Learning Rhythm" icon={Target}>
+            <div className="grid gap-3 text-sm font-bold text-slate-700">
+              <div className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3">
+                Course lessons introduce the grammar and vocabulary together.
+              </div>
+              <div className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3">
+                Review brings back weak items when they are due.
+              </div>
+              <div className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3">
+                Words and play reinforce the same material from another angle.
+              </div>
             </div>
           </Panel>
         </aside>
@@ -2490,8 +2704,13 @@ function DashboardView({ dashboard, setActive, onStartLesson }) {
   const review = dashboard.review || { counts: {}, weakSpots: [], estimatedMinutes: 0 };
   const lessons = dashboard.lessons || [];
   const completedLessons = lessons.filter((lesson) => lesson.progress >= 100).length;
+  const inProgressLesson = lessons.find((lesson) => lesson.progress > 0 && lesson.progress < 100);
+  const nextLesson = inProgressLesson || dashboard.currentLesson || lessons.find((lesson) => lesson.progress < 100) || lessons[0];
   const courseProgress = lessons.length ? Math.round((completedLessons / lessons.length) * 100) : 0;
-  const primaryTitle = plan.title || dashboard.currentLesson?.title || "Start Spanish";
+  const reviewTotal = review.counts?.total || 0;
+  const wordDue = dashboard.stats.wordReviewCount || review.counts?.vocabulary || 0;
+  const challenge = dashboard.challenge;
+  const primaryTitle = plan.title || nextLesson?.title || "Start Spanish";
 
   const startPrimary = () => {
     if (plan.target?.type === "lesson" && plan.target.id) {
@@ -2505,78 +2724,106 @@ function DashboardView({ dashboard, setActive, onStartLesson }) {
     setActive("challenges");
   };
 
+  const flowSteps = [
+    {
+      key: "course",
+      icon: BookOpen,
+      title: "Course",
+      detail: nextLesson?.title || "Begin the A1 path",
+      meta: `${completedLessons}/${lessons.length || 0} lessons complete`,
+      state: plan.target?.type === "lesson" ? "Next" : courseProgress >= 100 ? "Complete" : "Ready",
+      action: plan.target?.type === "lesson" ? plan.cta || "Start" : nextLesson?.progress ? "Continue" : "Open",
+      onClick: () => (plan.target?.type === "lesson" && plan.target.id ? onStartLesson(plan.target.id) : setActive("path"))
+    },
+    {
+      key: "review",
+      icon: ListChecks,
+      title: "Review",
+      detail: reviewTotal ? "Due grammar, words, and mistakes" : "No due review right now",
+      meta: `${reviewTotal} due · ${review.estimatedMinutes || 0} min`,
+      state: reviewTotal ? "Due" : "Clear",
+      action: "Review",
+      onClick: () => setActive("review")
+    },
+    {
+      key: "words",
+      icon: NotebookTabs,
+      title: "Words",
+      detail: wordDue ? "Memory words are ready" : "Build vocabulary memory",
+      meta: `${dashboard.stats.masteredWords || 0}/${dashboard.stats.totalWords || 0} mastered`,
+      state: wordDue ? "Due" : "Practice",
+      action: "Practice",
+      onClick: () => setActive("words")
+    },
+    {
+      key: "play",
+      icon: Gamepad2,
+      title: "Play",
+      detail: challenge?.title || "Mini games and short challenges",
+      meta: challenge ? `${challenge.progress}/${challenge.targetCount} challenge` : "Games available",
+      state: challenge?.isCompleted ? "Done" : "Optional",
+      action: challenge ? "Challenge" : "Games",
+      onClick: () => setActive(challenge ? "challenges" : "play")
+    }
+  ];
+
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section className="space-y-5">
         <section className="rounded-lg border border-slate-900 bg-slate-950 p-5 text-white shadow-soft sm:p-7">
-          <div className="grid gap-6 lg:grid-cols-[1fr_250px] lg:items-end">
+          <div className="grid gap-6 lg:grid-cols-[1fr_260px] lg:items-end">
             <div>
               <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-black text-lagoon-100">
-                <Target size={16} /> Today's Spanish
+                <Target size={16} /> Today
               </p>
               <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight sm:text-5xl">{primaryTitle}</h1>
               <p className="mt-3 max-w-2xl text-base font-semibold text-slate-300">
-                {plan.reason || "Open one focused session, practice actively, and let the app choose what comes next."}
+                {plan.reason || "Start with the strongest next action, then keep the rest in one clean queue."}
               </p>
               <div className="mt-5 flex flex-wrap gap-2 text-sm font-black">
-                <span className="rounded-full bg-white/10 px-3 py-1">{plan.estimatedMinutes || dashboard.currentLesson?.estimatedMinutes || 8} min</span>
-                <span className="rounded-full bg-white/10 px-3 py-1">{review.counts?.vocabulary || 0} words due</span>
-                <span className="rounded-full bg-white/10 px-3 py-1">{review.counts?.mistakes || 0} weak spots</span>
+                <span className="rounded-full bg-white/10 px-3 py-1">{plan.estimatedMinutes || nextLesson?.estimatedMinutes || 8} min focus</span>
+                <span className="rounded-full bg-white/10 px-3 py-1">{reviewTotal} review due</span>
+                <span className="rounded-full bg-white/10 px-3 py-1">{courseProgress}% course</span>
               </div>
             </div>
             <button
               onClick={startPrimary}
               className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-honey-500 px-5 py-4 font-black text-white hover:bg-honey-600"
             >
-              <Rocket size={19} /> {plan.cta || "Start today's session"}
+              <Rocket size={19} /> {plan.cta || "Start"}
             </button>
           </div>
         </section>
 
-        <div className="grid gap-5 lg:grid-cols-2">
-          <Panel
-            title="Review Due Today"
-            icon={ListChecks}
-            action={
-              <button onClick={() => setActive("review")} className="text-sm font-black text-lagoon-700">
-                Start
+        <Panel title="Today's Flow" icon={Rocket}>
+          <div className="grid gap-3 lg:grid-cols-4">
+            {flowSteps.map((step, index) => (
+              <button
+                key={step.key}
+                onClick={step.onClick}
+                className="flex min-h-48 flex-col rounded-lg border border-stone-200 bg-stone-50 p-4 text-left transition hover:-translate-y-0.5 hover:border-lagoon-300 hover:bg-white hover:shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="grid h-11 w-11 place-items-center rounded-md bg-white text-lagoon-600 shadow-sm">
+                    <step.icon size={21} />
+                  </div>
+                  <span className="rounded-full bg-slate-950 px-2 py-1 text-xs font-black text-white">{index + 1}</span>
+                </div>
+                <div className="mt-4 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-black text-slate-950">{step.title}</h3>
+                    <span className="rounded-full bg-white px-2 py-1 text-[11px] font-black uppercase text-lagoon-700">{step.state}</span>
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-slate-600">{step.detail}</p>
+                  <p className="mt-3 text-xs font-black uppercase tracking-wide text-slate-500">{step.meta}</p>
+                </div>
+                <span className="mt-4 font-black text-lagoon-700">{step.action}</span>
               </button>
-            }
-          >
-            <div className="grid grid-cols-3 gap-3">
-              <InfoTile label="Words" value={review.counts?.vocabulary || 0} />
-              <InfoTile label="Grammar" value={review.counts?.grammar || 0} />
-              <InfoTile label="Mistakes" value={review.counts?.mistakes || 0} />
-            </div>
-            <p className="mt-4 text-sm font-semibold text-slate-600">
-              Estimated time: {review.estimatedMinutes || 0} minutes. The queue mixes vocabulary, grammar patterns, and recent wrong answers.
-            </p>
-          </Panel>
+            ))}
+          </div>
+        </Panel>
 
-          <Panel title="Course Progress" icon={BarChart3}>
-            <div className="grid grid-cols-2 gap-3">
-              <InfoTile label="Completed" value={`${completedLessons}/${lessons.length}`} />
-              <InfoTile label="Stable Words" value={dashboard.stats.masteredWords || 0} />
-            </div>
-            <div className="mt-4">
-              <div className="mb-2 flex justify-between text-sm font-bold text-slate-600">
-                <span>Beginner path</span>
-                <span>{courseProgress}%</span>
-              </div>
-              <ProgressBar value={courseProgress} />
-            </div>
-          </Panel>
-        </div>
-
-        <Panel
-          title="Fix My Mistakes"
-          icon={PenTool}
-          action={
-            <button onClick={() => setActive("review")} className="text-sm font-black text-lagoon-700">
-              Practice
-            </button>
-          }
-        >
+        <Panel title="Weak Spots" icon={PenTool} action={<button onClick={() => setActive("review")} className="text-sm font-black text-lagoon-700">Review</button>}>
           {review.weakSpots?.length ? (
             <div className="grid gap-3 md:grid-cols-2">
               {review.weakSpots.slice(0, 4).map((spot) => (
@@ -2593,44 +2840,31 @@ function DashboardView({ dashboard, setActive, onStartLesson }) {
               ))}
             </div>
           ) : (
-            <p className="text-sm font-semibold text-slate-600">No weak spots yet. Mistakes will appear here automatically after practice.</p>
+            <p className="text-sm font-semibold text-slate-600">No recurring weak spots.</p>
           )}
         </Panel>
       </section>
 
       <aside className="space-y-5">
-        <Panel title="Recent Achievement" icon={Trophy}>
+        <Panel title="Snapshot" icon={BarChart3}>
+          <div className="grid gap-3">
+            <InfoTile label="Course" value={`${courseProgress}%`} />
+            <InfoTile label="Review due" value={reviewTotal} />
+            <InfoTile label="Mastered words" value={dashboard.stats.masteredWords || 0} />
+            <InfoTile label="Streak" value={dashboard.stats.streakDays} />
+          </div>
+        </Panel>
+        <Panel title="Latest Ability" icon={Trophy}>
           <div className="flex gap-4">
             <AssetImage imageKey="rewards-and-progress:15" alt="Recent achievement" className="h-20 w-20 shrink-0" />
             <div>
-              <p className="font-black text-slate-950">{dashboard.recentAchievement || "Complete your first lesson to unlock a practical ability."}</p>
-              <p className="mt-2 text-sm font-semibold text-slate-600">Progress means being able to use Spanish in a real situation.</p>
+              <p className="font-black text-slate-950">{dashboard.recentAchievement || "Complete a lesson to unlock your first practical ability."}</p>
+              <p className="mt-2 text-sm font-semibold text-slate-600">Abilities come from finished lessons, not isolated drills.</p>
             </div>
           </div>
         </Panel>
-        <StatsCard dashboard={dashboard} />
-        <WeeklyChallengeCard challenge={dashboard.challenge} onOpen={() => setActive("challenges")} />
+        {challenge && <WeeklyChallengeCard challenge={challenge} onOpen={() => setActive("challenges")} />}
       </aside>
-    </div>
-  );
-}
-
-function HeroBand() {
-  return (
-    <div className="relative overflow-hidden rounded-lg bg-coral-500 px-6 py-7 text-white shadow-soft">
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute right-20 top-6 text-6xl">✦</div>
-        <div className="absolute right-48 bottom-2 text-4xl">✧</div>
-      </div>
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold sm:text-4xl">Spanish Grammar Adventure</h1>
-          <p className="mt-2 text-base font-semibold text-white/95">Master the rules. Build real confidence.</p>
-        </div>
-        <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white/95 px-4 py-3 text-sm font-bold text-coral-600">
-          <Sparkles size={17} /> ¡Sigue asi!
-        </div>
-      </div>
     </div>
   );
 }
@@ -3598,7 +3832,13 @@ function GrammarView({ lessons }) {
 
   return (
     <div className="space-y-5">
-      <HeroBand />
+      <Panel title="Grammar Map" icon={GraduationCap}>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <InfoTile label="Topics" value={grouped.length} />
+          <InfoTile label="Lessons" value={lessons.length} />
+          <InfoTile label="Average" value={`${lessons.length ? Math.round(lessons.reduce((sum, lesson) => sum + lesson.progress, 0) / lessons.length) : 0}%`} />
+        </div>
+      </Panel>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {grouped.map(([topic, topicLessons]) => (
           <Panel key={topic} title={topic} icon={GraduationCap}>
