@@ -160,7 +160,18 @@ Lesson targets:
 
 Checkpoint: talk about preferences and ask someone else.
 
-### A2.4 Objects and Pronouns
+### A2.4 Scenarios and Input
+
+Lesson targets:
+
+- restaurant ordering, recommendations, and bill requests.
+- travel directions and conversation repair.
+- pharmacy symptoms, medicine, and safety details.
+- short reading and listening labs with comprehension checks.
+
+Checkpoint: complete first scenario and input-comprehension checks.
+
+### A2.5 Objects and Pronouns
 
 Lesson targets:
 
@@ -171,7 +182,7 @@ Lesson targets:
 
 Checkpoint: replace nouns with pronouns in short sentences.
 
-### A2.5 Past Events
+### A2.6 Past Events
 
 Lesson targets:
 
@@ -182,26 +193,26 @@ Lesson targets:
 
 Checkpoint: tell what happened yesterday.
 
-### A2.6 Background and Habitual Past
+### A2.7 Background and Habitual Past
 
 Lesson targets:
 
-- imperfect: era, estaba, tenia, iba, hablaba.
+- imperfect: era, estaba, tenía, iba, hablaba.
 - descriptions, age, repeated past actions.
 - preterite vs imperfect first contrast.
 
 Checkpoint: describe what something was like and what happened.
 
-### A2.7 Practical Scenarios
+### A2.8 Expanded Practical Scenarios
 
 Lesson targets:
 
-- hotel, transport, doctor, restaurant, shopping.
+- hotel, transport, doctor, shopping, and plan changes.
 - complaints and problems.
 - polite requests.
 - basic commands.
 
-Checkpoint: complete scenario dialogues.
+Checkpoint: complete longer scenario dialogues.
 
 ## B1 Units
 
@@ -271,4 +282,3 @@ Advanced units should be topic-based and skill-based:
 - Long-form reading and writing.
 
 Each advanced unit should produce vocabulary, grammar review, reading, listening, and writing prompts.
-

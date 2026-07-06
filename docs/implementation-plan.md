@@ -214,19 +214,22 @@ Deliverable: Espanolo becomes a long-term Spanish practice system.
 - Expanded the Conjugation Trainer with tense, person, verb-family, difficulty, and mistake filters.
 - Added admin curriculum QA for missing outcomes, thin lessons, unit checkpoint gaps, and repeated quiz images.
 - Added seed-data tests for lesson order, references, checkpoint coverage, and answer specs.
+- Built A2.3: gustar, encantar, preferir, hobbies, favorites, and preference dialogues.
+- Added the first multi-turn scenario packs for restaurant, travel directions, and pharmacy help.
+- Added the Reading and Listening Lab MVP with transcript reveal, hidden dictation audio text, and comprehension questions.
 
 ## Next 10 Concrete Steps
 
 1. Run a live production seed pass and verify old learner progress recalculates correctly.
 2. Audit A1 checkpoint results after real use and tune overly strict accepted answers.
-3. Build A2.3: gustar, preferences, hobbies, and preference dialogues.
-4. Add first multi-turn scenario pack for restaurant, travel, and pharmacy interactions.
-5. Add a Reading and Listening Lab MVP with transcript reveal and comprehension questions.
-6. Add admin filters to jump from QA findings directly to the affected lesson or exercise.
-7. Add more accepted-answer normalization tests for punctuation, accents, and Spanish question marks.
-8. Continue the asset pass for A2/B1 lessons before new content goes live.
-9. Add weak-ending analytics for the Conjugation Trainer.
-10. Start A2 object-pronoun lessons after the preference unit is stable.
+3. Add admin filters to jump from QA findings directly to the affected lesson or exercise.
+4. Add more accepted-answer normalization tests for punctuation, accents, and Spanish question marks.
+5. Continue the asset pass for A2/B1 lessons before new content goes live.
+6. Add weak-ending analytics for the Conjugation Trainer.
+7. Start A2 object-pronoun lessons with shopping and concrete object actions.
+8. Add expanded scenario packs for hotel check-in, shopping, plan changes, and explaining a problem.
+9. Let Input Lab save unknown words directly into vocabulary review.
+10. Add more graded reading and listening texts at A2 with mixed comprehension checkpoints.
 
 ## Definition of Done
 

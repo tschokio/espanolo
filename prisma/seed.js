@@ -148,6 +148,30 @@ const topics = [
     cefrLevel: "A2",
     imageKey: "irregular-verbs:1",
     order: 13
+  },
+  {
+    slug: "likes-preferences",
+    title: "Likes and Preferences",
+    description: "Talk about likes, dislikes, favorites, hobbies, and simple choices with gustar, encantar, and preferir.",
+    cefrLevel: "A2",
+    imageKey: "preferences-and-hobbies:1",
+    order: 14
+  },
+  {
+    slug: "scenario-practice",
+    title: "Scenario Practice",
+    description: "Practice controlled multi-turn conversations for restaurants, travel, pharmacies, and common problems.",
+    cefrLevel: "A2",
+    imageKey: "conversation-and-opinion:1",
+    order: 15
+  },
+  {
+    slug: "input-comprehension",
+    title: "Input Comprehension",
+    description: "Build reading and listening comprehension with short graded texts, transcript reveal, and recall questions.",
+    cefrLevel: "A2",
+    imageKey: "reading-and-listening-lab:1",
+    order: 16
   }
 ];
 
@@ -490,6 +514,71 @@ const vocabularyGroups = [
       ["querer", "to want", "verb", null, "Quiero comprar un billete.", "irregular-verbs:14"],
       ["tener que", "to have to", "phrase", null, "Tengo que trabajar.", "irregular-verbs:15"],
       ["dar", "to give", "verb", null, "Doy el libro a Ana.", "irregular-verbs:16"]
+    ]
+  },
+  {
+    slug: "a2-preferences-hobbies",
+    title: "A2 Preferences and Hobbies",
+    description: "Concrete words for likes, dislikes, favorites, and hobby conversations.",
+    situation: "free time",
+    imageKey: "preferences-and-hobbies:1",
+    words: [
+      ["la música", "music", "noun", "feminine", "Me gusta la música.", "preferences-and-hobbies:1"],
+      ["las películas", "movies", "noun", "feminine plural", "Me gustan las películas.", "preferences-and-hobbies:2"],
+      ["el fútbol", "soccer", "noun", "masculine", "Me gusta el fútbol.", "preferences-and-hobbies:3"],
+      ["leer", "to read", "verb", null, "Me gusta leer.", "preferences-and-hobbies:4"],
+      ["cocinar", "to cook", "verb", null, "Me encanta cocinar.", "preferences-and-hobbies:5"],
+      ["viajar", "to travel", "verb", null, "Me gusta viajar.", "preferences-and-hobbies:6"],
+      ["el café", "coffee", "noun", "masculine", "Me gusta el café.", "preferences-and-hobbies:7"],
+      ["la lluvia", "rain", "noun", "feminine", "No me gusta la lluvia.", "preferences-and-hobbies:8"],
+      ["el té", "tea", "noun", "masculine", "Prefiero el té.", "preferences-and-hobbies:9"],
+      ["la playa", "beach", "noun", "feminine", "Prefiero la playa.", "preferences-and-hobbies:10"],
+      ["el restaurante favorito", "favorite restaurant", "phrase", "masculine", "Mi restaurante favorito es pequeño.", "preferences-and-hobbies:11"],
+      ["el color favorito", "favorite color", "phrase", "masculine", "Mi color favorito es azul.", "preferences-and-hobbies:12"],
+      ["la clase", "class", "noun", "feminine", "Me gusta la clase de español.", "preferences-and-hobbies:13"],
+      ["el fin de semana", "weekend", "phrase", "masculine", "Viajo el fin de semana.", "preferences-and-hobbies:14"],
+      ["estar aburrido", "to be bored", "phrase", null, "Estoy aburrido.", "preferences-and-hobbies:15"],
+      ["estar emocionado", "to be excited", "phrase", null, "Estoy emocionado.", "preferences-and-hobbies:16"]
+    ]
+  },
+  {
+    slug: "a2-scenario-survival",
+    title: "A2 Scenario Survival",
+    description: "Practical phrases for ordering, asking directions, and requesting pharmacy help.",
+    situation: "practical conversations",
+    imageKey: "conversation-and-opinion:1",
+    words: [
+      ["¿Qué recomienda?", "What do you recommend?", "phrase", null, "¿Qué recomienda para comer?", "food-and-ordering:17"],
+      ["Quisiera", "I would like", "phrase", null, "Quisiera una mesa, por favor.", "food-and-ordering:19"],
+      ["para llevar", "to go", "phrase", null, "Quisiera dos cafés para llevar.", "food-and-ordering:20"],
+      ["sin", "without", "preposition", null, "Quisiera agua sin gas.", "food-and-ordering:1"],
+      ["la dirección", "address / direction", "noun", "feminine", "Necesito la dirección del hotel.", "city-transport:15"],
+      ["siga derecho", "go straight", "phrase", null, "Siga derecho hasta la estación.", "city-transport:14"],
+      ["gire a la izquierda", "turn left", "phrase", null, "Gire a la izquierda en la plaza.", "city-transport:15"],
+      ["la farmacia", "pharmacy", "noun", "feminine", "La farmacia está cerca.", "places-around-town:13"],
+      ["el dolor", "pain", "noun", "masculine", "Tengo dolor de cabeza.", "body-and-health:7"],
+      ["la medicina", "medicine", "noun", "feminine", "Necesito medicina para el dolor.", "body-and-health:12"],
+      ["la alergia", "allergy", "noun", "feminine", "Tengo alergia a la aspirina.", "body-and-health:12"],
+      ["¿Cada cuánto?", "How often?", "phrase", null, "¿Cada cuánto tomo la medicina?", "body-and-health:12"]
+    ]
+  },
+  {
+    slug: "a2-reading-listening-lab",
+    title: "A2 Reading and Listening Lab",
+    description: "Words for short texts, audio prompts, transcripts, and comprehension checks.",
+    situation: "input practice",
+    imageKey: "reading-and-listening-lab:1",
+    words: [
+      ["el texto", "text", "noun", "masculine", "Leo el texto dos veces.", "reading-and-listening-lab:1"],
+      ["el audio", "audio", "noun", "masculine", "Escucho el audio sin leer.", "reading-and-listening-lab:2"],
+      ["la pregunta", "question", "noun", "feminine", "Contesto la pregunta.", "reading-and-listening-lab:5"],
+      ["la respuesta", "answer", "noun", "feminine", "Escribo la respuesta.", "reading-and-listening-lab:6"],
+      ["el resumen", "summary", "noun", "masculine", "Escribo un resumen corto.", "reading-and-listening-lab:7"],
+      ["la palabra nueva", "new word", "phrase", "feminine", "Guardo una palabra nueva.", "reading-and-listening-lab:8"],
+      ["escuchar", "to listen", "verb", null, "Escucho primero.", "reading-and-listening-lab:2"],
+      ["leer", "to read", "verb", null, "Leo después.", "reading-and-listening-lab:1"],
+      ["la transcripción", "transcript", "noun", "feminine", "Reviso la transcripción.", "reading-and-listening-lab:4"],
+      ["la idea principal", "main idea", "phrase", "feminine", "Busco la idea principal.", "reading-and-listening-lab:9"]
     ]
   }
 ];
@@ -1886,6 +1975,292 @@ const lessons = [
       ["Salgo de casa a las ocho.", "I leave home at eight.", "Salir becomes salgo."],
       ["Puedo abrir la puerta.", "I can open the door.", "Poder becomes puedo."],
       ["Voy a traer una bolsa.", "I am going to bring a bag.", "Voy a plus infinitive expresses a plan."]
+    ]
+  },
+  {
+    slug: "a2-gustar-basics",
+    title: "Gustar Basics",
+    summary: "Learn the Spanish pattern for saying what you like and dislike.",
+    cefrLevel: "A2",
+    theme: "Likes and Preferences",
+    situation: "talking about interests",
+    imageKey: "preferences-and-hobbies:1",
+    topicSlug: "likes-preferences",
+    vocabularySlugs: ["a2-preferences-hobbies"],
+    order: 620,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can say that you like one thing.",
+      "You can say that you do not like one thing.",
+      "You can avoid translating I like word for word."
+    ],
+    conceptKeys: ["gustar", "indirect-object-me", "likes-dislikes"],
+    reviewSummary: "You practiced me gusta and no me gusta for single things.",
+    sentences: [
+      ["Me gusta la música.", "I like music.", "Spanish says the music is pleasing to me: me gusta la música."],
+      ["Me gusta el café.", "I like coffee.", "Use gusta with one singular thing."],
+      ["No me gusta la lluvia.", "I do not like rain.", "Put no before me gusta to make it negative."],
+      ["¿Te gusta el fútbol?", "Do you like soccer?", "Use te gusta when asking one familiar person what they like."]
+    ]
+  },
+  {
+    slug: "a2-gustar-plurals-and-infinitives",
+    title: "Gustar with Plurals and Activities",
+    summary: "Use gusta with activities and gustan with plural things.",
+    cefrLevel: "A2",
+    theme: "Likes and Preferences",
+    situation: "hobbies and activities",
+    imageKey: "preferences-and-hobbies:4",
+    topicSlug: "likes-preferences",
+    vocabularySlugs: ["a2-preferences-hobbies", "daily-actions"],
+    order: 630,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can choose gusta or gustan by what is liked.",
+      "You can say you like doing an activity.",
+      "You can use encanta for a stronger like."
+    ],
+    conceptKeys: ["gustar-plural", "infinitive-after-gustar", "encantar"],
+    reviewSummary: "You practiced me gustan for plural things and me gusta plus infinitive for activities.",
+    sentences: [
+      ["Me gustan las películas.", "I like movies.", "Use gustan because las películas is plural."],
+      ["Me gusta leer.", "I like to read.", "Use gusta before an infinitive activity."],
+      ["Me encanta cocinar.", "I love cooking.", "Encantar works like gustar but is stronger."],
+      ["No me gustan las películas largas.", "I do not like long movies.", "Use no me gustan with plural things you dislike."]
+    ]
+  },
+  {
+    slug: "a2-preferir-and-favorites",
+    title: "Preferir and Favorites",
+    summary: "Say what you prefer and name simple favorites.",
+    cefrLevel: "A2",
+    theme: "Preferences",
+    situation: "choosing between options",
+    imageKey: "preferences-and-hobbies:9",
+    topicSlug: "likes-preferences",
+    vocabularySlugs: ["a2-preferences-hobbies", "food-and-ordering", "numbers-and-colors"],
+    order: 640,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can use prefiero for I prefer.",
+      "You can name a favorite color, place, or restaurant.",
+      "You can contrast a like with a preference."
+    ],
+    conceptKeys: ["preferir", "favorites", "contrast-pero"],
+    reviewSummary: "You practiced prefiero, favorito, favorita, and simple preference contrasts.",
+    sentences: [
+      ["Prefiero el té.", "I prefer tea.", "Preferir is stem-changing; the yo form is prefiero."],
+      ["Prefiero la playa.", "I prefer the beach.", "Use prefiero when choosing one option over another."],
+      ["Mi color favorito es azul.", "My favorite color is blue.", "Favorito agrees with masculine color."],
+      ["Me gusta el café, pero prefiero el té.", "I like coffee, but I prefer tea.", "Use pero to contrast a like and a stronger preference."]
+    ]
+  },
+  {
+    slug: "a2-preference-dialogues",
+    title: "Preference Dialogues",
+    summary: "Answer simple questions about hobbies, choices, and favorites.",
+    cefrLevel: "A2",
+    theme: "Dialogue",
+    situation: "small talk",
+    imageKey: "conversation-and-opinion:2",
+    topicSlug: "likes-preferences",
+    vocabularySlugs: ["a2-preferences-hobbies", "useful-phrases"],
+    order: 650,
+    estimatedMinutes: 11,
+    outcomes: [
+      "You can answer what you like doing.",
+      "You can choose between two options.",
+      "You can ask a preference question back."
+    ],
+    conceptKeys: ["dialogue", "preference-questions", "te-gusta"],
+    reviewSummary: "You practiced short preference answers in conversation.",
+    sentences: [
+      ["¿Qué te gusta hacer?", "What do you like to do?", "Answer with me gusta plus an infinitive."],
+      ["Me gusta leer y cocinar.", "I like to read and cook.", "You can connect two activities with y."],
+      ["¿Prefieres café o té?", "Do you prefer coffee or tea?", "Use o to offer a choice."],
+      ["Prefiero el té. ¿Y tú?", "I prefer tea. And you?", "Add ¿Y tú? to ask the same question back."]
+    ]
+  },
+  {
+    slug: "checkpoint-a2-likes-preferences",
+    title: "A2.3 Likes and Preferences Checkpoint",
+    summary: "Check gustar, encantar, preferir, favorites, and preference dialogue replies.",
+    cefrLevel: "A2",
+    theme: "Checkpoint",
+    situation: "preference review",
+    imageKey: "preferences-and-hobbies:10",
+    topicSlug: "likes-preferences",
+    vocabularySlugs: ["a2-preferences-hobbies", "food-and-ordering"],
+    order: 660,
+    estimatedMinutes: 13,
+    outcomes: [
+      "You can produce likes and dislikes from English prompts.",
+      "You can choose gusta or gustan correctly.",
+      "You can answer a short preference question."
+    ],
+    conceptKeys: ["checkpoint", "gustar", "preferir", "dialogue"],
+    reviewSummary: "You completed the A2.3 checkpoint for likes, dislikes, favorites, and preferences.",
+    sentences: [
+      ["Me gusta viajar.", "I like to travel.", "Use gusta before an infinitive."],
+      ["Me gustan las películas.", "I like movies.", "Use gustan with a plural liked thing."],
+      ["Prefiero la playa.", "I prefer the beach.", "Prefiero is the yo form of preferir."],
+      ["No me gusta la lluvia.", "I do not like rain.", "Negate gustar with no before me."]
+    ]
+  },
+  {
+    slug: "scenario-restaurant-order",
+    title: "Restaurant Scenario",
+    summary: "Order politely, ask for a recommendation, and handle a simple bill request.",
+    cefrLevel: "A2",
+    theme: "Scenario",
+    situation: "restaurant",
+    imageKey: "food-and-ordering:17",
+    topicSlug: "scenario-practice",
+    vocabularySlugs: ["a2-scenario-survival", "food-and-ordering", "useful-phrases"],
+    order: 670,
+    estimatedMinutes: 12,
+    outcomes: [
+      "You can start a restaurant order politely.",
+      "You can ask for a recommendation.",
+      "You can ask for the bill."
+    ],
+    conceptKeys: ["scenario", "restaurant", "polite-request"],
+    reviewSummary: "You practiced a controlled restaurant conversation.",
+    sentences: [
+      ["Quisiera una mesa, por favor.", "I would like a table, please.", "Quisiera is softer and more polite than quiero in service situations."],
+      ["¿Qué recomienda?", "What do you recommend?", "Use recomienda with usted in polite service contexts."],
+      ["Quisiera dos cafés para llevar.", "I would like two coffees to go.", "Para llevar means to go."],
+      ["La cuenta, por favor.", "The bill, please.", "A complete restaurant closing phrase."]
+    ]
+  },
+  {
+    slug: "scenario-travel-directions",
+    title: "Travel Directions Scenario",
+    summary: "Ask where a place is and understand simple direction replies.",
+    cefrLevel: "A2",
+    theme: "Scenario",
+    situation: "directions",
+    imageKey: "city-transport:12",
+    topicSlug: "scenario-practice",
+    vocabularySlugs: ["a2-scenario-survival", "travel-and-survival", "city-transport"],
+    order: 680,
+    estimatedMinutes: 12,
+    outcomes: [
+      "You can ask where a station or hotel is.",
+      "You can understand straight and left/right directions.",
+      "You can ask someone to repeat or slow down."
+    ],
+    conceptKeys: ["scenario", "directions", "conversation-repair"],
+    reviewSummary: "You practiced travel direction questions and repair phrases.",
+    sentences: [
+      ["Perdón, ¿dónde está la estación?", "Excuse me, where is the station?", "Start with perdón to get attention politely."],
+      ["Siga derecho.", "Go straight.", "Siga is a polite command form used in directions."],
+      ["Gire a la izquierda.", "Turn left.", "Use izquierda for left and derecha for right."],
+      ["¿Puede repetir, por favor?", "Can you repeat, please?", "Use puede repetir when you need the direction again."]
+    ]
+  },
+  {
+    slug: "scenario-pharmacy-help",
+    title: "Pharmacy Scenario",
+    summary: "Explain a simple health problem and ask how often to take medicine.",
+    cefrLevel: "A2",
+    theme: "Scenario",
+    situation: "pharmacy",
+    imageKey: "body-and-health:12",
+    topicSlug: "scenario-practice",
+    vocabularySlugs: ["a2-scenario-survival", "body-and-health", "useful-phrases"],
+    order: 690,
+    estimatedMinutes: 12,
+    outcomes: [
+      "You can say what hurts.",
+      "You can ask for medicine for a common symptom.",
+      "You can ask how often to take it."
+    ],
+    conceptKeys: ["scenario", "pharmacy", "health"],
+    reviewSummary: "You practiced a controlled pharmacy conversation for symptoms and medicine.",
+    sentences: [
+      ["Me duele la cabeza.", "My head hurts.", "Use me duele with one thing that hurts."],
+      ["Necesito medicina para el dolor.", "I need medicine for pain.", "Para introduces the purpose here."],
+      ["Tengo alergia a la aspirina.", "I have an allergy to aspirin.", "Use a plus the thing you are allergic to."],
+      ["¿Cada cuánto tomo la medicina?", "How often do I take the medicine?", "Cada cuánto asks about frequency."]
+    ]
+  },
+  {
+    slug: "lab-a2-cafe-reading",
+    title: "Cafe Reading Lab",
+    summary: "Read a short A2 text, then answer comprehension and summary questions.",
+    cefrLevel: "A2",
+    theme: "Reading Lab",
+    situation: "short cafe text",
+    imageKey: "reading-and-listening-lab:1",
+    topicSlug: "input-comprehension",
+    vocabularySlugs: ["a2-reading-listening-lab", "a2-preferences-hobbies", "food-and-ordering"],
+    order: 700,
+    estimatedMinutes: 12,
+    outcomes: [
+      "You can find the main idea of a short text.",
+      "You can answer detail questions without seeing an answer list first.",
+      "You can write a one-sentence summary from a model."
+    ],
+    conceptKeys: ["reading", "main-idea", "comprehension"],
+    reviewSummary: "You practiced reading a short cafe text and answering comprehension questions.",
+    sentences: [
+      ["Ana trabaja por la mañana.", "Ana works in the morning.", "First identify who the text is about and when the action happens."],
+      ["Después va a un café cerca de la estación.", "Afterward she goes to a cafe near the station.", "Después connects the next event."],
+      ["Le gusta el café, pero prefiere el té por la tarde.", "She likes coffee, but she prefers tea in the afternoon.", "The contrast tells you her stronger preference."],
+      ["También lee un libro pequeño antes de volver a casa.", "She also reads a small book before returning home.", "También adds another detail to the routine."]
+    ]
+  },
+  {
+    slug: "lab-a2-weekend-listening",
+    title: "Weekend Listening Lab",
+    summary: "Listen to a short weekend plan, reveal the transcript, then answer comprehension checks.",
+    cefrLevel: "A2",
+    theme: "Listening Lab",
+    situation: "weekend plan audio",
+    imageKey: "reading-and-listening-lab:2",
+    topicSlug: "input-comprehension",
+    vocabularySlugs: ["a2-reading-listening-lab", "a2-irregular-verbs", "places-around-town"],
+    order: 710,
+    estimatedMinutes: 12,
+    outcomes: [
+      "You can catch the main plan in short audio.",
+      "You can use transcript reveal to check what you missed.",
+      "You can answer dictation and detail questions."
+    ],
+    conceptKeys: ["listening", "transcript", "comprehension"],
+    reviewSummary: "You practiced listening for a weekend plan and checking details with the transcript.",
+    sentences: [
+      ["Mañana voy a la tienda.", "Tomorrow I am going to the store.", "Voy a plus infinitive expresses a near-future plan."],
+      ["Tengo que comprar pan y una bolsa.", "I have to buy bread and a bag.", "Tengo que introduces an obligation."],
+      ["Después quiero escuchar música en casa.", "Afterward I want to listen to music at home.", "Después marks the next step."],
+      ["Por la noche voy a leer un libro.", "At night I am going to read a book.", "Por la noche sets the time."]
+    ]
+  },
+  {
+    slug: "checkpoint-a2-scenarios-input",
+    title: "A2.4 Scenarios and Input Checkpoint",
+    summary: "Check restaurant, travel, pharmacy, reading, and listening comprehension skills.",
+    cefrLevel: "A2",
+    theme: "Checkpoint",
+    situation: "scenario and input review",
+    imageKey: "conversation-and-opinion:1",
+    topicSlug: "scenario-practice",
+    vocabularySlugs: ["a2-scenario-survival", "a2-reading-listening-lab", "food-and-ordering", "body-and-health"],
+    order: 720,
+    estimatedMinutes: 15,
+    outcomes: [
+      "You can complete short scenario replies.",
+      "You can answer simple reading details.",
+      "You can type a short heard sentence."
+    ],
+    conceptKeys: ["checkpoint", "scenario", "reading", "listening"],
+    reviewSummary: "You completed the A2.4 checkpoint for controlled scenarios and input comprehension.",
+    sentences: [
+      ["Quisiera dos cafés para llevar.", "I would like two coffees to go.", "Restaurant request."],
+      ["Perdón, ¿dónde está la estación?", "Excuse me, where is the station?", "Travel direction question."],
+      ["Necesito medicina para el dolor.", "I need medicine for pain.", "Pharmacy request."],
+      ["Mañana voy a la tienda.", "Tomorrow I am going to the store.", "Listening detail."]
     ]
   }
 ];
@@ -4380,6 +4755,898 @@ const exercises = [
     xpReward: 20,
     imageKey: "irregular-verbs:7",
     options: []
+  },
+  {
+    slug: "a2-gustar-meaning-musica",
+    lessonSlug: "a2-gustar-basics",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Gustar meaning.",
+    instruction: "Choose the meaning.",
+    questionText: "Me gusta la música.",
+    answerJson: { correct: "I like music.", accepted: ["I like music", "I like music."] },
+    explanation: "Me gusta la música means I like music. The liked thing is singular, so use gusta.",
+    difficulty: 1,
+    order: 1,
+    xpReward: 12,
+    imageKey: "preferences-and-hobbies:1",
+    options: [
+      ["I like music.", "I like music.", true],
+      ["I am music.", "I am music.", false],
+      ["I need music.", "I need music.", false]
+    ]
+  },
+  {
+    slug: "a2-gustar-me-cafe",
+    lessonSlug: "a2-gustar-basics",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.CLOZE,
+    prompt: "Build a like.",
+    instruction: "Complete the pattern.",
+    questionText: "____ gusta el café.",
+    answerJson: { correct: "Me", accepted: ["me"], goal: "gustar" },
+    explanation: "Use me gusta for I like: Me gusta el café.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 12,
+    imageKey: "preferences-and-hobbies:7",
+    options: [
+      ["Me", "Me", true],
+      ["Yo", "Yo", false],
+      ["Tengo", "Tengo", false]
+    ]
+  },
+  {
+    slug: "a2-gustar-no-lluvia",
+    lessonSlug: "a2-gustar-basics",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Dislike.",
+    instruction: "Translate the sentence.",
+    questionText: "I do not like rain.",
+    answerJson: { correct: "No me gusta la lluvia.", accepted: ["no me gusta la lluvia", "no me gusta la lluvia."] },
+    explanation: "Put no before me gusta: No me gusta la lluvia.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 16,
+    imageKey: "preferences-and-hobbies:8",
+    options: []
+  },
+  {
+    slug: "a2-gustar-dialogue-futbol",
+    lessonSlug: "a2-gustar-basics",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Answer a like question.",
+    instruction: "Type a natural answer in Spanish.",
+    questionText: "¿Te gusta el fútbol?",
+    answerJson: {
+      correct: "Sí, me gusta el fútbol.",
+      accepted: ["sí, me gusta el fútbol", "si, me gusta el futbol", "me gusta el fútbol", "me gusta el futbol"]
+    },
+    explanation: "Answer a te gusta question from your view with me gusta.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 16,
+    imageKey: "preferences-and-hobbies:3",
+    options: []
+  },
+  {
+    slug: "a2-gustar-plural-peliculas",
+    lessonSlug: "a2-gustar-plurals-and-infinitives",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.CLOZE,
+    prompt: "Plural liked thing.",
+    instruction: "Choose gusta or gustan.",
+    questionText: "Me ____ las películas.",
+    answerJson: { correct: "gustan", accepted: ["gustan"], goal: "gustar_plural" },
+    explanation: "Use gustan because las películas is plural.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 14,
+    imageKey: "preferences-and-hobbies:2",
+    options: [
+      ["gustan", "gustan", true],
+      ["gusta", "gusta", false],
+      ["prefiero", "prefiero", false]
+    ]
+  },
+  {
+    slug: "a2-gustar-infinitive-leer",
+    lessonSlug: "a2-gustar-plurals-and-infinitives",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Activity with gustar.",
+    instruction: "Translate the sentence.",
+    questionText: "I like to read.",
+    answerJson: { correct: "Me gusta leer.", accepted: ["me gusta leer", "me gusta leer."] },
+    explanation: "Use gusta before an infinitive activity: Me gusta leer.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 16,
+    imageKey: "preferences-and-hobbies:4",
+    options: []
+  },
+  {
+    slug: "a2-gustar-encanta-cocinar",
+    lessonSlug: "a2-gustar-plurals-and-infinitives",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Build a strong like.",
+    instruction: "Put the words in order.",
+    questionText: "I love cooking.",
+    answerJson: { correctWords: ["Me", "encanta", "cocinar", "."] },
+    explanation: "Me encanta cocinar means I love cooking.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 16,
+    imageKey: "preferences-and-hobbies:5",
+    options: [
+      ["Me", "Me", false],
+      ["encanta", "encanta", false],
+      ["cocinar", "cocinar", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "a2-gustar-why-gustan",
+    lessonSlug: "a2-gustar-plurals-and-infinitives",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Pattern check.",
+    instruction: "Choose the reason.",
+    questionText: "Why does Me gustan las películas use gustan?",
+    answerJson: { correct: "Because movies are plural.", accepted: ["Because movies are plural", "Because movies are plural."] },
+    explanation: "Gustar agrees with the thing liked. Las películas is plural, so use gustan.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 14,
+    imageKey: "preferences-and-hobbies:2",
+    options: [
+      ["Because movies are plural.", "Because movies are plural.", true],
+      ["Because me is plural.", "Because me is plural.", false],
+      ["Because it is negative.", "Because it is negative.", false]
+    ]
+  },
+  {
+    slug: "a2-preferir-yo-prefiero",
+    lessonSlug: "a2-preferir-and-favorites",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.CONJUGATION,
+    prompt: "Preferir yo form.",
+    instruction: "Write the present yo form.",
+    questionText: "Yo ____ el té. (preferir)",
+    answerJson: {
+      correct: "prefiero",
+      accepted: ["prefiero"],
+      trainer: { tense: "present", person: "yo", family: "stem-changing", infinitive: "preferir" }
+    },
+    explanation: "Preferir changes e to ie in the yo form: prefiero.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 16,
+    imageKey: "preferences-and-hobbies:9",
+    options: []
+  },
+  {
+    slug: "a2-preferir-playa",
+    lessonSlug: "a2-preferir-and-favorites",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Preference.",
+    instruction: "Translate the sentence.",
+    questionText: "I prefer the beach.",
+    answerJson: { correct: "Prefiero la playa.", accepted: ["prefiero la playa", "prefiero la playa."] },
+    explanation: "Use prefiero for I prefer: Prefiero la playa.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 16,
+    imageKey: "preferences-and-hobbies:10",
+    options: []
+  },
+  {
+    slug: "a2-favorite-color-blue",
+    lessonSlug: "a2-preferir-and-favorites",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Favorite.",
+    instruction: "Translate the sentence.",
+    questionText: "My favorite color is blue.",
+    answerJson: { correct: "Mi color favorito es azul.", accepted: ["mi color favorito es azul", "mi color favorito es azul."] },
+    explanation: "Color is masculine, so use favorito: Mi color favorito es azul.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 16,
+    imageKey: "preferences-and-hobbies:12",
+    options: []
+  },
+  {
+    slug: "a2-preferir-cafe-te-contrast",
+    lessonSlug: "a2-preferir-and-favorites",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.TRANSFORMATION,
+    prompt: "Add a preference.",
+    instruction: "Rewrite the sentence so it says you like coffee but prefer tea.",
+    questionText: "Me gusta el café.",
+    answerJson: {
+      correct: "Me gusta el café, pero prefiero el té.",
+      accepted: ["me gusta el cafe pero prefiero el te", "me gusta el café, pero prefiero el té", "me gusta el café pero prefiero el té"]
+    },
+    explanation: "Use pero to contrast a like with a stronger preference.",
+    difficulty: 3,
+    order: 4,
+    xpReward: 20,
+    imageKey: "preferences-and-hobbies:7",
+    options: []
+  },
+  {
+    slug: "a2-dialogue-que-te-gusta-hacer",
+    lessonSlug: "a2-preference-dialogues",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Hobby answer.",
+    instruction: "Type a natural answer in Spanish.",
+    questionText: "¿Qué te gusta hacer?",
+    answerJson: {
+      correct: "Me gusta leer.",
+      accepted: ["me gusta leer", "me gusta leer.", "me gusta cocinar", "me gusta cocinar.", "me gusta viajar", "me gusta viajar."]
+    },
+    explanation: "Answer with me gusta plus an infinitive activity.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 18,
+    imageKey: "preferences-and-hobbies:4",
+    options: []
+  },
+  {
+    slug: "a2-dialogue-prefieres-cafe-te",
+    lessonSlug: "a2-preference-dialogues",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Choose one option.",
+    instruction: "Type a natural answer in Spanish.",
+    questionText: "¿Prefieres café o té?",
+    answerJson: {
+      correct: "Prefiero el té.",
+      accepted: ["prefiero el te", "prefiero el té", "prefiero el cafe", "prefiero el café"]
+    },
+    explanation: "Use prefiero plus the option you choose.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "preferences-and-hobbies:9",
+    options: []
+  },
+  {
+    slug: "a2-dialogue-color-favorito",
+    lessonSlug: "a2-preference-dialogues",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Favorite answer.",
+    instruction: "Answer in Spanish.",
+    questionText: "¿Cuál es tu color favorito?",
+    answerJson: {
+      correct: "Mi color favorito es azul.",
+      accepted: ["mi color favorito es azul", "mi color favorito es azul.", "mi color favorito es rojo", "mi color favorito es rojo."]
+    },
+    explanation: "Use mi color favorito es plus the color.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "preferences-and-hobbies:12",
+    options: []
+  },
+  {
+    slug: "a2-dialogue-writing-musica-peliculas",
+    lessonSlug: "a2-preference-dialogues",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.WRITING_PROMPT,
+    prompt: "Preference contrast.",
+    instruction: "Write the full model sentence.",
+    questionText: "Write: I like music, but I prefer movies.",
+    answerJson: {
+      correct: "Me gusta la música, pero prefiero las películas.",
+      accepted: ["me gusta la musica pero prefiero las peliculas", "me gusta la música, pero prefiero las películas"],
+      rubric: "Use me gusta, pero, prefiero, and the plural noun las películas."
+    },
+    explanation: "Use gusta with la música and prefiero with las películas.",
+    difficulty: 3,
+    order: 4,
+    xpReward: 22,
+    imageKey: "preferences-and-hobbies:2",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-like-travel",
+    lessonSlug: "checkpoint-a2-likes-preferences",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A2.3 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I like to travel.",
+    answerJson: { correct: "Me gusta viajar.", accepted: ["me gusta viajar", "me gusta viajar."] },
+    explanation: "Use me gusta before an infinitive: Me gusta viajar.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 18,
+    imageKey: "preferences-and-hobbies:6",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-gustan-peliculas",
+    lessonSlug: "checkpoint-a2-likes-preferences",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.CLOZE,
+    prompt: "A2.3 checkpoint.",
+    instruction: "Choose gusta or gustan.",
+    questionText: "Me ____ las películas.",
+    answerJson: { correct: "gustan", accepted: ["gustan"] },
+    explanation: "Use gustan because las películas is plural.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "preferences-and-hobbies:2",
+    options: [
+      ["gustan", "gustan", true],
+      ["gusta", "gusta", false],
+      ["gusto", "gusto", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a2-prefiero-playa",
+    lessonSlug: "checkpoint-a2-likes-preferences",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.CONJUGATION,
+    prompt: "A2.3 checkpoint.",
+    instruction: "Write the present yo form.",
+    questionText: "Yo ____ la playa. (preferir)",
+    answerJson: {
+      correct: "prefiero",
+      accepted: ["prefiero"],
+      trainer: { tense: "present", person: "yo", family: "stem-changing", infinitive: "preferir" }
+    },
+    explanation: "The yo form is prefiero.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "preferences-and-hobbies:10",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-no-like-rain-builder",
+    lessonSlug: "checkpoint-a2-likes-preferences",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "A2.3 checkpoint.",
+    instruction: "Build the sentence.",
+    questionText: "I do not like rain.",
+    answerJson: { correctWords: ["No", "me", "gusta", "la", "lluvia", "."] },
+    explanation: "No goes before me gusta: No me gusta la lluvia.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "preferences-and-hobbies:8",
+    options: [
+      ["No", "No", false],
+      ["me", "me", false],
+      ["gusta", "gusta", false],
+      ["la", "la", false],
+      ["lluvia", "lluvia", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a2-weekend-preference",
+    lessonSlug: "checkpoint-a2-likes-preferences",
+    topicSlug: "likes-preferences",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "A2.3 checkpoint.",
+    instruction: "Answer with a hobby or activity.",
+    questionText: "¿Qué te gusta hacer el fin de semana?",
+    answerJson: {
+      correct: "Me gusta viajar.",
+      accepted: ["me gusta viajar", "me gusta viajar.", "me gusta leer", "me gusta leer.", "me gusta cocinar", "me gusta cocinar."]
+    },
+    explanation: "Use me gusta plus an infinitive activity.",
+    difficulty: 2,
+    order: 5,
+    xpReward: 20,
+    imageKey: "preferences-and-hobbies:14",
+    options: []
+  },
+  {
+    slug: "scenario-restaurant-table-for-two",
+    lessonSlug: "scenario-restaurant-order",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Restaurant opening.",
+    instruction: "Reply as the customer.",
+    questionText: "El camarero dice: Buenas tardes. ¿Cuántas personas?",
+    answerJson: {
+      correct: "Una mesa para dos, por favor.",
+      accepted: ["una mesa para dos por favor", "una mesa para dos, por favor", "somos dos", "somos dos, por favor"],
+      scenario: { setting: "restaurant", partner: "Camarero", learnerRole: "Cliente", goal: "Ask for a table for two." }
+    },
+    explanation: "Una mesa para dos, por favor is a polite restaurant reply.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 18,
+    imageKey: "food-and-ordering:19",
+    options: []
+  },
+  {
+    slug: "scenario-restaurant-recommend",
+    lessonSlug: "scenario-restaurant-order",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Ask for a recommendation.",
+    instruction: "Ask the waiter what they recommend.",
+    questionText: "El camarero dice: Tenemos sopa y pollo.",
+    answerJson: {
+      correct: "¿Qué recomienda?",
+      accepted: ["que recomienda", "qué recomienda", "¿qué recomienda?"],
+      scenario: { setting: "restaurant", partner: "Camarero", learnerRole: "Cliente", goal: "Ask for a recommendation." }
+    },
+    explanation: "¿Qué recomienda? is a concise polite question with usted.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "food-and-ordering:17",
+    options: []
+  },
+  {
+    slug: "scenario-restaurant-para-llevar",
+    lessonSlug: "scenario-restaurant-order",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "To go or here.",
+    instruction: "Answer that it is to go.",
+    questionText: "¿Para aquí o para llevar?",
+    answerJson: {
+      correct: "Para llevar, por favor.",
+      accepted: ["para llevar", "para llevar por favor", "para llevar, por favor"],
+      scenario: { setting: "restaurant", partner: "Camarero", learnerRole: "Cliente", goal: "Say the order is to go." }
+    },
+    explanation: "Para llevar means to go.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "food-and-ordering:20",
+    options: []
+  },
+  {
+    slug: "scenario-restaurant-bill",
+    lessonSlug: "scenario-restaurant-order",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Close the meal.",
+    instruction: "Ask for the bill.",
+    questionText: "The bill, please.",
+    answerJson: {
+      correct: "La cuenta, por favor.",
+      accepted: ["la cuenta por favor", "la cuenta, por favor"]
+    },
+    explanation: "La cuenta, por favor is the standard short phrase for asking for the bill.",
+    difficulty: 1,
+    order: 4,
+    xpReward: 16,
+    imageKey: "food-and-ordering:18",
+    options: []
+  },
+  {
+    slug: "scenario-travel-ask-station",
+    lessonSlug: "scenario-travel-directions",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Ask directions.",
+    instruction: "Ask politely where the station is.",
+    questionText: "You need the station.",
+    answerJson: {
+      correct: "Perdón, ¿dónde está la estación?",
+      accepted: ["perdon donde esta la estacion", "perdón dónde está la estación", "perdón, ¿dónde está la estación?"],
+      scenario: { setting: "street", partner: "Persona local", learnerRole: "Viajero", goal: "Ask where the station is." }
+    },
+    explanation: "Start with perdón, then ask ¿dónde está la estación?",
+    difficulty: 2,
+    order: 1,
+    xpReward: 18,
+    imageKey: "city-transport:7",
+    options: []
+  },
+  {
+    slug: "scenario-travel-siga-derecho",
+    lessonSlug: "scenario-travel-directions",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Understand directions.",
+    instruction: "Choose the meaning.",
+    questionText: "Siga derecho.",
+    answerJson: { correct: "Go straight.", accepted: ["Go straight", "Go straight."] },
+    explanation: "Siga derecho means go straight in polite directions.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 14,
+    imageKey: "city-transport:14",
+    options: [
+      ["Go straight.", "Go straight.", true],
+      ["Turn left.", "Turn left.", false],
+      ["Go back.", "Go back.", false]
+    ]
+  },
+  {
+    slug: "scenario-travel-repeat-builder",
+    lessonSlug: "scenario-travel-directions",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Repair phrase.",
+    instruction: "Build the polite question.",
+    questionText: "Can you repeat, please?",
+    answerJson: { correctWords: ["¿", "Puede", "repetir", ",", "por", "favor", "?"] },
+    explanation: "Use puede repetir when you need someone to repeat.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "conversation-and-opinion:4",
+    options: [
+      ["¿", "¿", false],
+      ["Puede", "Puede", false],
+      ["repetir", "repetir", false],
+      [",", ",", false],
+      ["por", "por", false],
+      ["favor", "favor", false],
+      ["?", "?", false]
+    ]
+  },
+  {
+    slug: "scenario-travel-hotel-near-station",
+    lessonSlug: "scenario-travel-directions",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Location detail.",
+    instruction: "Translate the sentence.",
+    questionText: "The hotel is near the station.",
+    answerJson: {
+      correct: "El hotel está cerca de la estación.",
+      accepted: ["el hotel esta cerca de la estacion", "el hotel está cerca de la estación"]
+    },
+    explanation: "Use está for location: El hotel está cerca de la estación.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "city-transport:13",
+    options: []
+  },
+  {
+    slug: "scenario-pharmacy-head-hurts",
+    lessonSlug: "scenario-pharmacy-help",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Symptom.",
+    instruction: "Translate the sentence.",
+    questionText: "My head hurts.",
+    answerJson: { correct: "Me duele la cabeza.", accepted: ["me duele la cabeza", "me duele la cabeza."] },
+    explanation: "Use me duele with one thing that hurts.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 18,
+    imageKey: "body-and-health:7",
+    options: []
+  },
+  {
+    slug: "scenario-pharmacy-need-medicine",
+    lessonSlug: "scenario-pharmacy-help",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Ask for medicine.",
+    instruction: "Reply to the pharmacist.",
+    questionText: "La farmacéutica dice: ¿Qué necesita?",
+    answerJson: {
+      correct: "Necesito medicina para el dolor.",
+      accepted: ["necesito medicina para el dolor", "necesito medicina para el dolor."],
+      scenario: { setting: "pharmacy", partner: "Farmacéutica", learnerRole: "Cliente", goal: "Ask for pain medicine." }
+    },
+    explanation: "Necesito medicina para el dolor is a clear pharmacy request.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "body-and-health:12",
+    options: []
+  },
+  {
+    slug: "scenario-pharmacy-allergy",
+    lessonSlug: "scenario-pharmacy-help",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Safety detail.",
+    instruction: "Translate the sentence.",
+    questionText: "I have an allergy to aspirin.",
+    answerJson: { correct: "Tengo alergia a la aspirina.", accepted: ["tengo alergia a la aspirina", "tengo alergia a la aspirina."] },
+    explanation: "Use tengo alergia a plus the medicine or substance.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "body-and-health:12",
+    options: []
+  },
+  {
+    slug: "scenario-pharmacy-how-often",
+    lessonSlug: "scenario-pharmacy-help",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Medicine frequency.",
+    instruction: "Ask the question in Spanish.",
+    questionText: "How often do I take the medicine?",
+    answerJson: { correct: "¿Cada cuánto tomo la medicina?", accepted: ["cada cuanto tomo la medicina", "cada cuánto tomo la medicina", "¿cada cuánto tomo la medicina?"] },
+    explanation: "¿Cada cuánto? asks how often.",
+    difficulty: 3,
+    order: 4,
+    xpReward: 20,
+    imageKey: "body-and-health:12",
+    options: []
+  },
+  {
+    slug: "lab-reading-ana-works-when",
+    lessonSlug: "lab-a2-cafe-reading",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Reading detail.",
+    instruction: "Answer from the text.",
+    questionText: "When does Ana work?",
+    answerJson: { correct: "In the morning.", accepted: ["In the morning", "In the morning."] },
+    explanation: "The text says Ana trabaja por la mañana.",
+    difficulty: 1,
+    order: 1,
+    xpReward: 14,
+    imageKey: "reading-and-listening-lab:1",
+    options: [
+      ["In the morning.", "In the morning.", true],
+      ["At night.", "At night.", false],
+      ["On Sunday.", "On Sunday.", false]
+    ]
+  },
+  {
+    slug: "lab-reading-ana-prefers-tea",
+    lessonSlug: "lab-a2-cafe-reading",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Reading contrast.",
+    instruction: "Answer from the text.",
+    questionText: "What does Ana prefer in the afternoon?",
+    answerJson: { correct: "Tea.", accepted: ["Tea", "Tea."] },
+    explanation: "The text says she likes coffee, but prefers tea in the afternoon.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 14,
+    imageKey: "preferences-and-hobbies:9",
+    options: [
+      ["Tea.", "Tea.", true],
+      ["Rain.", "Rain.", false],
+      ["Soccer.", "Soccer.", false]
+    ]
+  },
+  {
+    slug: "lab-reading-cafe-location",
+    lessonSlug: "lab-a2-cafe-reading",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Reading detail.",
+    instruction: "Answer in Spanish.",
+    questionText: "Where is the cafe?",
+    answerJson: {
+      correct: "Está cerca de la estación.",
+      accepted: ["esta cerca de la estacion", "está cerca de la estación", "el cafe esta cerca de la estacion", "el café está cerca de la estación"]
+    },
+    explanation: "The text says the cafe is near the station.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "places-around-town:1",
+    options: []
+  },
+  {
+    slug: "lab-reading-summary-ana",
+    lessonSlug: "lab-a2-cafe-reading",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.WRITING_PROMPT,
+    prompt: "Reading summary.",
+    instruction: "Write the model summary.",
+    questionText: "Summarize: Ana works, goes to a cafe, and prefers tea.",
+    answerJson: {
+      correct: "Ana trabaja, va a un café y prefiere el té.",
+      accepted: ["ana trabaja va a un cafe y prefiere el te", "ana trabaja, va a un café y prefiere el té"],
+      rubric: "Mention Ana, trabaja, va a un café, and prefiere el té."
+    },
+    explanation: "A good summary keeps the main actions and the preference.",
+    difficulty: 3,
+    order: 4,
+    xpReward: 22,
+    imageKey: "reading-and-listening-lab:7",
+    options: []
+  },
+  {
+    slug: "lab-listening-manana-tienda-dictation",
+    lessonSlug: "lab-a2-weekend-listening",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.LISTENING_DICTATION,
+    prompt: "Listening dictation.",
+    instruction: "Listen and type the sentence.",
+    questionText: "Type what you hear.",
+    answerJson: {
+      correct: "Mañana voy a la tienda.",
+      accepted: ["manana voy a la tienda", "mañana voy a la tienda"],
+      audioText: "Mañana voy a la tienda."
+    },
+    explanation: "The sentence is Mañana voy a la tienda.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 20,
+    imageKey: "reading-and-listening-lab:2",
+    options: []
+  },
+  {
+    slug: "lab-listening-buy-what",
+    lessonSlug: "lab-a2-weekend-listening",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Listening detail.",
+    instruction: "Answer from the audio.",
+    questionText: "What does the speaker have to buy?",
+    answerJson: { correct: "Bread and a bag.", accepted: ["Bread and a bag", "Bread and a bag."] },
+    explanation: "The audio says Tengo que comprar pan y una bolsa.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 14,
+    imageKey: "food-and-ordering:3",
+    options: [
+      ["Bread and a bag.", "Bread and a bag.", true],
+      ["Tea and a ticket.", "Tea and a ticket.", false],
+      ["Medicine and water.", "Medicine and water.", false]
+    ]
+  },
+  {
+    slug: "lab-listening-after-store",
+    lessonSlug: "lab-a2-weekend-listening",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Listening sequence.",
+    instruction: "Answer in Spanish.",
+    questionText: "After the store, what does the speaker want to do?",
+    answerJson: {
+      correct: "Quiere escuchar música en casa.",
+      accepted: ["quiere escuchar musica en casa", "quiere escuchar música en casa", "escuchar musica en casa", "escuchar música en casa"]
+    },
+    explanation: "The audio says Después quiero escuchar música en casa.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "reading-and-listening-lab:2",
+    options: []
+  },
+  {
+    slug: "lab-listening-night-book-builder",
+    lessonSlug: "lab-a2-weekend-listening",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Listening sentence.",
+    instruction: "Build the sentence.",
+    questionText: "At night I am going to read a book.",
+    answerJson: { correctWords: ["Por", "la", "noche", "voy", "a", "leer", "un", "libro", "."] },
+    explanation: "Por la noche sets the time, and voy a leer gives the plan.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "reading-and-listening-lab:3",
+    options: [
+      ["Por", "Por", false],
+      ["la", "la", false],
+      ["noche", "noche", false],
+      ["voy", "voy", false],
+      ["a", "a", false],
+      ["leer", "leer", false],
+      ["un", "un", false],
+      ["libro", "libro", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a2-scenario-order-coffee",
+    lessonSlug: "checkpoint-a2-scenarios-input",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "A2.4 checkpoint.",
+    instruction: "Order politely.",
+    questionText: "Order two coffees to go.",
+    answerJson: {
+      correct: "Quisiera dos cafés para llevar.",
+      accepted: ["quisiera dos cafes para llevar", "quisiera dos cafés para llevar", "dos cafes para llevar por favor"],
+      scenario: { setting: "restaurant", partner: "Camarero", learnerRole: "Cliente", goal: "Order two coffees to go." }
+    },
+    explanation: "Quisiera is polite, and para llevar means to go.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 20,
+    imageKey: "food-and-ordering:20",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-scenario-ask-station",
+    lessonSlug: "checkpoint-a2-scenarios-input",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "A2.4 checkpoint.",
+    instruction: "Ask for directions.",
+    questionText: "Ask where the station is.",
+    answerJson: {
+      correct: "Perdón, ¿dónde está la estación?",
+      accepted: ["perdon donde esta la estacion", "perdón dónde está la estación", "perdón, ¿dónde está la estación?"],
+      scenario: { setting: "street", partner: "Persona local", learnerRole: "Viajero", goal: "Ask where the station is." }
+    },
+    explanation: "Use perdón plus ¿dónde está la estación?",
+    difficulty: 2,
+    order: 2,
+    xpReward: 20,
+    imageKey: "city-transport:7",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-scenario-medicine",
+    lessonSlug: "checkpoint-a2-scenarios-input",
+    topicSlug: "scenario-practice",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "A2.4 checkpoint.",
+    instruction: "Ask for pharmacy help.",
+    questionText: "Say you need medicine for pain.",
+    answerJson: {
+      correct: "Necesito medicina para el dolor.",
+      accepted: ["necesito medicina para el dolor", "necesito medicina para el dolor."],
+      scenario: { setting: "pharmacy", partner: "Farmacéutica", learnerRole: "Cliente", goal: "Ask for pain medicine." }
+    },
+    explanation: "Necesito medicina para el dolor is direct and clear.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 20,
+    imageKey: "body-and-health:12",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-input-dictation",
+    lessonSlug: "checkpoint-a2-scenarios-input",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.LISTENING_DICTATION,
+    prompt: "A2.4 checkpoint.",
+    instruction: "Listen and type the sentence.",
+    questionText: "Type what you hear.",
+    answerJson: {
+      correct: "Mañana voy a la tienda.",
+      accepted: ["manana voy a la tienda", "mañana voy a la tienda"],
+      audioText: "Mañana voy a la tienda."
+    },
+    explanation: "The sentence is Mañana voy a la tienda.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 20,
+    imageKey: "reading-and-listening-lab:2",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-reading-preference",
+    lessonSlug: "checkpoint-a2-scenarios-input",
+    topicSlug: "input-comprehension",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "A2.4 checkpoint.",
+    instruction: "Answer from the reading lab text.",
+    questionText: "In the cafe text, what does Ana prefer in the afternoon?",
+    answerJson: { correct: "Tea.", accepted: ["Tea", "Tea."] },
+    explanation: "The text says Ana likes coffee, but prefers tea in the afternoon.",
+    difficulty: 1,
+    order: 5,
+    xpReward: 16,
+    imageKey: "preferences-and-hobbies:9",
+    options: [
+      ["Tea.", "Tea.", true],
+      ["Coffee.", "Coffee.", false],
+      ["Rain.", "Rain.", false]
+    ]
   }
 ];
 

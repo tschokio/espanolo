@@ -44,9 +44,9 @@ const navItems = [
 ];
 
 function primaryNavKey(active) {
-  if (["dashboard", "path", "lessons", "grammar"].includes(active)) return "learn";
+  if (["dashboard", "path", "lessons", "grammar", "lab"].includes(active)) return "learn";
   if (["pronunciation"].includes(active)) return "words";
-  if (["games", "challenges"].includes(active)) return "play";
+  if (["games", "challenges", "scenarios"].includes(active)) return "play";
   if (["progress", "settings"].includes(active)) return "profile";
   if (["admin"].includes(active)) return "manage";
   return active || "learn";
@@ -418,6 +418,47 @@ const topicTeachingCards = {
       body: "Use voy a plus an infinitive for something you are going to do.",
       example: "Voy a estudiar mañana."
     }
+  ],
+  "likes-preferences": [
+    {
+      title: "Gustar works from the liked thing",
+      body: "Use gusta with one thing or an activity, and gustan with plural things.",
+      example: "Me gusta el café. Me gustan las películas."
+    },
+    {
+      title: "No goes before me gusta",
+      body: "Make a dislike by placing no before the whole me gusta pattern.",
+      example: "No me gusta la lluvia."
+    },
+    {
+      title: "Preferir has the yo form prefiero",
+      body: "Use prefiero when choosing one option over another.",
+      example: "Me gusta el café, pero prefiero el té."
+    }
+  ],
+  "scenario-practice": [
+    {
+      title: "Scenarios use short useful replies",
+      body: "In service and travel contexts, a clear phrase is better than an overly long sentence.",
+      example: "La cuenta, por favor. Perdón, ¿dónde está la estación?"
+    },
+    {
+      title: "Polite requests use quisiera",
+      body: "Quisiera is useful when ordering or asking for something in a restaurant, shop, or pharmacy.",
+      example: "Quisiera dos cafés para llevar."
+    }
+  ],
+  "input-comprehension": [
+    {
+      title: "Read or listen for the main action first",
+      body: "Identify who acts, what they do, and when it happens before focusing on every word.",
+      example: "Ana trabaja por la mañana."
+    },
+    {
+      title: "Use the transcript as a check",
+      body: "Try the audio first, then reveal the transcript to compare what you heard with the real sentence.",
+      example: "Mañana voy a la tienda."
+    }
   ]
 };
 
@@ -514,6 +555,7 @@ function buildWordSession(type, selectedGroups, groups, options = {}) {
 }
 
 let activePronunciationAudio = null;
+let activePronunciationSpeech = null;
 
 function pronunciationAudioUrl(text, provider = "", sourceText = "") {
   const params = new URLSearchParams({ text: text || "" });
@@ -522,18 +564,49 @@ function pronunciationAudioUrl(text, provider = "", sourceText = "") {
   return `/api/pronunciation/audio?${params.toString()}`;
 }
 
+function playSpeechSynthesisFallback(text, setAudioState) {
+  if (!window.speechSynthesis || typeof window.SpeechSynthesisUtterance === "undefined") return false;
+  window.speechSynthesis.cancel();
+  const utterance = new window.SpeechSynthesisUtterance(text);
+  utterance.lang = "es-ES";
+  utterance.rate = 0.9;
+  utterance.onstart = () => setAudioState("playing");
+  utterance.onend = () => {
+    if (activePronunciationSpeech === utterance) activePronunciationSpeech = null;
+    setAudioState("idle");
+  };
+  utterance.onerror = () => {
+    if (activePronunciationSpeech === utterance) activePronunciationSpeech = null;
+    setAudioState("error");
+    window.setTimeout(() => setAudioState("idle"), 2600);
+  };
+  activePronunciationSpeech = utterance;
+  window.speechSynthesis.speak(utterance);
+  return true;
+}
+
 function playPronunciationClip(text, setAudioState, provider = "", sourceText = "") {
   if (!text || typeof window === "undefined") return;
   if (activePronunciationAudio) {
     activePronunciationAudio.pause();
     activePronunciationAudio.removeAttribute("src");
   }
+  if (window.speechSynthesis && activePronunciationSpeech) {
+    window.speechSynthesis.cancel();
+    activePronunciationSpeech = null;
+  }
 
   const audio = new Audio(pronunciationAudioUrl(text, provider, sourceText));
   activePronunciationAudio = audio;
   setAudioState("loading");
+  let fallbackTried = false;
 
   const resetAfterError = () => {
+    if (!fallbackTried && !provider && playSpeechSynthesisFallback(text, setAudioState)) {
+      fallbackTried = true;
+      if (activePronunciationAudio === audio) activePronunciationAudio = null;
+      return;
+    }
     if (activePronunciationAudio === audio) activePronunciationAudio = null;
     setAudioState("error");
     window.setTimeout(() => setAudioState("idle"), 2600);
@@ -849,10 +922,10 @@ function LearningApp({ user, setUser, theme, setTheme, toggleTheme }) {
 }
 
 function ActiveView({ active, user, dashboard, refreshDashboard, setActive, launchLessonId, setLaunchLessonId, theme, setTheme }) {
-  if (["learn", "dashboard", "path", "lessons", "grammar"].includes(active)) {
+  if (["learn", "dashboard", "path", "lessons", "grammar", "lab"].includes(active)) {
     return (
       <LearningWorkspace
-        initialTab={active === "path" || active === "lessons" ? "course" : active === "grammar" ? "grammar" : "today"}
+        initialTab={active === "path" || active === "lessons" ? "course" : active === "grammar" ? "grammar" : active === "lab" ? "lab" : "today"}
         dashboard={dashboard}
         refreshDashboard={refreshDashboard}
         setActive={setActive}
@@ -865,10 +938,10 @@ function ActiveView({ active, user, dashboard, refreshDashboard, setActive, laun
   if (["words", "pronunciation"].includes(active)) {
     return <WordsWorkspace initialTab={active === "pronunciation" ? "audio" : "memory"} dashboard={dashboard} refreshDashboard={refreshDashboard} />;
   }
-  if (["play", "games", "challenges"].includes(active)) {
+  if (["play", "games", "challenges", "scenarios"].includes(active)) {
     return (
       <PlayWorkspace
-        initialTab={active === "challenges" ? "challenge" : "games"}
+        initialTab={active === "challenges" ? "challenge" : active === "scenarios" ? "scenarios" : "games"}
         dashboard={dashboard}
         refreshDashboard={refreshDashboard}
       />
@@ -923,7 +996,8 @@ function LearningWorkspace({ initialTab = "today", dashboard, refreshDashboard, 
         tabs={[
           { key: "today", label: "Today", icon: Target },
           { key: "course", label: "Course", icon: BookOpen },
-          { key: "grammar", label: "Grammar Map", icon: GraduationCap }
+          { key: "grammar", label: "Grammar Map", icon: GraduationCap },
+          { key: "lab", label: "Input Lab", icon: Volume2 }
         ]}
       />
       {tab === "today" ? (
@@ -944,6 +1018,8 @@ function LearningWorkspace({ initialTab = "today", dashboard, refreshDashboard, 
           launchLessonId={launchLessonId}
           onLaunchHandled={() => setLaunchLessonId("")}
         />
+      ) : tab === "lab" ? (
+        <ReadingListeningLabView dashboard={dashboard} refreshDashboard={refreshDashboard} />
       ) : (
         <GrammarView lessons={dashboard.lessons} />
       )}
@@ -1027,18 +1103,21 @@ function PlayWorkspace({ initialTab = "games", dashboard, refreshDashboard }) {
           { label: "XP", value: dashboard.stats.xp.toLocaleString() }
         ]}
       >
-        Mini games and weekly challenges.
+        Mini games, scenario practice, and weekly challenges.
       </WorkspaceSummary>
       <WorkspaceTabs
         active={tab}
         onChange={setTab}
         tabs={[
           { key: "games", label: "Mini Games", icon: Gamepad2 },
+          { key: "scenarios", label: "Scenarios", icon: Users },
           { key: "challenge", label: "Challenge", icon: Trophy }
         ]}
       />
       {tab === "challenge" ? (
         <ChallengesView challenge={dashboard.challenge} refreshDashboard={refreshDashboard} />
+      ) : tab === "scenarios" ? (
+        <ScenarioPracticeView dashboard={dashboard} refreshDashboard={refreshDashboard} />
       ) : (
         <MiniGamesView dashboard={dashboard} refreshDashboard={refreshDashboard} />
       )}
@@ -3574,7 +3653,7 @@ function PracticePanel({
                 <p className="mt-1 text-sm text-slate-600">{exercise.instruction}</p>
                 {isListeningDictation && exercise.audioText && (
                   <div className="mt-3">
-                    <PronunciationTools text={exercise.audioText} />
+                    <PronunciationTools text={exercise.audioText} hideTextInTitle allowCopy={false} />
                   </div>
                 )}
                 {isWritingPrompt && exercise.rubric && (
@@ -3889,7 +3968,7 @@ function ExerciseQueue({
   );
 }
 
-function PronunciationTools({ text, compact = false }) {
+function PronunciationTools({ text, compact = false, hideTextInTitle = false, allowCopy = true }) {
   const links = dictionaryLinks(text);
   const [audioState, setAudioState] = useState("idle");
   const buttonClass = compact
@@ -3898,6 +3977,7 @@ function PronunciationTools({ text, compact = false }) {
   const providerButtonClass =
     "rounded px-2 py-2 text-xs font-black text-slate-600 hover:bg-white hover:text-lagoon-700";
   const audioLabel = audioState === "loading" ? "Loading" : audioState === "playing" ? "Playing" : "Listen";
+  const audioTitle = hideTextInTitle ? "Play Spanish pronunciation audio" : `Play real pronunciation audio for ${text}`;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -3909,7 +3989,7 @@ function PronunciationTools({ text, compact = false }) {
           audioState === "playing" && "border-lagoon-300 bg-lagoon-50 text-lagoon-800",
           audioState === "error" && "border-red-200 bg-red-50 text-red-700"
         )}
-        title={`Play real pronunciation audio for ${text}`}
+        title={audioTitle}
       >
         <Volume2 size={compact ? 16 : 17} />
         {!compact && audioLabel}
@@ -3920,7 +4000,7 @@ function PronunciationTools({ text, compact = false }) {
             type="button"
             onClick={() => playPronunciationClip(text, setAudioState, "spanishdict")}
             className={providerButtonClass}
-            title={`Play ${text} from SpanishDict audio`}
+            title={hideTextInTitle ? "Play SpanishDict audio" : `Play ${text} from SpanishDict audio`}
           >
             SpanishDict
           </button>
@@ -3928,18 +4008,18 @@ function PronunciationTools({ text, compact = false }) {
             type="button"
             onClick={() => playPronunciationClip(text, setAudioState, "leo")}
             className={providerButtonClass}
-            title={`Play ${text} from LEO audio`}
+            title={hideTextInTitle ? "Play LEO audio" : `Play ${text} from LEO audio`}
           >
             LEO
           </button>
         </div>
       )}
-      {!compact && (
+      {!compact && allowCopy && (
         <button
           type="button"
           onClick={() => navigator.clipboard?.writeText(text).catch(() => null)}
           className={buttonClass}
-          title={`Copy ${text}`}
+          title={hideTextInTitle ? "Copy Spanish text" : `Copy ${text}`}
         >
           <Copy size={16} />
           Copy
@@ -3950,7 +4030,7 @@ function PronunciationTools({ text, compact = false }) {
         target="_blank"
         rel="noreferrer"
         className={buttonClass}
-        title={`Open ${text} on SpanishDict`}
+        title={hideTextInTitle ? "Open SpanishDict" : `Open ${text} on SpanishDict`}
       >
         <ExternalLink size={compact ? 15 : 16} />
         {!compact && "SpanishDict"}
@@ -3960,7 +4040,7 @@ function PronunciationTools({ text, compact = false }) {
         target="_blank"
         rel="noreferrer"
         className={buttonClass}
-        title={`Open ${text} on LEO`}
+        title={hideTextInTitle ? "Open LEO" : `Open ${text} on LEO`}
       >
         <ExternalLink size={compact ? 15 : 16} />
         {!compact && "LEO"}
@@ -4412,6 +4492,403 @@ function GrammarView({ lessons }) {
           </Panel>
         ))}
       </div>
+    </div>
+  );
+}
+
+function lessonsByThemes(dashboard, themes) {
+  const themeSet = new Set(themes);
+  return (dashboard.lessons || []).filter((lesson) => themeSet.has(lesson.theme));
+}
+
+function ScenarioPracticeView({ dashboard, refreshDashboard }) {
+  const scenarioLessons = lessonsByThemes(dashboard, ["Scenario"]);
+  const [selectedId, setSelectedId] = useState("");
+  const [lesson, setLesson] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [turns, setTurns] = useState([]);
+  const [lastResult, setLastResult] = useState(null);
+
+  const loadLesson = async (lessonId) => {
+    setSelectedId(lessonId);
+    setLoading(true);
+    setLesson(null);
+    setIndex(0);
+    setTurns([]);
+    setLastResult(null);
+    try {
+      const data = await api(`/api/lessons/${lessonId}`);
+      setLesson(data.lesson);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exercises = lesson?.exercises || [];
+  const current = exercises[index] || null;
+  const finished = Boolean(lesson && index >= exercises.length);
+  const correctCount = turns.filter((turn) => turn.correct).length;
+  const progress = exercises.length ? Math.round((Math.min(index, exercises.length) / exercises.length) * 100) : 0;
+
+  if (!scenarioLessons.length) {
+    return (
+      <Panel title="Scenarios" icon={Users}>
+        <p className="text-sm font-semibold text-slate-600">No scenario packs are published yet.</p>
+      </Panel>
+    );
+  }
+
+  if (!selectedId) {
+    return (
+      <div className="space-y-5">
+        <Panel title="Scenario Packs" icon={Users}>
+          <div className="grid gap-4 md:grid-cols-3">
+            {scenarioLessons.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => loadLesson(item.id)}
+                className="rounded-lg border border-stone-200 bg-white p-4 text-left shadow-sm hover:border-lagoon-300"
+              >
+                <AssetImage imageKey={item.imageKey} alt={item.title} className="h-20 w-20" />
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-lagoon-50 px-2 py-1 text-xs font-black text-lagoon-700">{item.cefrLevel}</span>
+                  {item.unit?.label && <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-black text-slate-700">{item.unit.label}</span>}
+                </div>
+                <h3 className="mt-3 text-lg font-black text-slate-950">{item.title}</h3>
+                <p className="mt-2 text-sm font-semibold text-slate-600">{item.summary}</p>
+                <ProgressBar value={item.progress || 0} className="mt-4" />
+              </button>
+            ))}
+          </div>
+        </Panel>
+      </div>
+    );
+  }
+
+  if (loading || !lesson) {
+    return <Panel title="Scenarios" icon={Users}>Loading scenario...</Panel>;
+  }
+
+  if (finished) {
+    const score = exercises.length ? Math.round((correctCount / exercises.length) * 100) : 0;
+    return (
+      <div className="mx-auto max-w-4xl space-y-5">
+        <QuizResultBanner result={lastResult} />
+        <Panel title="Scenario Complete" icon={Trophy}>
+          <div className="grid gap-5 md:grid-cols-[130px_1fr] md:items-center">
+            <AssetImage imageKey={lesson.imageKey} alt={lesson.title} className="h-28 w-28" />
+            <div>
+              <h2 className="text-3xl font-black text-slate-950">{correctCount}/{exercises.length} turns correct</h2>
+              <p className="mt-2 text-sm font-semibold text-slate-600">{lesson.reviewSummary}</p>
+              <ProgressBar value={score} className="mt-4" color={score >= 80 ? "bg-emerald-500" : "bg-honey-500"} />
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button
+                  onClick={() => {
+                    setIndex(0);
+                    setTurns([]);
+                    setLastResult(null);
+                  }}
+                  className="rounded-md border border-stone-200 bg-white px-5 py-3 font-black text-slate-700 hover:bg-stone-50"
+                >
+                  Repeat
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedId("");
+                    setLesson(null);
+                    refreshDashboard?.({ silent: true });
+                  }}
+                  className="rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600"
+                >
+                  Choose Scenario
+                </button>
+              </div>
+            </div>
+          </div>
+        </Panel>
+        <ScenarioTurnHistory turns={turns} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="space-y-4">
+        <button
+          onClick={() => {
+            setSelectedId("");
+            setLesson(null);
+          }}
+          className="rounded-md border border-stone-200 bg-white px-4 py-2 font-bold text-slate-600 hover:bg-stone-50"
+        >
+          Back to scenarios
+        </button>
+        <QuizResultBanner result={lastResult} />
+        <Panel title={lesson.title} icon={Users}>
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-black text-lagoon-900">
+            <span>Turn {index + 1}/{exercises.length}</span>
+            <span>{lesson.situation}</span>
+          </div>
+          <ProgressBar value={progress} className="mt-3" />
+        </Panel>
+        {current?.scenario && (
+          <Panel title="Turn Context" icon={Users}>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <InfoTile label="Setting" value={current.scenario.setting || lesson.situation} />
+              <InfoTile label="Partner" value={current.scenario.partner || "Partner"} />
+              <InfoTile label="Goal" value={current.scenario.goal || current.prompt} />
+            </div>
+          </Panel>
+        )}
+        <PracticePanel
+          key={current.id}
+          title={`${lesson.title} ${index + 1}/${exercises.length}`}
+          exercise={current}
+          source="LESSON"
+          autoAdvance
+          autoAdvanceOnWrong
+          autoAdvanceDelay={1000}
+          autoSubmitChoices
+          onResult={(result) => {
+            const savedTurn = {
+              id: current.id,
+              prompt: current.prompt,
+              questionText: current.questionText,
+              submitted: result.submitted,
+              expected: result.expected,
+              correct: Boolean(result.correct),
+              scenario: current.scenario || null
+            };
+            setLastResult(result);
+            setTurns((currentTurns) => {
+              const next = [...currentTurns];
+              next[index] = savedTurn;
+              return next;
+            });
+          }}
+          onComplete={async () => {
+            setIndex((value) => value + 1);
+            await refreshDashboard?.({ silent: true });
+          }}
+        />
+      </section>
+      <aside className="space-y-5">
+        <Panel title="Scenario" icon={BookOpen}>
+          <div className="flex gap-4">
+            <AssetImage imageKey={lesson.imageKey} alt={lesson.title} className="h-20 w-20 shrink-0" />
+            <div>
+              <p className="font-black text-slate-950">{lesson.title}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-600">{lesson.summary}</p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-2">
+            {(lesson.outcomes || []).slice(0, 3).map((outcome) => (
+              <p key={outcome} className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-bold text-slate-700">
+                {outcome}
+              </p>
+            ))}
+          </div>
+        </Panel>
+        <ScenarioTurnHistory turns={turns} />
+      </aside>
+    </div>
+  );
+}
+
+function ScenarioTurnHistory({ turns }) {
+  return (
+    <Panel title="Answered Turns" icon={ListChecks}>
+      {turns.filter(Boolean).length ? (
+        <div className="grid gap-3">
+          {turns.filter(Boolean).map((turn, index) => (
+            <div key={`${turn.id}-${index}`} className="rounded-lg border border-stone-200 bg-white p-3">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-black text-slate-950">{turn.questionText}</p>
+                <span className={classNames("rounded-full px-2 py-1 text-xs font-black", turn.correct ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>
+                  {turn.correct ? "Correct" : "Review"}
+                </span>
+              </div>
+              <p className="mt-2 text-xs font-bold text-slate-500">You: {turn.submitted || "—"}</p>
+              <p className="mt-1 text-xs font-bold text-emerald-700">Answer: {turn.expected || "—"}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm font-semibold text-slate-600">Answered turns will stay visible here.</p>
+      )}
+    </Panel>
+  );
+}
+
+function ReadingListeningLabView({ dashboard, refreshDashboard }) {
+  const labLessons = lessonsByThemes(dashboard, ["Reading Lab", "Listening Lab"]);
+  const [selectedId, setSelectedId] = useState("");
+  const [lesson, setLesson] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [practiceOpen, setPracticeOpen] = useState(false);
+
+  const loadLesson = async (lessonId) => {
+    setSelectedId(lessonId);
+    setLesson(null);
+    setLoading(true);
+    setShowTranscript(false);
+    setPracticeOpen(false);
+    try {
+      const data = await api(`/api/lessons/${lessonId}`);
+      setLesson(data.lesson);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isListening = lesson?.theme === "Listening Lab";
+  const transcript = (lesson?.sentences || []).map((sentence) => sentence.spanish).join(" ");
+
+  if (!labLessons.length) {
+    return (
+      <Panel title="Input Lab" icon={Volume2}>
+        <p className="text-sm font-semibold text-slate-600">No reading or listening labs are published yet.</p>
+      </Panel>
+    );
+  }
+
+  if (!selectedId) {
+    return (
+      <Panel title="Input Lab" icon={Volume2}>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {labLessons.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => loadLesson(item.id)}
+              className="rounded-lg border border-stone-200 bg-white p-4 text-left shadow-sm hover:border-lagoon-300"
+            >
+              <AssetImage imageKey={item.imageKey} alt={item.title} className="h-20 w-20" />
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-lagoon-50 px-2 py-1 text-xs font-black text-lagoon-700">{item.theme}</span>
+                {item.unit?.label && <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-black text-slate-700">{item.unit.label}</span>}
+              </div>
+              <h3 className="mt-3 text-lg font-black text-slate-950">{item.title}</h3>
+              <p className="mt-2 text-sm font-semibold text-slate-600">{item.summary}</p>
+              <ProgressBar value={item.progress || 0} className="mt-4" />
+            </button>
+          ))}
+        </div>
+      </Panel>
+    );
+  }
+
+  if (loading || !lesson) {
+    return <Panel title="Input Lab" icon={Volume2}>Loading lab...</Panel>;
+  }
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="space-y-5">
+        <button
+          onClick={() => {
+            setSelectedId("");
+            setLesson(null);
+          }}
+          className="rounded-md border border-stone-200 bg-white px-4 py-2 font-bold text-slate-600 hover:bg-stone-50"
+        >
+          Back to labs
+        </button>
+
+        <Panel title={lesson.title} icon={isListening ? Volume2 : BookOpen}>
+          <div className="grid gap-5 lg:grid-cols-[140px_1fr]">
+            <AssetImage imageKey={lesson.imageKey} alt={lesson.title} className="aspect-square w-full max-w-[150px]" />
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-lagoon-50 px-2 py-1 text-xs font-black text-lagoon-700">{lesson.cefrLevel}</span>
+                <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-black text-slate-700">{lesson.theme}</span>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-slate-600">{lesson.summary}</p>
+              {isListening ? (
+                <div className="mt-5 rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <p className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">Audio</p>
+                  <PronunciationTools text={transcript} hideTextInTitle allowCopy={false} />
+                </div>
+              ) : (
+                <div className="mt-5 space-y-3 rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  {(lesson.sentences || []).map((sentence) => (
+                    <p key={sentence.id} className="text-lg font-black text-slate-950">{sentence.spanish}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              onClick={() => setShowTranscript((value) => !value)}
+              className="rounded-md border border-stone-200 bg-white px-4 py-3 font-black text-slate-700 hover:bg-stone-50"
+            >
+              {showTranscript ? "Hide Transcript" : isListening ? "Reveal Transcript" : "Show Translation"}
+            </button>
+            <button
+              onClick={() => setPracticeOpen(true)}
+              className="rounded-md bg-lagoon-500 px-5 py-3 font-black text-white hover:bg-lagoon-600"
+            >
+              Start Questions
+            </button>
+          </div>
+        </Panel>
+
+        {showTranscript && (
+          <Panel title={isListening ? "Transcript" : "Translation"} icon={NotebookTabs}>
+            <div className="grid gap-3">
+              {(lesson.sentences || []).map((sentence) => (
+                <div key={sentence.id} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-black text-slate-950">{sentence.spanish}</p>
+                    <PronunciationTools text={sentence.spanish} compact />
+                  </div>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">{sentence.english}</p>
+                  {sentence.note && <p className="mt-2 text-sm font-bold text-lagoon-700">{sentence.note}</p>}
+                </div>
+              ))}
+            </div>
+          </Panel>
+        )}
+
+        {practiceOpen && (
+          <ExerciseQueue
+            key={lesson.id}
+            title={`${lesson.theme} Questions`}
+            exercises={lesson.exercises}
+            source="LESSON"
+            refreshDashboard={refreshDashboard}
+            completeTitle="Lab Complete"
+            completeImageKey={lesson.imageKey || "reading-and-listening-lab:1"}
+          />
+        )}
+      </section>
+      <aside className="space-y-5">
+        <Panel title="Lab Focus" icon={Target}>
+          <div className="grid gap-2">
+            {(lesson.outcomes || []).slice(0, 4).map((outcome) => (
+              <p key={outcome} className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-bold text-slate-700">
+                {outcome}
+              </p>
+            ))}
+          </div>
+        </Panel>
+        <Panel title="Vocabulary" icon={NotebookTabs}>
+          <div className="grid gap-3">
+            {(lesson.vocabularyGroups || []).flatMap((group) => group.words.slice(0, 6)).slice(0, 8).map((word) => (
+              <div key={word.id} className="flex items-center gap-3 rounded-md border border-stone-200 bg-white p-2">
+                <AssetImage imageKey={word.imageKey} alt={word.spanish} className="h-12 w-12 shrink-0" />
+                <div className="min-w-0">
+                  <p className="truncate font-black text-slate-950">{word.spanish}</p>
+                  <p className="text-xs font-semibold text-slate-600">{word.english}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </aside>
     </div>
   );
 }

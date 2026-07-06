@@ -561,6 +561,8 @@ const publicExercise = (exercise) => ({
   audioText: exercise.type === "LISTENING_DICTATION" ? exercise.answerJson?.audioText || exercise.answerJson?.correct || "" : "",
   rubric: exercise.answerJson?.rubric || "",
   trainer: exercise.answerJson?.trainer || null,
+  scenario: exercise.answerJson?.scenario || null,
+  lab: exercise.answerJson?.lab || null,
   mastered: Boolean(exercise.mastered),
   lastAttemptCorrect: exercise.lastAttemptCorrect ?? null,
   options: [...(exercise.options || [])]
@@ -682,12 +684,41 @@ const curriculumUnits = [
     endOrder: 610
   },
   {
-    slug: "a2-3-preferences-and-past",
+    slug: "a2-3-likes-and-preferences",
     label: "A2.3",
-    title: "Preferences and Past Events",
-    phase: "Planned A2",
-    description: "Gustar, object pronouns, preterite, imperfect, and practical scenarios.",
+    title: "Likes and Preferences",
+    phase: "A2 Foundation",
+    description: "Gustar, encantar, preferir, hobbies, favorites, and preference dialogues.",
     order: 11,
+    startOrder: 620,
+    endOrder: 660
+  },
+  {
+    slug: "a2-4-scenarios-and-input",
+    label: "A2.4",
+    title: "Scenarios and Input",
+    phase: "A2 Practice",
+    description: "Restaurant, travel, pharmacy scenarios plus reading and listening labs.",
+    order: 12,
+    startOrder: 670,
+    endOrder: 720
+  },
+  {
+    slug: "a2-5-object-pronouns-shopping",
+    label: "A2.5",
+    title: "Object Pronouns and Shopping",
+    phase: "Planned A2",
+    description: "Lo, la, los, las, indirect objects, shopping, prices, and concrete object actions.",
+    order: 13,
+    planned: true
+  },
+  {
+    slug: "a2-6-past-events",
+    label: "A2.6",
+    title: "Past Events",
+    phase: "Planned A2",
+    description: "Preterite and imperfect foundations for simple stories and past routines.",
+    order: 14,
     planned: true
   },
   {
@@ -696,7 +727,7 @@ const curriculumUnits = [
     title: "Intermediate Bridge",
     phase: "Planned B1",
     description: "Past tense control, opinions, reading, listening, and guided production.",
-    order: 12,
+    order: 15,
     planned: true
   }
 ];
