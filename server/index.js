@@ -1443,6 +1443,10 @@ async function buildDashboard(userId) {
           endsAt: activeChallenge.endsAt,
           progress: activeChallenge.progress[0]?.completedCount || 0,
           isCompleted: activeChallenge.progress[0]?.isCompleted || false,
+          exercises: activeChallenge.exercises
+            .map((challengeExercise) => challengeExercise.exercise)
+            .filter(Boolean)
+            .map(publicExercise),
           exercise: activeChallenge.exercises[0]?.exercise
             ? publicExercise(activeChallenge.exercises[0].exercise)
             : null

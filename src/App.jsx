@@ -1000,33 +1000,7 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
         </div>
       </div>
 
-      {resultBanner && (
-        <div
-          className={classNames(
-            "sticky top-24 z-20 mb-4 rounded-lg border p-3 shadow-soft",
-            resultBanner.correct ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"
-          )}
-        >
-          <div className="flex items-start gap-3">
-            <div
-              className={classNames(
-                "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-white",
-                resultBanner.correct ? "bg-emerald-600" : "bg-red-600"
-              )}
-            >
-              {resultBanner.correct ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
-            </div>
-            <div className="min-w-0">
-              <p className="font-black">
-                {resultBanner.correct ? `Correct +${resultBanner.xpAwarded || 0} XP` : "Not quite"}
-              </p>
-              <p className="mt-1 text-sm">
-                Answer: <span className="font-black">{resultBanner.expected || "—"}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <QuizResultBanner result={resultBanner} className="mb-4" />
 
       {current.type === "overview" ? (
         <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-soft sm:p-8">
@@ -1085,7 +1059,9 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
           exercise={current.exercise}
           source="LESSON"
           autoAdvance
+          autoAdvanceOnWrong
           autoAdvanceDelay={850}
+          autoSubmitChoices
           onResult={(result) => {
             setResultBanner(result);
             setResults((currentResults) => {
@@ -1767,9 +1743,9 @@ function WordLearnerView({ refreshDashboard }) {
                   Expected: <span className="font-black">{feedback.expected}</span>
                 </p>
                 <p className="mt-1 text-sm text-slate-700">{feedback.review.message}</p>
-                <button onClick={nextCard} className="mt-4 rounded-md bg-slate-950 px-4 py-2 font-black text-white">
-                  {nextLabel}
-                </button>
+                <div className="mt-4 rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
+                  {nextLabel} loading...
+                </div>
               </div>
             )}
           </div>
@@ -2093,9 +2069,9 @@ function WordLearnerView({ refreshDashboard }) {
                       Expected: <span className="font-black">{feedback.expected}</span>
                     </p>
                     <p className="mt-1 text-sm text-slate-700">{feedback.review.message}</p>
-                    <button onClick={nextCard} className="mt-4 rounded-md bg-slate-950 px-4 py-2 font-black text-white">
-                      {nextLabel}
-                    </button>
+                    <div className="mt-4 rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
+                      {nextLabel} loading...
+                    </div>
                   </div>
                 )}
               </div>
@@ -2698,9 +2674,9 @@ function PracticePanel({
   gameKey,
   autoAdvance = false,
   autoAdvanceDelay = 900,
-  autoAdvanceOnWrong = false,
+  autoAdvanceOnWrong = true,
   showInlineFeedback = true,
-  autoSubmitChoices = false
+  autoSubmitChoices = true
 }) {
   const [answer, setAnswer] = useState("");
   const [words, setWords] = useState([]);
@@ -2759,7 +2735,7 @@ function PracticePanel({
     const submittedAnswer = answerOverride ?? answer;
     const submittedWords = wordsOverride ?? words;
     const submittedValue = isSentenceBuilder ? submittedWords.join(" ") : submittedAnswer;
-    if (!submittedValue.trim() || locked) return;
+    if (!submittedValue.trim() || locked || busy) return;
     setBusy(true);
     try {
       const result = await api(`/api/exercises/${exercise.id}/attempt`, {
@@ -2789,7 +2765,7 @@ function PracticePanel({
         }, autoAdvanceDelay);
       }
     } catch (err) {
-      const errorResult = { correct: false, explanation: err.message, submitted: selectedValue, expected: "" };
+      const errorResult = { correct: false, explanation: err.message, submitted: submittedValue, expected: "" };
       setFeedback(errorResult);
       onResult?.(errorResult);
     } finally {
@@ -2844,13 +2820,19 @@ function PracticePanel({
         <div className="grid gap-0 md:grid-cols-[1fr_220px]">
           <div className="p-4">
             {isSentenceBuilder ? (
-              <SentenceBuilder exercise={exerciseForDisplay} words={words} setWords={setWords} disabled={locked} />
+              <SentenceBuilder
+                exercise={exerciseForDisplay}
+                words={words}
+                setWords={setWords}
+                disabled={locked || busy}
+                onAutoComplete={autoSubmitChoices ? (nextWords) => submit("", nextWords) : null}
+              />
             ) : (
               <AnswerChoices
                 exercise={exerciseForDisplay}
                 answer={answer}
                 setAnswer={setAnswer}
-                disabled={locked}
+                disabled={locked || busy}
                 feedback={feedback}
                 acceptedValues={acceptedValues}
                 onAutoSelect={autoSubmitChoices ? (value) => submit(value, words) : null}
@@ -2985,6 +2967,130 @@ function FeedbackFact({ label, value, good = false }) {
     <div className={classNames("rounded-md border bg-white p-3", good ? "border-emerald-200" : "border-white/80")}>
       <p className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</p>
       <p className={classNames("mt-1 text-sm font-bold", good ? "text-emerald-800" : "text-slate-800")}>{value}</p>
+    </div>
+  );
+}
+
+function QuizResultBanner({ result, className = "" }) {
+  if (!result) return null;
+  return (
+    <div
+      className={classNames(
+        "sticky top-24 z-20 rounded-lg border p-3 shadow-soft",
+        result.correct ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900",
+        className
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={classNames(
+            "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-white",
+            result.correct ? "bg-emerald-600" : "bg-red-600"
+          )}
+        >
+          {result.correct ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+        </div>
+        <div className="min-w-0">
+          <p className="font-black">
+            {result.correct ? `Correct +${result.xpAwarded || 0} XP` : "Not correct"}
+          </p>
+          <p className="mt-1 text-sm">
+            Correct answer: <span className="font-black">{result.expected || "—"}</span>
+          </p>
+          {result.submitted && (
+            <p className="mt-1 text-xs font-bold opacity-80">
+              Your answer: <span className="font-black">{result.submitted}</span>
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExerciseQueue({
+  title,
+  exercises = [],
+  source = "LESSON",
+  refreshDashboard,
+  emptyMessage = "No practice questions are available yet.",
+  completeTitle = "Practice complete",
+  completeImageKey = "rewards-and-progress:15"
+}) {
+  const usableExercises = exercises.filter(Boolean);
+  const [index, setIndex] = useState(0);
+  const [results, setResults] = useState([]);
+  const [lastResult, setLastResult] = useState(null);
+
+  useEffect(() => {
+    setIndex(0);
+    setResults([]);
+    setLastResult(null);
+  }, [usableExercises.map((exercise) => exercise.id).join("|"), source]);
+
+  if (!usableExercises.length) {
+    return (
+      <Panel title={title} icon={Sparkles}>
+        <p className="text-sm font-semibold text-slate-600">{emptyMessage}</p>
+      </Panel>
+    );
+  }
+
+  const finished = index >= usableExercises.length;
+  const correct = results.filter(Boolean).length;
+  const progress = Math.round((Math.min(index, usableExercises.length) / usableExercises.length) * 100);
+
+  if (finished) {
+    return (
+      <div className="space-y-4">
+        <QuizResultBanner result={lastResult} />
+        <Panel title={completeTitle} icon={Trophy}>
+          <div className="grid gap-4 md:grid-cols-[120px_1fr] md:items-center">
+            <AssetImage imageKey={completeImageKey} alt={completeTitle} className="h-28 w-28" />
+            <div>
+              <h2 className="text-3xl font-black text-slate-950">{correct}/{usableExercises.length} correct</h2>
+              <ProgressBar value={usableExercises.length ? (correct / usableExercises.length) * 100 : 0} className="mt-4" />
+            </div>
+          </div>
+        </Panel>
+      </div>
+    );
+  }
+
+  const current = usableExercises[index];
+
+  return (
+    <div className="space-y-4">
+      <QuizResultBanner result={lastResult} />
+      <div className="rounded-lg border border-lagoon-100 bg-lagoon-50 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-black text-lagoon-900">
+          <span>{title}</span>
+          <span>{index + 1}/{usableExercises.length}</span>
+        </div>
+        <ProgressBar value={progress} className="mt-3" />
+      </div>
+      <PracticePanel
+        key={current.id}
+        title={`${title} ${index + 1}/${usableExercises.length}`}
+        exercise={current}
+        source={source}
+        autoAdvance
+        autoAdvanceOnWrong
+        autoAdvanceDelay={1000}
+        autoSubmitChoices
+        onResult={(result) => {
+          setLastResult(result);
+          setResults((currentResults) => {
+            const next = [...currentResults];
+            next[index] = Boolean(result.correct);
+            return next;
+          });
+        }}
+        onComplete={async () => {
+          setIndex((value) => value + 1);
+          await refreshDashboard?.({ silent: true });
+        }}
+      />
     </div>
   );
 }
@@ -3137,7 +3243,7 @@ function AnswerChoices({ exercise, answer, setAnswer, disabled = false, feedback
   );
 }
 
-function SentenceBuilder({ exercise, words, setWords, disabled = false }) {
+function SentenceBuilder({ exercise, words, setWords, disabled = false, onAutoComplete = null }) {
   const remaining = exercise.options.filter((option) => !words.includes(option.value));
   return (
     <div>
@@ -3164,7 +3270,13 @@ function SentenceBuilder({ exercise, words, setWords, disabled = false }) {
           <button
             key={option.id}
             disabled={disabled}
-            onClick={() => setWords([...words, option.value])}
+            onClick={() => {
+              const nextWords = [...words, option.value];
+              setWords(nextWords);
+              if (nextWords.length === exercise.options.length) {
+                onAutoComplete?.(nextWords);
+              }
+            }}
             className="rounded-md border border-stone-200 bg-white px-3 py-2 font-semibold hover:bg-stone-50 disabled:cursor-default disabled:opacity-50"
           >
             {option.text}
@@ -3450,11 +3562,13 @@ function LessonsView({ lessons, refreshDashboard }) {
               </div>
             </Panel>
 
-            <PracticePanel
+            <ExerciseQueue
+              key={lesson.id}
               title="Lesson Practice"
-              exercise={lesson.exercises.find((exercise) => exercise.type !== "SENTENCE_BUILDER") || lesson.exercises[0]}
+              exercises={lesson.exercises}
               source="LESSON"
-              onComplete={refreshDashboard}
+              refreshDashboard={refreshDashboard}
+              completeTitle="Lesson practice complete"
             />
           </>
         )}
@@ -3945,13 +4059,62 @@ function nextRoundNumber(round) {
 }
 
 function ChallengesView({ challenge, refreshDashboard }) {
+  const exercises = challenge?.exercises?.length ? challenge.exercises : challenge?.exercise ? [challenge.exercise] : [];
+  const [localProgress, setLocalProgress] = useState(challenge?.progress || 0);
+  const [lastResult, setLastResult] = useState(null);
+
+  useEffect(() => {
+    setLocalProgress(challenge?.progress || 0);
+    setLastResult(null);
+  }, [challenge?.id]);
+
+  useEffect(() => {
+    if (challenge && challenge.progress > localProgress) {
+      setLocalProgress(challenge.progress);
+    }
+  }, [challenge?.progress, challenge?.id, localProgress]);
+
+  if (!challenge) {
+    return <Panel title="Challenges" icon={Trophy}>No active challenge is available.</Panel>;
+  }
+
+  const targetCount = challenge.targetCount || exercises.length || 1;
+  const isComplete = localProgress >= targetCount || challenge.isCompleted;
+  const displayChallenge = { ...challenge, progress: Math.min(localProgress, targetCount), isCompleted: isComplete };
+  const current = exercises.length ? exercises[localProgress % exercises.length] : null;
+
   return (
     <div className="space-y-5">
-      <WeeklyChallengeCard challenge={challenge} onOpen={() => null} />
-      {challenge?.exercise ? (
-        <PracticePanel title="Challenge Round" exercise={challenge.exercise} source="CHALLENGE" onComplete={refreshDashboard} />
+      <WeeklyChallengeCard challenge={displayChallenge} onOpen={() => null} />
+      <QuizResultBanner result={lastResult} />
+      {isComplete ? (
+        <Panel title="Challenge Complete" icon={Trophy}>
+          <div className="grid gap-4 md:grid-cols-[120px_1fr] md:items-center">
+            <AssetImage imageKey="rewards-and-progress:3" alt="Challenge complete" className="h-28 w-28" />
+            <div>
+              <h2 className="text-3xl font-black text-slate-950">Challenge complete</h2>
+              <p className="mt-2 font-semibold text-slate-600">Your weekly challenge progress is saved.</p>
+            </div>
+          </div>
+        </Panel>
+      ) : current ? (
+        <PracticePanel
+          key={`${current.id}-${localProgress}`}
+          title={`Challenge Round ${localProgress + 1}/${targetCount}`}
+          exercise={current}
+          source="CHALLENGE"
+          autoAdvance
+          autoAdvanceOnWrong
+          autoAdvanceDelay={1000}
+          autoSubmitChoices
+          onResult={setLastResult}
+          onComplete={async () => {
+            setLocalProgress((value) => Math.min(targetCount, value + 1));
+            await refreshDashboard?.({ silent: true });
+          }}
+        />
       ) : (
-        <Panel title="Challenges" icon={Trophy}>No active challenge is available.</Panel>
+        <Panel title="Challenges" icon={Trophy}>No challenge questions are available yet.</Panel>
       )}
     </div>
   );
@@ -3961,13 +4124,17 @@ function ReviewQueueView({ refreshDashboard }) {
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [lastResult, setLastResult] = useState(null);
 
-  const loadReview = async () => {
+  const loadReview = async (options = {}) => {
     setLoading(true);
     try {
       const data = await api("/api/review/due");
       setReview(data);
       setSelectedItem((current) => {
+        if (options.skipKey) {
+          return data.items.find((item) => item.key !== options.skipKey) || data.items[0] || null;
+        }
         if (current && data.items.some((item) => item.key === current.key)) return current;
         return data.items[0] || null;
       });
@@ -4027,22 +4194,27 @@ function ReviewQueueView({ refreshDashboard }) {
       </section>
 
       <section>
+        <QuizResultBanner result={lastResult} className="mb-4" />
         {selectedItem?.exercise ? (
           <PracticePanel
             title="Fix My Mistakes"
             exercise={selectedItem.exercise}
             source="REVIEW"
             autoAdvance
+            autoAdvanceOnWrong
+            autoSubmitChoices
+            onResult={setLastResult}
             onComplete={async () => {
-              await loadReview();
+              await loadReview({ skipKey: selectedItem.key });
               await refreshDashboard?.({ silent: true });
             }}
           />
         ) : selectedItem?.word ? (
           <ReviewWordCard
             item={selectedItem}
+            onResult={setLastResult}
             onComplete={async () => {
-              await loadReview();
+              await loadReview({ skipKey: selectedItem.key });
               await refreshDashboard?.({ silent: true });
             }}
           />
@@ -4056,7 +4228,7 @@ function ReviewQueueView({ refreshDashboard }) {
   );
 }
 
-function ReviewWordCard({ item, onComplete }) {
+function ReviewWordCard({ item, onComplete, onResult }) {
   const word = item.word;
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
@@ -4078,12 +4250,12 @@ function ReviewWordCard({ item, onComplete }) {
           answer
         }
       });
-      setFeedback(result);
-      if (result.correct) {
-        window.setTimeout(() => {
-          onComplete?.();
-        }, 900);
-      }
+      const resultWithAnswer = { ...result, submitted: answer };
+      setFeedback(resultWithAnswer);
+      onResult?.(resultWithAnswer);
+      window.setTimeout(() => {
+        onComplete?.();
+      }, result.correct ? 900 : 1400);
     } finally {
       setBusy(false);
     }
@@ -4143,22 +4315,9 @@ function ReviewWordCard({ item, onComplete }) {
             Correct answer: <span className="font-black">{feedback.expected}</span>
           </p>
           <p className="mt-1 text-sm font-semibold text-slate-600">{feedback.review?.message}</p>
-          {!feedback.correct && (
-            <button
-              onClick={() => {
-                setAnswer("");
-                setFeedback(null);
-              }}
-              className="mt-4 rounded-md bg-red-600 px-5 py-3 font-black text-white hover:bg-red-700"
-            >
-              Try Again
-            </button>
-          )}
-          {feedback.correct && (
-            <div className="mt-4 rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
-              Moving to the next due item...
-            </div>
-          )}
+          <div className="mt-4 rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
+            Moving to the next due item...
+          </div>
         </div>
       )}
     </Panel>
