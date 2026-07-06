@@ -84,6 +84,11 @@ function classifyError(exercise, submittedText, expected, answerSpec = {}) {
     return "verb_conjugation";
   }
 
+  if (exercise.type === "TRANSFORMATION") return "transformation";
+  if (exercise.type === "DIALOGUE_REPLY") return "dialogue";
+  if (exercise.type === "LISTENING_DICTATION") return "listening";
+  if (exercise.type === "WRITING_PROMPT") return "writing";
+
   return "vocabulary";
 }
 
@@ -98,6 +103,10 @@ function feedbackForCategory(category, expected, answerSpec = {}) {
     word_order: `The words are right, but the order needs to be: ${expected}.`,
     ser_estar: `Check ser vs estar here. The expected answer is ${expected}.`,
     verb_conjugation: `Check the verb form. The expected answer is ${expected}.`,
+    transformation: `Rewrite the sentence to match the requested pattern: ${expected}.`,
+    dialogue: `Use a natural reply for this situation. One good answer is ${expected}.`,
+    listening: `Listen again and check each word. The expected sentence is ${expected}.`,
+    writing: `Match the required model sentence first: ${expected}.`,
     vocabulary: `Review the meaning and pattern. The expected answer is ${expected}.`
   };
   return messages[category] || messages.vocabulary;

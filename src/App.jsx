@@ -60,17 +60,23 @@ const imageSheets = {
   "city-transport": { src: "/images/city-transport.webp", grid: 4 },
   "classroom-basics": { src: "/images/classroom-basics.webp", grid: 4 },
   "clothing-basics": { src: "/images/clothing-basics.webp", grid: 5 },
+  "conversation-and-opinion": { src: "/images/conversation-and-opinion.webp", grid: 4 },
   "daily-actions": { src: "/images/daily-actions.webp", grid: 5 },
   "emotions-and-states": { src: "/images/emotions-and-states.webp", grid: 4 },
   "food-and-ordering": { src: "/images/food-and-ordering.webp", grid: 5 },
   "fruit-and-produce": { src: "/images/fruit-and-produce.webp", grid: 5 },
   "grammar-scenes": { src: "/images/grammar-scenes.webp", grid: 4 },
   "home-objects": { src: "/images/home-objects.webp", grid: 5 },
+  "irregular-verbs": { src: "/images/irregular-verbs.webp", grid: 4 },
   "minigame-ui-rewards": { src: "/images/minigame-ui-rewards.webp", grid: 4 },
   "nature-and-animals": { src: "/images/nature-and-animals.webp", grid: 4 },
   "numbers-and-colors": { src: "/images/numbers-and-colors.webp", grid: 4 },
+  "object-pronouns-and-shopping": { src: "/images/object-pronouns-and-shopping.webp", grid: 4 },
+  "past-events": { src: "/images/past-events.webp", grid: 4 },
   "people-and-family": { src: "/images/people-and-family.webp", grid: 4 },
   "places-around-town": { src: "/images/places-around-town.webp", grid: 4 },
+  "preferences-and-hobbies": { src: "/images/preferances-and-hobbies.webp", grid: 4 },
+  "reading-and-listening-lab": { src: "/images/reading-ad-listening-lab.webp", grid: 4 },
   "rewards-and-progress": { src: "/images/rewards-and-progress.webp", grid: 4 },
   "travel-and-survival": { src: "/images/travel-and-survival.webp", grid: 5 },
   "weather-and-time": { src: "/images/weather-and-time.webp", grid: 4 }
@@ -377,6 +383,23 @@ const topicTeachingCards = {
       title: "Question frames are reusable",
       body: "Keep the frame and swap the noun or place to make new questions.",
       example: "¿Dónde está el hotel? ¿Dónde está la estación?"
+    }
+  ],
+  "daily-routine-time": [
+    {
+      title: "Some routine verbs are reflexive",
+      body: "Use me with actions you do to yourself in the yo form. The me is part of the meaning.",
+      example: "Me despierto. Me levanto. Me ducho."
+    },
+    {
+      title: "Not every routine verb needs me",
+      body: "Normal action verbs like desayunar, estudiar, trabajar, cocinar, and leer do not use me in basic routine sentences.",
+      example: "Desayuno a las ocho. Estudio por la tarde."
+    },
+    {
+      title: "Time phrases usually follow the action",
+      body: "Use por la mañana, por la tarde, por la noche, and cada semana to place habits in time.",
+      example: "Trabajo por la mañana. Limpio cada semana."
     }
   ]
 };
@@ -1411,7 +1434,13 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
   const guideCards = useMemo(() => lessonGuideCards(lesson), [lesson.id]);
   const guideStep = guideCards.length ? { type: "guide" } : null;
   const learnSteps = lesson.sentences.map((sentence, index) => ({ type: "learn", sentence, index }));
-  const randomizedExercises = useMemo(() => shuffleItems(lesson.exercises || []), [lesson.id, sessionRun]);
+  const randomizedExercises = useMemo(() => {
+    const exercises = lesson.exercises || [];
+    if (!lesson.isCheckpoint) return shuffleItems(exercises);
+    const unmastered = exercises.filter((exercise) => !exercise.mastered);
+    const mastered = exercises.filter((exercise) => exercise.mastered);
+    return [...shuffleItems(unmastered), ...shuffleItems(mastered)];
+  }, [lesson.id, sessionRun]);
   const practiceSteps = randomizedExercises.map((exercise, index) => ({ type: "practice", exercise, index }));
   const steps = [overviewStep, ...(guideStep ? [guideStep] : []), ...learnSteps, ...practiceSteps];
   const current = steps[step];
@@ -1421,6 +1450,7 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
   const progress = steps.length ? Math.round((Math.min(step, steps.length) / steps.length) * 100) : 0;
   const masteredChecks = lesson.completedExercises || 0;
   const totalChecks = lesson.exerciseCount || lesson.totalExercises || lesson.exercises.length || 0;
+  const unmasteredChecks = (lesson.exercises || []).filter((exercise) => !exercise.mastered);
 
   useEffect(() => {
     if (!finished || completionReported) return;
@@ -1530,6 +1560,22 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
                   <p className="mt-3 text-sm font-semibold text-slate-600">
                     A check counts here only after that exact exercise has been answered correctly at least once.
                   </p>
+                </div>
+              )}
+              {lesson.isCheckpoint && unmasteredChecks.length > 0 && (
+                <div className="mt-5 rounded-lg border border-honey-200 bg-honey-50 p-4">
+                  <p className="font-black text-honey-900">Checks still to master</p>
+                  <div className="mt-3 grid gap-2">
+                    {unmasteredChecks.slice(0, 8).map((exercise) => (
+                      <div key={exercise.id} className="rounded-md border border-honey-100 bg-white px-3 py-2">
+                        <p className="text-sm font-black text-slate-900">{exercise.prompt}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-600">{exercise.questionText}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {unmasteredChecks.length > 8 && (
+                    <p className="mt-2 text-xs font-bold text-honey-800">{unmasteredChecks.length - 8} more checks need a correct answer.</p>
+                  )}
                 </div>
               )}
             </div>
@@ -3264,6 +3310,15 @@ function PracticePanel({
   }
 
   const isSentenceBuilder = exercise.type === "SENTENCE_BUILDER";
+  const isWritingPrompt = exercise.type === "WRITING_PROMPT";
+  const isListeningDictation = exercise.type === "LISTENING_DICTATION";
+  const exerciseTypeLabels = {
+    SHORT_ANSWER: "Typed answer",
+    TRANSFORMATION: "Rewrite",
+    DIALOGUE_REPLY: "Dialogue",
+    LISTENING_DICTATION: "Dictation",
+    WRITING_PROMPT: "Writing"
+  };
   const selectedValue = isSentenceBuilder ? words.join(" ") : answer;
   const locked = Boolean(feedback && typeof feedback.correct === "boolean");
   const canSubmit = selectedValue.trim().length > 0 && !locked && !busy;
@@ -3362,8 +3417,25 @@ function PracticePanel({
               <AssetImage imageKey={exercise.imageKey} alt={exercise.prompt} className="h-20 w-20 shrink-0 sm:h-24 sm:w-24" />
               <div className="min-w-0">
                 <p className="text-sm font-bold text-slate-500">{exercise.prompt}</p>
-                <h3 className="mt-2 text-xl font-extrabold text-slate-950">{exercise.questionText}</h3>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <h3 className="text-xl font-extrabold text-slate-950">{exercise.questionText}</h3>
+                  {exerciseTypeLabels[exercise.type] && (
+                    <span className="rounded-full bg-lagoon-50 px-2 py-1 text-xs font-black text-lagoon-700">
+                      {exerciseTypeLabels[exercise.type]}
+                    </span>
+                  )}
+                </div>
                 <p className="mt-1 text-sm text-slate-600">{exercise.instruction}</p>
+                {isListeningDictation && exercise.audioText && (
+                  <div className="mt-3">
+                    <PronunciationTools text={exercise.audioText} />
+                  </div>
+                )}
+                {isWritingPrompt && exercise.rubric && (
+                  <p className="mt-3 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                    {exercise.rubric}
+                  </p>
+                )}
               </div>
             </div>
             {locked && (
@@ -3389,6 +3461,14 @@ function PracticePanel({
                 setWords={setWords}
                 disabled={locked || busy}
                 onAutoComplete={autoSubmitChoices ? (nextWords) => submit("", nextWords) : null}
+              />
+            ) : isWritingPrompt ? (
+              <textarea
+                value={answer}
+                onChange={(event) => setAnswer(event.target.value)}
+                disabled={locked || busy}
+                className="min-h-32 w-full rounded-md border border-stone-200 px-3 py-3 outline-none focus:border-lagoon-500 disabled:bg-stone-100"
+                placeholder="Write your answer"
               />
             ) : (
               <AnswerChoices
@@ -4242,7 +4322,102 @@ function MiniGamesView({ dashboard, refreshDashboard }) {
           refreshDashboard={refreshDashboard}
         />
       )}
+
+      <ConjugationTrainer lessons={dashboard.lessons || []} refreshDashboard={refreshDashboard} />
     </div>
+  );
+}
+
+function ConjugationTrainer({ lessons, refreshDashboard }) {
+  const [deck, setDeck] = useState([]);
+  const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(false);
+  const [started, setStarted] = useState(false);
+
+  const loadDeck = async () => {
+    setLoading(true);
+    try {
+      const lessonDetails = await Promise.all(lessons.map((lesson) => api(`/api/lessons/${lesson.id}`)));
+      const exercises = lessonDetails
+        .flatMap((data) => data.lesson.exercises.map((exercise) => ({ ...exercise, lessonTitle: data.lesson.title })))
+        .filter((exercise) => exercise.type === "CONJUGATION");
+      setDeck(exercises);
+      setStarted(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredDeck = useMemo(() => {
+    if (filter === "all") return deck;
+    if (filter === "reflexive") {
+      return deck.filter((exercise) => /se\)|me\s|despertarse|levantarse|cepillarse|acostarse/i.test(`${exercise.questionText} ${exercise.explanation}`));
+    }
+    return deck.filter((exercise) => /-ar|hablar|estudiar|trabajar|comprar|caminar/i.test(`${exercise.questionText} ${exercise.explanation}`));
+  }, [deck, filter]);
+
+  return (
+    <section className="space-y-4">
+      <Panel title="Conjugation Trainer" icon={PenTool}>
+      <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+        <div>
+          <p className="text-sm font-semibold text-slate-600">
+            Train verb forms separately from the course path. Mistakes still enter review.
+          </p>
+          <div className="mt-4 grid gap-2">
+            {[
+              ["all", "All forms"],
+              ["present-ar", "Present -ar"],
+              ["reflexive", "Reflexive yo"]
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setFilter(value)}
+                className={classNames(
+                  "rounded-md border px-3 py-2 text-left text-sm font-black",
+                  filter === value ? "border-lagoon-400 bg-lagoon-50 text-lagoon-800" : "border-stone-200 bg-white text-slate-700"
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={loadDeck}
+            disabled={loading}
+            className="mt-4 w-full rounded-md bg-lagoon-500 px-4 py-3 font-black text-white hover:bg-lagoon-600 disabled:opacity-60"
+          >
+            {loading ? "Loading..." : started ? "Refresh deck" : "Start trainer"}
+          </button>
+          {started && (
+            <p className="mt-3 text-xs font-bold text-slate-500">
+              {filteredDeck.length}/{deck.length} forms in this filter
+            </p>
+          )}
+        </div>
+        <div>
+          <div className="rounded-lg border border-stone-200 bg-stone-50 p-5">
+            <p className="font-black text-slate-900">{started ? "Trainer deck ready." : "Choose a filter and start a trainer round."}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-600">
+              This uses real lesson checks, so correct answers count toward mastery.
+            </p>
+          </div>
+        </div>
+      </div>
+      </Panel>
+      {started && (
+        <ExerciseQueue
+          key={`conjugation-${filter}-${deck.map((exercise) => exercise.id).join("|")}`}
+          title="Conjugation"
+          exercises={filteredDeck}
+          source="LESSON"
+          refreshDashboard={refreshDashboard}
+          emptyMessage="No conjugation checks match this filter yet."
+          completeTitle="Conjugation round complete"
+          completeImageKey="minigame-ui-rewards:3"
+        />
+      )}
+    </section>
   );
 }
 
@@ -5222,7 +5397,20 @@ function AdminView({ refreshDashboard }) {
             onChange={(event) => setExerciseForm({ ...exerciseForm, type: event.target.value })}
             className="rounded-md border border-stone-200 px-3 py-3"
           >
-            {["MULTIPLE_CHOICE", "CLOZE", "SENTENCE_BUILDER", "CONJUGATION", "ARTICLE_MATCH", "TRANSLATION", "ERROR_CORRECTION"].map((type) => (
+            {[
+              "MULTIPLE_CHOICE",
+              "CLOZE",
+              "SENTENCE_BUILDER",
+              "CONJUGATION",
+              "ARTICLE_MATCH",
+              "TRANSLATION",
+              "ERROR_CORRECTION",
+              "SHORT_ANSWER",
+              "TRANSFORMATION",
+              "DIALOGUE_REPLY",
+              "LISTENING_DICTATION",
+              "WRITING_PROMPT"
+            ].map((type) => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>

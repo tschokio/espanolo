@@ -132,6 +132,14 @@ const topics = [
     cefrLevel: "A1",
     imageKey: "grammar-scenes:11",
     order: 11
+  },
+  {
+    slug: "daily-routine-time",
+    title: "Daily Routine and Time",
+    description: "Describe normal days with reflexive verbs, time words, and frequency.",
+    cefrLevel: "A2",
+    imageKey: "a2-daily-routine:1",
+    order: 12
   }
 ];
 
@@ -424,6 +432,31 @@ const vocabularyGroups = [
       ["la playa", "beach", "noun", "feminine", "Estoy en la playa.", "nature-and-animals:8"],
       ["el agua", "water", "noun", "masculine", "El agua está fría.", "nature-and-animals:9"],
       ["bonito", "pretty", "adjective", "masculine", "El parque es bonito.", "nature-and-animals:10"]
+    ]
+  },
+  {
+    slug: "a2-daily-routine",
+    title: "A2 Daily Routine",
+    description: "Routine actions, reflexive morning verbs, time words, and weekly frequency.",
+    situation: "normal day",
+    imageKey: "a2-daily-routine:1",
+    words: [
+      ["despertarse", "to wake up", "verb", null, "Me despierto temprano.", "a2-daily-routine:1"],
+      ["levantarse", "to get up", "verb", null, "Me levanto a las siete.", "a2-daily-routine:2"],
+      ["ducharse", "to shower", "verb", null, "Me ducho por la mañana.", "a2-daily-routine:3"],
+      ["cepillarse los dientes", "to brush one's teeth", "phrase", null, "Me cepillo los dientes.", "a2-daily-routine:4"],
+      ["vestirse", "to get dressed", "verb", null, "Me visto antes de desayunar.", "a2-daily-routine:5"],
+      ["desayunar", "to eat breakfast", "verb", null, "Desayuno a las ocho.", "a2-daily-routine:6"],
+      ["ir al trabajo", "to go to work", "phrase", null, "Voy al trabajo por la mañana.", "a2-daily-routine:7"],
+      ["estudiar", "to study", "verb", null, "Estudio por la tarde.", "a2-daily-routine:8"],
+      ["cocinar la cena", "to cook dinner", "phrase", null, "Cocino la cena por la noche.", "a2-daily-routine:9"],
+      ["limpiar el cuarto", "to clean the room", "phrase", null, "Limpio el cuarto los sábados.", "a2-daily-routine:10"],
+      ["acostarse", "to go to bed", "verb", null, "Me acuesto a las diez.", "a2-daily-routine:11"],
+      ["leer por la noche", "to read at night", "phrase", null, "Leo por la noche.", "a2-daily-routine:12"],
+      ["por la mañana", "in the morning", "phrase", null, "Trabajo por la mañana.", "a2-daily-routine:13"],
+      ["por la tarde", "in the afternoon", "phrase", null, "Estudio por la tarde.", "a2-daily-routine:14"],
+      ["cada semana", "every week", "phrase", null, "Limpio cada semana.", "a2-daily-routine:15"],
+      ["estar cansado", "to be tired", "phrase", null, "Estoy cansado después del trabajo.", "a2-daily-routine:16"]
     ]
   }
 ];
@@ -1364,6 +1397,137 @@ const lessons = [
       ["Llueve en la ciudad.", "It rains in the city.", "Llueve means it rains."],
       ["El agua está fría.", "The water is cold.", "Use estar for current temperature."],
       ["Estoy en la playa.", "I am at the beach.", "Use estar for where you are."]
+    ]
+  },
+  {
+    slug: "a2-daily-routine-overview",
+    title: "A2 Daily Routine Overview",
+    summary: "Describe a simple day from morning to night with time phrases.",
+    cefrLevel: "A2",
+    theme: "Daily Routine",
+    situation: "normal day",
+    imageKey: "a2-daily-routine:1",
+    topicSlug: "daily-routine-time",
+    vocabularySlugs: ["a2-daily-routine", "weather-and-time"],
+    order: 49,
+    estimatedMinutes: 9,
+    outcomes: [
+      "You can describe a normal morning and evening.",
+      "You can connect routine actions with time phrases.",
+      "You can recognize the difference between action verbs and reflexive verbs."
+    ],
+    conceptKeys: ["daily-routine", "time-phrases", "sequence"],
+    reviewSummary: "You practiced describing a daily routine with morning, afternoon, and night phrases.",
+    sentences: [
+      ["Me despierto temprano.", "I wake up early.", "Despertarse is reflexive: the me shows the action returns to the speaker."],
+      ["Desayuno a las ocho.", "I eat breakfast at eight.", "Non-reflexive action verbs do not need me."],
+      ["Estudio por la tarde.", "I study in the afternoon.", "Por la tarde means in the afternoon."],
+      ["Leo por la noche.", "I read at night.", "Por la noche is a common time phrase."]
+    ]
+  },
+  {
+    slug: "a2-reflexive-morning",
+    title: "Reflexive Morning Verbs",
+    summary: "Use me with common morning actions: wake up, get up, shower, brush teeth, and get dressed.",
+    cefrLevel: "A2",
+    theme: "Reflexive Verbs",
+    situation: "morning routine",
+    imageKey: "a2-daily-routine:4",
+    topicSlug: "daily-routine-time",
+    vocabularySlugs: ["a2-daily-routine"],
+    order: 50,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can use me before a reflexive verb in the yo form.",
+      "You can say several morning actions in sequence.",
+      "You can avoid adding me to normal non-reflexive verbs."
+    ],
+    conceptKeys: ["reflexive-verbs", "yo-form", "morning-routine"],
+    reviewSummary: "You practiced me despierto, me levanto, me ducho, me cepillo, and me visto.",
+    sentences: [
+      ["Me despierto a las siete.", "I wake up at seven.", "Use me with despierto because the verb is reflexive here."],
+      ["Me levanto después.", "I get up afterward.", "Me levanto is the yo form of levantarse."],
+      ["Me ducho por la mañana.", "I shower in the morning.", "Me stays before the conjugated verb."],
+      ["Me cepillo los dientes.", "I brush my teeth.", "Spanish says me cepillo los dientes, not mi dientes."],
+      ["Me visto antes de desayunar.", "I get dressed before breakfast.", "Antes de plus infinitive means before doing something."]
+    ]
+  },
+  {
+    slug: "a2-frequency-and-time",
+    title: "Frequency and Time",
+    summary: "Say when and how often routine actions happen.",
+    cefrLevel: "A2",
+    theme: "Time",
+    situation: "weekly schedule",
+    imageKey: "a2-daily-routine:15",
+    topicSlug: "daily-routine-time",
+    vocabularySlugs: ["a2-daily-routine", "weather-and-time"],
+    order: 51,
+    estimatedMinutes: 8,
+    outcomes: [
+      "You can place actions in the morning, afternoon, or night.",
+      "You can use cada semana for weekly habits.",
+      "You can build short routine sentences without translating word by word."
+    ],
+    conceptKeys: ["frequency", "time-phrases", "habit"],
+    reviewSummary: "You practiced por la mañana, por la tarde, por la noche, and cada semana.",
+    sentences: [
+      ["Trabajo por la mañana.", "I work in the morning.", "Use por la mañana for a general time of day."],
+      ["Estudio por la tarde.", "I study in the afternoon.", "Por la tarde comes after the action."],
+      ["Limpio cada semana.", "I clean every week.", "Cada semana marks frequency."],
+      ["Cocino la cena por la noche.", "I cook dinner at night.", "Spanish often puts the time phrase after the action."]
+    ]
+  },
+  {
+    slug: "a2-routine-sequence",
+    title: "Routine Sequence",
+    summary: "Connect routine actions into a small personal paragraph.",
+    cefrLevel: "A2",
+    theme: "Daily Routine",
+    situation: "describing your day",
+    imageKey: "a2-daily-routine:12",
+    topicSlug: "daily-routine-time",
+    vocabularySlugs: ["a2-daily-routine", "daily-actions"],
+    order: 52,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can combine several routine actions in order.",
+      "You can use después to connect events.",
+      "You can write a short controlled description of your day."
+    ],
+    conceptKeys: ["sequence", "writing", "routine"],
+    reviewSummary: "You practiced linking routine actions into a short description.",
+    sentences: [
+      ["Primero me levanto.", "First I get up.", "Primero signals the first action."],
+      ["Después desayuno.", "Afterward I eat breakfast.", "Después connects the next event."],
+      ["Luego voy al trabajo.", "Then I go to work.", "Luego is another simple connector."],
+      ["Por la noche leo y me acuesto.", "At night I read and go to bed.", "You can join two routine actions with y."]
+    ]
+  },
+  {
+    slug: "checkpoint-a2-daily-routine",
+    title: "A2 Daily Routine Checkpoint",
+    summary: "Prove you can understand, build, and write beginner routine sentences.",
+    cefrLevel: "A2",
+    theme: "Checkpoint",
+    situation: "daily routine review",
+    imageKey: "a2-daily-routine:15",
+    topicSlug: "daily-routine-time",
+    vocabularySlugs: ["a2-daily-routine"],
+    order: 53,
+    estimatedMinutes: 12,
+    outcomes: [
+      "You can produce routine sentences with correct reflexive me.",
+      "You can use time and frequency phrases naturally.",
+      "You can write a short controlled daily routine."
+    ],
+    conceptKeys: ["checkpoint", "daily-routine", "reflexive-verbs", "time-phrases"],
+    reviewSummary: "You completed the A2 daily routine checkpoint.",
+    sentences: [
+      ["Me despierto a las siete y desayuno a las ocho.", "I wake up at seven and eat breakfast at eight.", "Use me only with the reflexive verb."],
+      ["Trabajo por la mañana y estudio por la tarde.", "I work in the morning and study in the afternoon.", "Time phrases usually follow the action."],
+      ["Por la noche leo y me acuesto.", "At night I read and go to bed.", "Me acuesto is reflexive."],
+      ["Limpio el cuarto cada semana.", "I clean the room every week.", "Cada semana marks frequency."]
     ]
   }
 ];
@@ -2663,6 +2827,301 @@ const exercises = [
       ["favor", "favor", false],
       [".", ".", false]
     ]
+  },
+  {
+    slug: "a2-routine-despierto",
+    lessonSlug: "a2-daily-routine-overview",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Daily routine.",
+    instruction: "Translate the sentence.",
+    questionText: "I wake up early.",
+    answerJson: { correct: "Me despierto temprano.", accepted: ["me despierto temprano", "me despierto temprano."] },
+    explanation: "Use me despierto for I wake up: Me despierto temprano.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 16,
+    imageKey: "a2-daily-routine:1",
+    options: []
+  },
+  {
+    slug: "a2-routine-desayuno-ocho",
+    lessonSlug: "a2-daily-routine-overview",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.CLOZE,
+    prompt: "Time phrase.",
+    instruction: "Choose the routine verb.",
+    questionText: "____ a las ocho.",
+    answerJson: { correct: "Desayuno", accepted: ["desayuno", "Desayuno"] },
+    explanation: "Desayuno means I eat breakfast: Desayuno a las ocho.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 12,
+    imageKey: "a2-daily-routine:6",
+    options: [
+      ["Desayuno", "Desayuno", true],
+      ["Me levanto", "Me levanto", false],
+      ["Me acuesto", "Me acuesto", false]
+    ]
+  },
+  {
+    slug: "a2-routine-study-afternoon",
+    lessonSlug: "a2-daily-routine-overview",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Build the routine sentence.",
+    instruction: "Put the words in order.",
+    questionText: "I study in the afternoon.",
+    answerJson: { correctWords: ["Estudio", "por", "la", "tarde", "."] },
+    explanation: "The time phrase follows the action: Estudio por la tarde.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 16,
+    imageKey: "a2-daily-routine:8",
+    options: [
+      ["Estudio", "Estudio", false],
+      ["por", "por", false],
+      ["la", "la", false],
+      ["tarde", "tarde", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "a2-reflexive-me-levanto",
+    lessonSlug: "a2-reflexive-morning",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.CONJUGATION,
+    prompt: "Reflexive yo form.",
+    instruction: "Write the complete yo form.",
+    questionText: "Yo ____ a las siete. (levantarse)",
+    answerJson: { correct: "me levanto", accepted: ["me levanto"] },
+    explanation: "Levantarse becomes me levanto in the yo form.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 14,
+    imageKey: "a2-daily-routine:2",
+    options: []
+  },
+  {
+    slug: "a2-reflexive-brush-teeth",
+    lessonSlug: "a2-reflexive-morning",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.TRANSFORMATION,
+    prompt: "Rewrite with yo.",
+    instruction: "Change the infinitive phrase into a complete yo sentence.",
+    questionText: "cepillarse los dientes",
+    answerJson: { correct: "Me cepillo los dientes.", accepted: ["me cepillo los dientes", "me cepillo los dientes."] },
+    explanation: "For yo, cepillarse becomes me cepillo: Me cepillo los dientes.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "a2-daily-routine:4",
+    options: []
+  },
+  {
+    slug: "a2-reflexive-me-or-no-me",
+    lessonSlug: "a2-reflexive-morning",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Reflexive or normal verb?",
+    instruction: "Choose the natural sentence.",
+    questionText: "I eat breakfast.",
+    answerJson: { correct: "Desayuno.", accepted: ["desayuno", "desayuno."] },
+    explanation: "Desayunar is not reflexive here, so do not add me.",
+    difficulty: 1,
+    order: 3,
+    xpReward: 12,
+    imageKey: "a2-daily-routine:6",
+    options: [
+      ["Desayuno.", "Desayuno.", true],
+      ["Me desayuno.", "Me desayuno.", false],
+      ["Me despierto.", "Me despierto.", false]
+    ]
+  },
+  {
+    slug: "a2-time-cada-semana",
+    lessonSlug: "a2-frequency-and-time",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Frequency phrase.",
+    instruction: "Translate the sentence.",
+    questionText: "I clean every week.",
+    answerJson: { correct: "Limpio cada semana.", accepted: ["limpio cada semana", "limpio cada semana."] },
+    explanation: "Cada semana means every week: Limpio cada semana.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 16,
+    imageKey: "a2-daily-routine:15",
+    options: []
+  },
+  {
+    slug: "a2-time-cook-night",
+    lessonSlug: "a2-frequency-and-time",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.LISTENING_DICTATION,
+    prompt: "Dictation.",
+    instruction: "Listen, then type the Spanish sentence.",
+    questionText: "Listen to the sentence.",
+    answerJson: { correct: "Cocino la cena por la noche.", accepted: ["cocino la cena por la noche", "cocino la cena por la noche."], audioText: "Cocino la cena por la noche." },
+    explanation: "This sentence means I cook dinner at night.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "a2-daily-routine:9",
+    options: []
+  },
+  {
+    slug: "a2-time-afternoon-choice",
+    lessonSlug: "a2-frequency-and-time",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.CLOZE,
+    prompt: "Time of day.",
+    instruction: "Choose the phrase for in the afternoon.",
+    questionText: "Estudio ____.",
+    answerJson: { correct: "por la tarde", accepted: ["por la tarde"] },
+    explanation: "Por la tarde means in the afternoon.",
+    difficulty: 1,
+    order: 3,
+    xpReward: 12,
+    imageKey: "a2-daily-routine:14",
+    options: [
+      ["por la tarde", "por la tarde", true],
+      ["por la mañana", "por la mañana", false],
+      ["cada semana", "cada semana", false]
+    ]
+  },
+  {
+    slug: "a2-sequence-first-after",
+    lessonSlug: "a2-routine-sequence",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Build the sequence.",
+    instruction: "Put the words in order.",
+    questionText: "First I get up.",
+    answerJson: { correctWords: ["Primero", "me", "levanto", "."] },
+    explanation: "Primero comes first, and levantarse becomes me levanto.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 16,
+    imageKey: "a2-daily-routine:2",
+    options: [
+      ["Primero", "Primero", false],
+      ["me", "me", false],
+      ["levanto", "levanto", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "a2-sequence-dialogue-reply",
+    lessonSlug: "a2-routine-sequence",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Reply naturally.",
+    instruction: "Type a natural answer in Spanish.",
+    questionText: "¿Qué haces por la noche?",
+    answerJson: {
+      correct: "Leo por la noche.",
+      accepted: ["leo por la noche", "leo por la noche.", "por la noche leo", "por la noche leo."],
+      alternatives: [{ answer: "Me acuesto por la noche.", note: "This is also a natural routine answer." }]
+    },
+    explanation: "Answer the question with a routine action plus a time phrase.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "a2-daily-routine:12",
+    options: []
+  },
+  {
+    slug: "a2-sequence-writing",
+    lessonSlug: "a2-routine-sequence",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.WRITING_PROMPT,
+    prompt: "Controlled writing.",
+    instruction: "Write the full model sentence.",
+    questionText: "Write: At night I read and go to bed.",
+    answerJson: {
+      correct: "Por la noche leo y me acuesto.",
+      accepted: ["por la noche leo y me acuesto", "por la noche leo y me acuesto.", "leo por la noche y me acuesto", "leo por la noche y me acuesto."],
+      rubric: "Use a night phrase, leo, y, and me acuesto."
+    },
+    explanation: "Me acuesto is reflexive, but leo is not.",
+    difficulty: 3,
+    order: 3,
+    xpReward: 20,
+    imageKey: "a2-daily-routine:11",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-reflexive-me",
+    lessonSlug: "checkpoint-a2-daily-routine",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.CONJUGATION,
+    prompt: "A2 checkpoint.",
+    instruction: "Write the complete yo form.",
+    questionText: "Yo ____ a las siete. (despertarse)",
+    answerJson: { correct: "me despierto", accepted: ["me despierto"] },
+    explanation: "Despertarse becomes me despierto in the yo form.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 18,
+    imageKey: "a2-daily-routine:1",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-time-phrase",
+    lessonSlug: "checkpoint-a2-daily-routine",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A2 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I work in the morning.",
+    answerJson: { correct: "Trabajo por la mañana.", accepted: ["trabajo por la mañana", "trabajo por la mañana."] },
+    explanation: "Por la mañana means in the morning.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "a2-daily-routine:13",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-routine-sequence",
+    lessonSlug: "checkpoint-a2-daily-routine",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "A2 checkpoint.",
+    instruction: "Build the sentence.",
+    questionText: "Afterward I eat breakfast.",
+    answerJson: { correctWords: ["Después", "desayuno", "."] },
+    explanation: "Después connects the next event in a routine.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "a2-daily-routine:6",
+    options: [
+      ["Después", "Después", false],
+      ["desayuno", "desayuno", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a2-short-routine",
+    lessonSlug: "checkpoint-a2-daily-routine",
+    topicSlug: "daily-routine-time",
+    type: ExerciseType.WRITING_PROMPT,
+    prompt: "A2 checkpoint.",
+    instruction: "Write the full model sentence.",
+    questionText: "Write: I wake up at seven and eat breakfast at eight.",
+    answerJson: {
+      correct: "Me despierto a las siete y desayuno a las ocho.",
+      accepted: ["me despierto a las siete y desayuno a las ocho", "me despierto a las siete y desayuno a las ocho."],
+      rubric: "Use me despierto, a las siete, y, desayuno, and a las ocho."
+    },
+    explanation: "Use me with despierto, but not with desayuno.",
+    difficulty: 3,
+    order: 4,
+    xpReward: 22,
+    imageKey: "a2-daily-routine:1",
+    options: []
   }
 ];
 
@@ -2835,6 +3294,69 @@ const assetPrompts = [
     canvasSize: 1200,
     imagePath: "/images/minigame-ui-rewards.webp",
     promptMarkdown: "4x4 mini-game UI rewards sheet. Cells include falling word card, catch basket, timer, life heart, correct glow, missed answer, combo flame, trophy, arena, target card, speed boost, focus icon, confetti, replay arrow, locked badge, and unlocked badge."
+  },
+  {
+    slug: "a2-daily-routine",
+    title: "A2 Daily Routine",
+    category: "A2 Vocabulary",
+    gridSize: 4,
+    canvasSize: 1254,
+    imagePath: "/images/a2-daily-routine.png",
+    promptMarkdown: "4x4 daily routine sheet. Cells include wake up, get up, shower, brush teeth, get dressed, eat breakfast, go to work, study, cook dinner, clean room, go to bed, read at night, morning clock, afternoon clock, weekly calendar, and tired after work."
+  },
+  {
+    slug: "irregular-verbs",
+    title: "A2 Irregular Verbs",
+    category: "A2 Verbs",
+    gridSize: 4,
+    canvasSize: 1254,
+    imagePath: "/images/irregular-verbs.webp",
+    promptMarkdown: "4x4 irregular verbs sheet. Cells include go to a store, come home, leave a house, put object on table, bring a bag, say something, do homework, make food, see a sign, hear music, know a fact, meet a person, can open a door, want a ticket, have to work, and give an item."
+  },
+  {
+    slug: "preferences-and-hobbies",
+    title: "A2 Preferences and Hobbies",
+    category: "A2 Vocabulary",
+    gridSize: 4,
+    canvasSize: 1254,
+    imagePath: "/images/preferances-and-hobbies.webp",
+    promptMarkdown: "4x4 preferences and hobbies sheet. Cells include likes music, likes movies, likes soccer, likes reading, likes cooking, likes travel, likes coffee, dislikes rain, prefers tea, prefers the beach, favorite restaurant, favorite color, hobby class, weekend activity, bored person, and excited person."
+  },
+  {
+    slug: "object-pronouns-and-shopping",
+    title: "A2 Object Pronouns and Shopping",
+    category: "A2 Grammar",
+    gridSize: 4,
+    canvasSize: 1254,
+    imagePath: "/images/object-pronouns-and-shopping.webp",
+    promptMarkdown: "4x4 object pronouns and shopping sheet. Cells include buying bread, buying apples, giving a book, giving keys, showing a map, seeing a movie, reading a menu, calling a friend, writing a message, paying a bill, carrying bags, returning an item, asking for help, offering water, sending a photo, and receiving a package."
+  },
+  {
+    slug: "past-events",
+    title: "A2 Past Events",
+    category: "A2 Grammar",
+    gridSize: 4,
+    canvasSize: 1254,
+    imagePath: "/images/past-events.webp",
+    promptMarkdown: "4x4 past events sheet. Cells include yesterday at cafe, last week trip, childhood home, old school, person was tired, person went to station, person bought food, person met a friend, rain during trip, lost passport, found keys, called doctor, took bus, worked yesterday, studied last night, and walked in park."
+  },
+  {
+    slug: "conversation-and-opinion",
+    title: "B1 Conversation and Opinion",
+    category: "B1 Communication",
+    gridSize: 4,
+    canvasSize: 1254,
+    imagePath: "/images/conversation-and-opinion.webp",
+    promptMarkdown: "4x4 conversation and opinion sheet. Cells include two people discussing plans, explaining a problem, giving opinion, friendly disagreement, work meeting, phone call, asking for clarification, apologizing, making a recommendation, comparing options, reading news, writing email, presenting idea, planning a trip, interview conversation, and group discussion."
+  },
+  {
+    slug: "reading-and-listening-lab",
+    title: "Reading and Listening Lab",
+    category: "Comprehension",
+    gridSize: 4,
+    canvasSize: 1254,
+    imagePath: "/images/reading-ad-listening-lab.webp",
+    promptMarkdown: "4x4 reading and listening lab sheet. Cells include reading short article, listening with headphones, transcript document, highlighted vocabulary, comprehension question, notebook summary, audio waveform, podcast scene, news article, story page, dictionary lookup, saved word list, corrected writing, listening quiz, reading progress, and study desk."
   }
 ];
 

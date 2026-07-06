@@ -83,6 +83,31 @@ test("classifies sentence builder word order mistakes", () => {
   assert.equal(result.errorCategory, "word_order");
 });
 
+test("checks short answer production exercises", () => {
+  const result = evaluateExerciseAnswer(
+    baseExercise({
+      type: "SHORT_ANSWER",
+      answerJson: { correct: "Me despierto temprano.", accepted: ["me despierto temprano", "me despierto temprano."] }
+    }),
+    { answer: "me despierto temprano" }
+  );
+
+  assert.equal(result.correct, true);
+});
+
+test("classifies transformation production mistakes", () => {
+  const result = evaluateExerciseAnswer(
+    baseExercise({
+      type: "TRANSFORMATION",
+      answerJson: { correct: "Me cepillo los dientes.", accepted: ["me cepillo los dientes", "me cepillo los dientes."] }
+    }),
+    { answer: "Cepillo mis dientes." }
+  );
+
+  assert.equal(result.correct, false);
+  assert.equal(result.errorCategory, "transformation");
+});
+
 test("schedules word review qualities in the expected order", () => {
   const now = new Date("2026-07-04T00:00:00.000Z");
   const existing = { ease: 2.1, intervalDays: 2, correctCount: 3, wrongCount: 0 };

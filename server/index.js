@@ -558,6 +558,10 @@ const publicExercise = (exercise) => ({
   lessonId: exercise.lessonId,
   topicId: exercise.topicId,
   answerGoal: exercise.answerJson?.goal || "",
+  audioText: exercise.type === "LISTENING_DICTATION" ? exercise.answerJson?.audioText || exercise.answerJson?.correct || "" : "",
+  rubric: exercise.answerJson?.rubric || "",
+  mastered: Boolean(exercise.mastered),
+  lastAttemptCorrect: exercise.lastAttemptCorrect ?? null,
   options: [...(exercise.options || [])]
     .sort((a, b) => a.order - b.order)
     .map((option) => ({
@@ -650,10 +654,11 @@ const curriculumUnits = [
     slug: "a2-1-daily-routine",
     label: "A2.1",
     title: "Daily Routine and Time",
-    phase: "Planned A2",
+    phase: "A2 Foundation",
     description: "Routine, reflexive verbs, time, frequency, and simple schedule talk.",
     order: 8,
-    planned: true
+    startOrder: 49,
+    endOrder: 53
   },
   {
     slug: "a2-2-verb-frames",
@@ -1954,6 +1959,21 @@ app.get(
     if (!lesson) return res.status(404).json({ error: "Lesson not found" });
     await syncLessonProgressForLessons(req.user.id, [lesson]);
     const summary = publicLessonSummary(lesson);
+    const attempts = await prisma.attempt.findMany({
+      where: {
+        userId: req.user.id,
+        exercise: { lessonId: lesson.id }
+      },
+      orderBy: { createdAt: "desc" },
+      select: { exerciseId: true, isCorrect: true }
+    });
+    const correctExerciseIds = new Set(attempts.filter((attempt) => attempt.isCorrect).map((attempt) => attempt.exerciseId));
+    const latestAttemptByExercise = new Map();
+    for (const attempt of attempts) {
+      if (!latestAttemptByExercise.has(attempt.exerciseId)) {
+        latestAttemptByExercise.set(attempt.exerciseId, attempt);
+      }
+    }
 
     res.json({
       lesson: {
@@ -1966,7 +1986,13 @@ app.get(
         outcomes: Array.isArray(lesson.outcomesJson) ? lesson.outcomesJson : [],
         conceptKeys: Array.isArray(lesson.conceptKeys) ? lesson.conceptKeys : [],
         reviewSummary: lesson.reviewSummary || "",
-        exercises: lesson.exercises.map(publicExercise)
+        exercises: lesson.exercises.map((exercise) =>
+          publicExercise({
+            ...exercise,
+            mastered: correctExerciseIds.has(exercise.id),
+            lastAttemptCorrect: latestAttemptByExercise.get(exercise.id)?.isCorrect ?? null
+          })
+        )
       }
     });
   })
