@@ -401,6 +401,23 @@ const topicTeachingCards = {
       body: "Use por la mañana, por la tarde, por la noche, and cada semana to place habits in time.",
       example: "Trabajo por la mañana. Limpio cada semana."
     }
+  ],
+  "irregular-present-frames": [
+    {
+      title: "Common verbs often have irregular yo forms",
+      body: "The most useful verbs do not always follow the regular pattern in the yo form, so learn them as complete chunks.",
+      example: "voy, hago, digo, vengo, salgo, pongo"
+    },
+    {
+      title: "Frames take an infinitive after them",
+      body: "Use the unchanged verb after puedo, quiero, necesito, and tengo que.",
+      example: "Puedo estudiar. Quiero ir. Tengo que trabajar."
+    },
+    {
+      title: "Voy a makes a near-future plan",
+      body: "Use voy a plus an infinitive for something you are going to do.",
+      example: "Voy a estudiar mañana."
+    }
   ]
 };
 
@@ -4457,11 +4474,49 @@ function MiniGamesView({ dashboard, refreshDashboard }) {
   );
 }
 
+function inferConjugationMeta(exercise) {
+  const text = `${exercise.questionText || ""} ${exercise.explanation || ""} ${exercise.lessonTitle || ""}`;
+  const trainer = exercise.trainer || {};
+  const infinitive = trainer.infinitive || /\(([^)]+)\)/.exec(exercise.questionText || "")?.[1] || "";
+  const lower = `${text} ${infinitive}`.toLowerCase();
+  const person =
+    trainer.person ||
+    (/nosotros/.test(lower)
+      ? "nosotros"
+      : /tú| tu /.test(lower)
+        ? "tu"
+        : /ellos|ellas/.test(lower)
+          ? "ellos"
+          : /él|ella/.test(lower)
+            ? "el-ella"
+            : "yo");
+  const family =
+    trainer.family ||
+    (/despertarse|levantarse|ducharse|cepillarse|acostarse|se\)/.test(lower)
+      ? "reflexive"
+      : /ir|hacer|decir|venir|salir|poner|traer|ver|oír|oir|saber|conocer|poder|querer|tener|dar/.test(lower)
+        ? "irregular"
+        : /-ar|hablar|estudiar|trabajar|comprar|caminar/.test(lower)
+          ? "regular-ar"
+          : "other");
+  const tense = trainer.tense || "present";
+  const difficulty = exercise.difficulty >= 3 ? "hard" : exercise.difficulty >= 2 ? "medium" : "easy";
+  return { tense, person, family, difficulty, infinitive };
+}
+
 function ConjugationTrainer({ lessons, refreshDashboard }) {
   const [deck, setDeck] = useState([]);
-  const [filter, setFilter] = useState("all");
+  const [filters, setFilters] = useState({
+    tense: "all",
+    person: "all",
+    family: "all",
+    difficulty: "all",
+    mistakesOnly: false
+  });
   const [loading, setLoading] = useState(false);
   const [started, setStarted] = useState(false);
+
+  const updateFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value }));
 
   const loadDeck = async () => {
     setLoading(true);
@@ -4469,7 +4524,8 @@ function ConjugationTrainer({ lessons, refreshDashboard }) {
       const lessonDetails = await Promise.all(lessons.map((lesson) => api(`/api/lessons/${lesson.id}`)));
       const exercises = lessonDetails
         .flatMap((data) => data.lesson.exercises.map((exercise) => ({ ...exercise, lessonTitle: data.lesson.title })))
-        .filter((exercise) => exercise.type === "CONJUGATION");
+        .filter((exercise) => exercise.type === "CONJUGATION")
+        .map((exercise) => ({ ...exercise, trainerMeta: inferConjugationMeta(exercise) }));
       setDeck(exercises);
       setStarted(true);
     } finally {
@@ -4478,65 +4534,89 @@ function ConjugationTrainer({ lessons, refreshDashboard }) {
   };
 
   const filteredDeck = useMemo(() => {
-    if (filter === "all") return deck;
-    if (filter === "reflexive") {
-      return deck.filter((exercise) => /se\)|me\s|despertarse|levantarse|cepillarse|acostarse/i.test(`${exercise.questionText} ${exercise.explanation}`));
-    }
-    return deck.filter((exercise) => /-ar|hablar|estudiar|trabajar|comprar|caminar/i.test(`${exercise.questionText} ${exercise.explanation}`));
-  }, [deck, filter]);
+    return deck.filter((exercise) => {
+      const meta = exercise.trainerMeta || inferConjugationMeta(exercise);
+      if (filters.tense !== "all" && meta.tense !== filters.tense) return false;
+      if (filters.person !== "all" && meta.person !== filters.person) return false;
+      if (filters.family !== "all" && meta.family !== filters.family) return false;
+      if (filters.difficulty !== "all" && meta.difficulty !== filters.difficulty) return false;
+      if (filters.mistakesOnly && exercise.lastAttemptCorrect !== false) return false;
+      return true;
+    });
+  }, [deck, filters]);
+
+  const mistakeCount = deck.filter((exercise) => exercise.lastAttemptCorrect === false).length;
+  const filterKey = `${filters.tense}-${filters.person}-${filters.family}-${filters.difficulty}-${filters.mistakesOnly}`;
+  const selectClass = "rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-black text-slate-700";
 
   return (
     <section className="space-y-4">
       <Panel title="Conjugation Trainer" icon={PenTool}>
-      <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
-        <div>
-          <p className="text-sm font-semibold text-slate-600">
-            Train verb forms separately from the course path. Mistakes still enter review.
-          </p>
-          <div className="mt-4 grid gap-2">
-            {[
-              ["all", "All forms"],
-              ["present-ar", "Present -ar"],
-              ["reflexive", "Reflexive yo"]
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setFilter(value)}
-                className={classNames(
-                  "rounded-md border px-3 py-2 text-left text-sm font-black",
-                  filter === value ? "border-lagoon-400 bg-lagoon-50 text-lagoon-800" : "border-stone-200 bg-white text-slate-700"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={loadDeck}
-            disabled={loading}
-            className="mt-4 w-full rounded-md bg-lagoon-500 px-4 py-3 font-black text-white hover:bg-lagoon-600 disabled:opacity-60"
-          >
-            {loading ? "Loading..." : started ? "Refresh deck" : "Start trainer"}
-          </button>
-          {started && (
-            <p className="mt-3 text-xs font-bold text-slate-500">
-              {filteredDeck.length}/{deck.length} forms in this filter
+        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+          <div>
+            <p className="text-sm font-semibold text-slate-600">
+              Train verb forms separately from the course path. Mistakes still enter review.
             </p>
-          )}
-        </div>
-        <div>
+            <div className="mt-4 grid gap-3">
+              <select value={filters.tense} onChange={(event) => updateFilter("tense", event.target.value)} className={selectClass}>
+                <option value="all">All tenses</option>
+                <option value="present">Present</option>
+              </select>
+              <select value={filters.person} onChange={(event) => updateFilter("person", event.target.value)} className={selectClass}>
+                <option value="all">All people</option>
+                <option value="yo">Yo</option>
+                <option value="tu">Tú</option>
+                <option value="el-ella">Él / Ella</option>
+                <option value="nosotros">Nosotros</option>
+                <option value="ellos">Ellos</option>
+              </select>
+              <select value={filters.family} onChange={(event) => updateFilter("family", event.target.value)} className={selectClass}>
+                <option value="all">All verb families</option>
+                <option value="regular-ar">Regular -ar</option>
+                <option value="irregular">Irregular present</option>
+                <option value="reflexive">Reflexive</option>
+                <option value="other">Other</option>
+              </select>
+              <select value={filters.difficulty} onChange={(event) => updateFilter("difficulty", event.target.value)} className={selectClass}>
+                <option value="all">All difficulty</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+              <label className="flex items-center justify-between rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-black text-slate-700">
+                Mistakes only
+                <input
+                  type="checkbox"
+                  checked={filters.mistakesOnly}
+                  onChange={(event) => updateFilter("mistakesOnly", event.target.checked)}
+                  className="h-5 w-5 accent-lagoon-500"
+                />
+              </label>
+            </div>
+            <button
+              onClick={loadDeck}
+              disabled={loading}
+              className="mt-4 w-full rounded-md bg-lagoon-500 px-4 py-3 font-black text-white hover:bg-lagoon-600 disabled:opacity-60"
+            >
+              {loading ? "Loading..." : started ? "Refresh deck" : "Start trainer"}
+            </button>
+          </div>
           <div className="rounded-lg border border-stone-200 bg-stone-50 p-5">
-            <p className="font-black text-slate-900">{started ? "Trainer deck ready." : "Choose a filter and start a trainer round."}</p>
-            <p className="mt-2 text-sm font-semibold text-slate-600">
-              This uses real lesson checks, so correct answers count toward mastery.
+            <p className="font-black text-slate-900">{started ? "Trainer deck ready." : "Choose filters and start a trainer round."}</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <InfoTile label="Deck" value={deck.length} />
+              <InfoTile label="Filtered" value={filteredDeck.length} />
+              <InfoTile label="Mistakes" value={mistakeCount} />
+            </div>
+            <p className="mt-4 text-sm font-semibold text-slate-600">
+              Correct answers count toward lesson mastery; wrong answers are saved for review.
             </p>
           </div>
         </div>
-      </div>
       </Panel>
       {started && (
         <ExerciseQueue
-          key={`conjugation-${filter}-${deck.map((exercise) => exercise.id).join("|")}`}
+          key={`conjugation-${filterKey}-${deck.map((exercise) => exercise.id).join("|")}`}
           title="Conjugation"
           exercises={filteredDeck}
           source="LESSON"
@@ -5457,6 +5537,7 @@ function AdminView({ refreshDashboard }) {
       </Panel>
 
       <SystemStatusPanel system={content.system} />
+      <CurriculumQaPanel qa={content.curriculumQa} />
 
       <div className="grid gap-5 xl:grid-cols-2">
         <AdminForm
@@ -5589,6 +5670,55 @@ function AdminView({ refreshDashboard }) {
         </AdminForm>
       </div>
     </div>
+  );
+}
+
+function CurriculumQaPanel({ qa }) {
+  if (!qa) return null;
+  const counts = qa.counts || {};
+  const issueTotal = Object.values(counts).reduce((sum, value) => sum + Number(value || 0), 0);
+  const issueSections = [
+    ["Missing outcomes", qa.missingOutcomes],
+    ["Missing review summaries", qa.missingReviewSummary],
+    ["Low exercise count", qa.lowExerciseLessons],
+    ["Unit issues", qa.unitIssues],
+    ["Repeated images", qa.repeatedImages]
+  ].filter(([, items]) => items?.length);
+
+  return (
+    <Panel
+      title="Curriculum QA"
+      icon={ListChecks}
+      action={
+        <span className={classNames("rounded-full px-3 py-1 text-xs font-black", issueTotal ? "bg-honey-100 text-honey-800" : "bg-emerald-100 text-emerald-800")}>
+          {issueTotal ? `${issueTotal} checks` : "Clean"}
+        </span>
+      }
+    >
+      <div className="grid gap-3 sm:grid-cols-5">
+        <InfoTile label="Outcomes" value={counts.missingOutcomes || 0} />
+        <InfoTile label="Summaries" value={counts.missingReviewSummary || 0} />
+        <InfoTile label="Thin lessons" value={counts.lowExerciseLessons || 0} />
+        <InfoTile label="Units" value={counts.unitIssues || 0} />
+        <InfoTile label="Images" value={counts.repeatedImages || 0} />
+      </div>
+      {issueSections.length ? (
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {issueSections.map(([title, items]) => (
+            <div key={title} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">{title}</p>
+              <div className="mt-2 grid gap-2 text-sm font-bold text-slate-700">
+                {items.slice(0, 5).map((item) => (
+                  <span key={item.slug || item.imageKey}>{item.label || item.title || item.imageKey} {item.count ? `(${item.count})` : ""}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 text-sm font-semibold text-slate-600">No curriculum QA issues found.</p>
+      )}
+    </Panel>
   );
 }
 

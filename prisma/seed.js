@@ -140,6 +140,14 @@ const topics = [
     cefrLevel: "A2",
     imageKey: "a2-daily-routine:1",
     order: 12
+  },
+  {
+    slug: "irregular-present-frames",
+    title: "Irregular Present and Useful Frames",
+    description: "Use high-frequency irregular yo forms and frames with infinitives for needs, plans, and ability.",
+    cefrLevel: "A2",
+    imageKey: "irregular-verbs:1",
+    order: 13
   }
 ];
 
@@ -457,6 +465,31 @@ const vocabularyGroups = [
       ["por la tarde", "in the afternoon", "phrase", null, "Estudio por la tarde.", "a2-daily-routine:14"],
       ["cada semana", "every week", "phrase", null, "Limpio cada semana.", "a2-daily-routine:15"],
       ["estar cansado", "to be tired", "phrase", null, "Estoy cansado después del trabajo.", "a2-daily-routine:16"]
+    ]
+  },
+  {
+    slug: "a2-irregular-verbs",
+    title: "A2 Irregular Verbs and Frames",
+    description: "High-frequency irregular present forms and useful verb frames with infinitives.",
+    situation: "plans and obligations",
+    imageKey: "irregular-verbs:1",
+    words: [
+      ["ir a la tienda", "to go to the store", "phrase", null, "Voy a la tienda.", "irregular-verbs:1"],
+      ["venir a casa", "to come home", "phrase", null, "Vengo a casa por la tarde.", "irregular-verbs:2"],
+      ["salir de casa", "to leave home", "phrase", null, "Salgo de casa a las ocho.", "irregular-verbs:3"],
+      ["poner", "to put", "verb", null, "Pongo el libro en la mesa.", "irregular-verbs:4"],
+      ["traer", "to bring", "verb", null, "Traigo una bolsa.", "irregular-verbs:5"],
+      ["decir", "to say", "verb", null, "Digo la verdad.", "irregular-verbs:6"],
+      ["hacer la tarea", "to do homework", "phrase", null, "Hago la tarea por la tarde.", "irregular-verbs:7"],
+      ["hacer comida", "to make food", "phrase", null, "Hago comida en casa.", "irregular-verbs:8"],
+      ["ver", "to see", "verb", null, "Veo el letrero.", "irregular-verbs:9"],
+      ["oír", "to hear", "verb", null, "Oigo música.", "irregular-verbs:10"],
+      ["saber", "to know a fact", "verb", null, "Sé la respuesta.", "irregular-verbs:11"],
+      ["conocer", "to know / meet a person", "verb", null, "Conozco a una persona.", "irregular-verbs:12"],
+      ["poder", "can / to be able to", "verb", null, "Puedo abrir la puerta.", "irregular-verbs:13"],
+      ["querer", "to want", "verb", null, "Quiero comprar un billete.", "irregular-verbs:14"],
+      ["tener que", "to have to", "phrase", null, "Tengo que trabajar.", "irregular-verbs:15"],
+      ["dar", "to give", "verb", null, "Doy el libro a Ana.", "irregular-verbs:16"]
     ]
   }
 ];
@@ -1719,6 +1752,140 @@ const lessons = [
       ["Trabajo por la mañana y estudio por la tarde.", "I work in the morning and study in the afternoon.", "Time phrases usually follow the action."],
       ["Por la noche leo y me acuesto.", "At night I read and go to bed.", "Me acuesto is reflexive."],
       ["Limpio el cuarto cada semana.", "I clean the room every week.", "Cada semana marks frequency."]
+    ]
+  },
+  {
+    slug: "a2-irregular-present-overview",
+    title: "Irregular Present Verbs",
+    summary: "Learn high-frequency irregular yo forms used in normal daily sentences.",
+    cefrLevel: "A2",
+    theme: "Irregular Verbs",
+    situation: "daily actions",
+    imageKey: "irregular-verbs:1",
+    topicSlug: "irregular-present-frames",
+    vocabularySlugs: ["a2-irregular-verbs", "a2-daily-routine"],
+    order: 570,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can use voy, hago, digo, vengo, and salgo in short sentences.",
+      "You can recognize that common verbs often have irregular yo forms.",
+      "You can produce several irregular forms without answer choices."
+    ],
+    conceptKeys: ["irregular-present", "yo-form", "high-frequency-verbs"],
+    reviewSummary: "You practiced common irregular yo forms: voy, hago, digo, vengo, and salgo.",
+    sentences: [
+      ["Voy a la tienda.", "I go to the store.", "Ir becomes voy in the yo form."],
+      ["Hago la tarea por la tarde.", "I do homework in the afternoon.", "Hacer becomes hago."],
+      ["Digo la verdad.", "I say the truth.", "Decir becomes digo."],
+      ["Vengo a casa por la tarde.", "I come home in the afternoon.", "Venir becomes vengo."],
+      ["Salgo de casa a las ocho.", "I leave home at eight.", "Salir becomes salgo."]
+    ]
+  },
+  {
+    slug: "a2-useful-verb-frames",
+    title: "Useful Verb Frames",
+    summary: "Use puedo, quiero, necesito, tengo que, and voy a before an infinitive.",
+    cefrLevel: "A2",
+    theme: "Verb Frames",
+    situation: "plans and needs",
+    imageKey: "irregular-verbs:13",
+    topicSlug: "irregular-present-frames",
+    vocabularySlugs: ["a2-irregular-verbs", "daily-actions"],
+    order: 580,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can put an infinitive after puedo, quiero, necesito, and tengo que.",
+      "You can use voy a plus infinitive for a simple future plan.",
+      "You can describe ability, desire, need, obligation, and plans."
+    ],
+    conceptKeys: ["verb-frames", "infinitive", "near-future"],
+    reviewSummary: "You practiced useful frames: puedo, quiero, necesito, tengo que, and voy a plus infinitive.",
+    sentences: [
+      ["Puedo estudiar hoy.", "I can study today.", "Use the infinitive estudiar after puedo."],
+      ["Quiero ir a la tienda.", "I want to go to the store.", "Use the infinitive ir after quiero."],
+      ["Necesito hacer la tarea.", "I need to do homework.", "Necesito can be followed by an infinitive."],
+      ["Tengo que trabajar.", "I have to work.", "Tengo que plus infinitive expresses obligation."],
+      ["Voy a estudiar mañana.", "I am going to study tomorrow.", "Voy a plus infinitive makes a near-future plan."]
+    ]
+  },
+  {
+    slug: "a2-more-irregular-actions",
+    title: "More Irregular Actions",
+    summary: "Practice pongo, traigo, veo, oigo, sé, conozco, and doy.",
+    cefrLevel: "A2",
+    theme: "Irregular Verbs",
+    situation: "objects and information",
+    imageKey: "irregular-verbs:4",
+    topicSlug: "irregular-present-frames",
+    vocabularySlugs: ["a2-irregular-verbs", "home-and-objects"],
+    order: 590,
+    estimatedMinutes: 10,
+    outcomes: [
+      "You can use several irregular yo forms with objects.",
+      "You can separate saber for facts from conocer for people.",
+      "You can understand and type simple object-action sentences."
+    ],
+    conceptKeys: ["irregular-present", "object-actions", "saber-conocer"],
+    reviewSummary: "You practiced pongo, traigo, veo, oigo, sé, conozco, and doy in concrete sentences.",
+    sentences: [
+      ["Pongo el libro en la mesa.", "I put the book on the table.", "Poner becomes pongo."],
+      ["Traigo una bolsa.", "I bring a bag.", "Traer becomes traigo."],
+      ["Veo el letrero.", "I see the sign.", "Ver becomes veo."],
+      ["Oigo música.", "I hear music.", "Oír becomes oigo."],
+      ["Sé la respuesta.", "I know the answer.", "Saber becomes sé for knowing a fact."],
+      ["Conozco a Ana.", "I know Ana.", "Conocer becomes conozco for knowing a person."]
+    ]
+  },
+  {
+    slug: "a2-plans-obligations",
+    title: "Plans and Obligations",
+    summary: "Combine irregular verbs and frames to talk about what you can, want, have to, and plan to do.",
+    cefrLevel: "A2",
+    theme: "Plans",
+    situation: "tomorrow and today",
+    imageKey: "irregular-verbs:15",
+    topicSlug: "irregular-present-frames",
+    vocabularySlugs: ["a2-irregular-verbs", "a2-daily-routine", "daily-actions"],
+    order: 600,
+    estimatedMinutes: 11,
+    outcomes: [
+      "You can answer simple questions about today and tomorrow.",
+      "You can combine a reason or contrast with pero.",
+      "You can write controlled plan sentences with useful frames."
+    ],
+    conceptKeys: ["plans", "obligation", "near-future", "contrast"],
+    reviewSummary: "You practiced combining useful frames into short plan and obligation sentences.",
+    sentences: [
+      ["Tengo que trabajar hoy.", "I have to work today.", "Tengo que introduces an obligation."],
+      ["Quiero ir a la tienda, pero tengo que trabajar.", "I want to go to the store, but I have to work.", "Pero adds a contrast."],
+      ["Voy a traer una bolsa.", "I am going to bring a bag.", "Voy a plus infinitive expresses a plan."],
+      ["Puedo estudiar por la noche.", "I can study at night.", "Puedo plus infinitive expresses ability."]
+    ]
+  },
+  {
+    slug: "checkpoint-a2-verb-frames",
+    title: "A2 Verb Frames Checkpoint",
+    summary: "Prove you can produce irregular present forms and useful infinitive frames.",
+    cefrLevel: "A2",
+    theme: "Checkpoint",
+    situation: "plans and needs review",
+    imageKey: "irregular-verbs:13",
+    topicSlug: "irregular-present-frames",
+    vocabularySlugs: ["a2-irregular-verbs", "a2-daily-routine"],
+    order: 610,
+    estimatedMinutes: 13,
+    outcomes: [
+      "You can produce common irregular yo forms.",
+      "You can use puedo, quiero, tengo que, and voy a with infinitives.",
+      "You can answer a basic question about tomorrow's plan."
+    ],
+    conceptKeys: ["checkpoint", "irregular-present", "verb-frames", "near-future"],
+    reviewSummary: "You completed the A2 verb frames checkpoint across irregular yo forms, obligation, ability, and plans.",
+    sentences: [
+      ["Vengo a casa por la tarde.", "I come home in the afternoon.", "Venir becomes vengo."],
+      ["Salgo de casa a las ocho.", "I leave home at eight.", "Salir becomes salgo."],
+      ["Puedo abrir la puerta.", "I can open the door.", "Poder becomes puedo."],
+      ["Voy a traer una bolsa.", "I am going to bring a bag.", "Voy a plus infinitive expresses a plan."]
     ]
   }
 ];
@@ -3914,6 +4081,304 @@ const exercises = [
     order: 4,
     xpReward: 22,
     imageKey: "a2-daily-routine:1",
+    options: []
+  },
+  {
+    slug: "a2-irregular-voy-tienda",
+    lessonSlug: "a2-irregular-present-overview",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.CONJUGATION,
+    prompt: "Irregular yo form.",
+    instruction: "Write the present yo form.",
+    questionText: "Yo ____ a la tienda. (ir)",
+    answerJson: { correct: "voy", accepted: ["voy"], trainer: { tense: "present", person: "yo", family: "irregular", infinitive: "ir" } },
+    explanation: "Ir becomes voy in the yo form.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 16,
+    imageKey: "irregular-verbs:1",
+    options: []
+  },
+  {
+    slug: "a2-irregular-hago-tarea",
+    lessonSlug: "a2-irregular-present-overview",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.CONJUGATION,
+    prompt: "Irregular yo form.",
+    instruction: "Write the present yo form.",
+    questionText: "Yo ____ la tarea. (hacer)",
+    answerJson: { correct: "hago", accepted: ["hago"], trainer: { tense: "present", person: "yo", family: "irregular", infinitive: "hacer" } },
+    explanation: "Hacer becomes hago in the yo form.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 16,
+    imageKey: "irregular-verbs:7",
+    options: []
+  },
+  {
+    slug: "a2-irregular-vengo-casa",
+    lessonSlug: "a2-irregular-present-overview",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Irregular sentence.",
+    instruction: "Translate the sentence.",
+    questionText: "I come home.",
+    answerJson: { correct: "Vengo a casa.", accepted: ["vengo a casa", "vengo a casa."] },
+    explanation: "Venir becomes vengo: Vengo a casa.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "irregular-verbs:2",
+    options: []
+  },
+  {
+    slug: "a2-frame-puedo-estudiar",
+    lessonSlug: "a2-useful-verb-frames",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.CLOZE,
+    prompt: "Useful frame.",
+    instruction: "Choose the yo form before the infinitive.",
+    questionText: "Yo ____ estudiar hoy.",
+    answerJson: { correct: "puedo", accepted: ["puedo"] },
+    explanation: "Puedo plus infinitive means I can: Puedo estudiar hoy.",
+    difficulty: 1,
+    order: 1,
+    xpReward: 14,
+    imageKey: "irregular-verbs:13",
+    options: [
+      ["puedo", "puedo", true],
+      ["puede", "puede", false],
+      ["pueden", "pueden", false]
+    ]
+  },
+  {
+    slug: "a2-frame-tengo-que-trabajar",
+    lessonSlug: "a2-useful-verb-frames",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Obligation frame.",
+    instruction: "Build the sentence.",
+    questionText: "I have to work.",
+    answerJson: { correctWords: ["Tengo", "que", "trabajar", "."] },
+    explanation: "Tengo que plus infinitive expresses obligation.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "irregular-verbs:15",
+    options: [
+      ["Tengo", "Tengo", false],
+      ["que", "que", false],
+      ["trabajar", "trabajar", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "a2-frame-voy-a-estudiar",
+    lessonSlug: "a2-useful-verb-frames",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Near future.",
+    instruction: "Translate the sentence.",
+    questionText: "I am going to study tomorrow.",
+    answerJson: { correct: "Voy a estudiar mañana.", accepted: ["voy a estudiar manana", "voy a estudiar mañana", "voy a estudiar manana.", "voy a estudiar mañana."] },
+    explanation: "Voy a plus infinitive makes a near-future plan.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "irregular-verbs:1",
+    options: []
+  },
+  {
+    slug: "a2-more-pongo-libro",
+    lessonSlug: "a2-more-irregular-actions",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.CONJUGATION,
+    prompt: "Irregular yo form.",
+    instruction: "Write the present yo form.",
+    questionText: "Yo ____ el libro en la mesa. (poner)",
+    answerJson: { correct: "pongo", accepted: ["pongo"], trainer: { tense: "present", person: "yo", family: "irregular", infinitive: "poner" } },
+    explanation: "Poner becomes pongo in the yo form.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 16,
+    imageKey: "irregular-verbs:4",
+    options: []
+  },
+  {
+    slug: "a2-more-traigo-dictation",
+    lessonSlug: "a2-more-irregular-actions",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.LISTENING_DICTATION,
+    prompt: "Dictation.",
+    instruction: "Listen, then type the Spanish sentence.",
+    questionText: "Listen to the sentence.",
+    answerJson: { correct: "Traigo una bolsa.", accepted: ["traigo una bolsa", "traigo una bolsa."], audioText: "Traigo una bolsa." },
+    explanation: "Traer becomes traigo: Traigo una bolsa.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "irregular-verbs:5",
+    options: []
+  },
+  {
+    slug: "a2-more-veo-letrero",
+    lessonSlug: "a2-more-irregular-actions",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "Irregular sentence.",
+    instruction: "Translate the sentence.",
+    questionText: "I see the sign.",
+    answerJson: { correct: "Veo el letrero.", accepted: ["veo el letrero", "veo el letrero."] },
+    explanation: "Ver becomes veo: Veo el letrero.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "irregular-verbs:9",
+    options: []
+  },
+  {
+    slug: "a2-plans-dialogue-tengo-que",
+    lessonSlug: "a2-plans-obligations",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "Answer with an obligation.",
+    instruction: "Type a natural answer in Spanish.",
+    questionText: "¿Qué tienes que hacer hoy?",
+    answerJson: {
+      correct: "Tengo que trabajar.",
+      accepted: ["tengo que trabajar", "tengo que trabajar.", "tengo que estudiar", "tengo que estudiar."]
+    },
+    explanation: "Answer with tengo que plus an infinitive.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 18,
+    imageKey: "irregular-verbs:15",
+    options: []
+  },
+  {
+    slug: "a2-plans-puedo-transform",
+    lessonSlug: "a2-plans-obligations",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.TRANSFORMATION,
+    prompt: "Change desire to ability.",
+    instruction: "Rewrite the sentence with puedo.",
+    questionText: "Quiero estudiar.",
+    answerJson: { correct: "Puedo estudiar.", accepted: ["puedo estudiar", "puedo estudiar."] },
+    explanation: "Use puedo plus infinitive: Puedo estudiar.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "irregular-verbs:13",
+    options: []
+  },
+  {
+    slug: "a2-plans-writing-store-work",
+    lessonSlug: "a2-plans-obligations",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.WRITING_PROMPT,
+    prompt: "Controlled writing.",
+    instruction: "Write the full model sentence.",
+    questionText: "Write: I want to go to the store, but I have to work.",
+    answerJson: {
+      correct: "Quiero ir a la tienda, pero tengo que trabajar.",
+      accepted: ["quiero ir a la tienda pero tengo que trabajar", "quiero ir a la tienda, pero tengo que trabajar", "quiero ir a la tienda pero tengo que trabajar."],
+      rubric: "Use quiero + ir, pero, and tengo que trabajar."
+    },
+    explanation: "Quiero and tengo que both take an infinitive after them.",
+    difficulty: 3,
+    order: 3,
+    xpReward: 22,
+    imageKey: "irregular-verbs:1",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-vengo",
+    lessonSlug: "checkpoint-a2-verb-frames",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.CONJUGATION,
+    prompt: "A2 checkpoint.",
+    instruction: "Write the present yo form.",
+    questionText: "Yo ____ a casa. (venir)",
+    answerJson: { correct: "vengo", accepted: ["vengo"], trainer: { tense: "present", person: "yo", family: "irregular", infinitive: "venir" } },
+    explanation: "Venir becomes vengo in the yo form.",
+    difficulty: 2,
+    order: 1,
+    xpReward: 18,
+    imageKey: "irregular-verbs:2",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-salgo",
+    lessonSlug: "checkpoint-a2-verb-frames",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.CONJUGATION,
+    prompt: "A2 checkpoint.",
+    instruction: "Write the present yo form.",
+    questionText: "Yo ____ a las ocho. (salir)",
+    answerJson: { correct: "salgo", accepted: ["salgo"], trainer: { tense: "present", person: "yo", family: "irregular", infinitive: "salir" } },
+    explanation: "Salir becomes salgo in the yo form.",
+    difficulty: 2,
+    order: 2,
+    xpReward: 18,
+    imageKey: "irregular-verbs:3",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-puedo-open",
+    lessonSlug: "checkpoint-a2-verb-frames",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.SHORT_ANSWER,
+    prompt: "A2 checkpoint.",
+    instruction: "Translate the sentence.",
+    questionText: "I can open the door.",
+    answerJson: { correct: "Puedo abrir la puerta.", accepted: ["puedo abrir la puerta", "puedo abrir la puerta."] },
+    explanation: "Puedo plus infinitive expresses ability.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 18,
+    imageKey: "irregular-verbs:13",
+    options: []
+  },
+  {
+    slug: "checkpoint-a2-bring-bag",
+    lessonSlug: "checkpoint-a2-verb-frames",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "A2 checkpoint.",
+    instruction: "Build the plan.",
+    questionText: "I am going to bring a bag.",
+    answerJson: { correctWords: ["Voy", "a", "traer", "una", "bolsa", "."] },
+    explanation: "Voy a plus infinitive expresses a plan: Voy a traer una bolsa.",
+    difficulty: 2,
+    order: 4,
+    xpReward: 18,
+    imageKey: "irregular-verbs:5",
+    options: [
+      ["Voy", "Voy", false],
+      ["a", "a", false],
+      ["traer", "traer", false],
+      ["una", "una", false],
+      ["bolsa", "bolsa", false],
+      [".", ".", false]
+    ]
+  },
+  {
+    slug: "checkpoint-a2-tomorrow-plan",
+    lessonSlug: "checkpoint-a2-verb-frames",
+    topicSlug: "irregular-present-frames",
+    type: ExerciseType.DIALOGUE_REPLY,
+    prompt: "A2 checkpoint.",
+    instruction: "Type a natural answer in Spanish.",
+    questionText: "¿Qué vas a hacer mañana?",
+    answerJson: {
+      correct: "Voy a estudiar mañana.",
+      accepted: ["voy a estudiar manana", "voy a estudiar mañana", "voy a estudiar manana.", "voy a estudiar mañana."]
+    },
+    explanation: "Answer with voy a plus an infinitive for a plan.",
+    difficulty: 2,
+    order: 5,
+    xpReward: 20,
+    imageKey: "irregular-verbs:7",
     options: []
   }
 ];

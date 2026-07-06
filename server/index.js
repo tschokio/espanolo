@@ -560,6 +560,7 @@ const publicExercise = (exercise) => ({
   answerGoal: exercise.answerJson?.goal || "",
   audioText: exercise.type === "LISTENING_DICTATION" ? exercise.answerJson?.audioText || exercise.answerJson?.correct || "" : "",
   rubric: exercise.answerJson?.rubric || "",
+  trainer: exercise.answerJson?.trainer || null,
   mastered: Boolean(exercise.mastered),
   lastAttemptCorrect: exercise.lastAttemptCorrect ?? null,
   options: [...(exercise.options || [])]
@@ -674,10 +675,11 @@ const curriculumUnits = [
     slug: "a2-2-verb-frames",
     label: "A2.2",
     title: "Irregular Verbs and Useful Frames",
-    phase: "Planned A2",
+    phase: "A2 Foundation",
     description: "Ir, hacer, decir, venir, poder, querer, tener que, and ir a.",
     order: 10,
-    planned: true
+    startOrder: 570,
+    endOrder: 610
   },
   {
     slug: "a2-3-preferences-and-past",
@@ -742,6 +744,72 @@ function publicCurriculumUnit(unit, lessons = []) {
             : averageProgress > 0
               ? "started"
               : "not_started"
+  };
+}
+
+function buildCurriculumQa({ lessons, exercises }) {
+  const exerciseCountByLessonId = new Map();
+  const imageUse = new Map();
+
+  for (const exercise of exercises) {
+    exerciseCountByLessonId.set(exercise.lessonId, (exerciseCountByLessonId.get(exercise.lessonId) || 0) + 1);
+    if (exercise.imageKey) {
+      if (!imageUse.has(exercise.imageKey)) imageUse.set(exercise.imageKey, []);
+      imageUse.get(exercise.imageKey).push(exercise.slug);
+    }
+  }
+
+  const lessonSummaries = lessons.map((lesson) => {
+    const isCheckpoint = /checkpoint/i.test(`${lesson.theme} ${lesson.title}`);
+    const exerciseCount = exerciseCountByLessonId.get(lesson.id) || 0;
+    return {
+      id: lesson.id,
+      slug: lesson.slug,
+      title: lesson.title,
+      order: lesson.order,
+      unit: lessonUnitForOrder(lesson.order),
+      isCheckpoint,
+      exerciseCount,
+      hasOutcomes: Array.isArray(lesson.outcomesJson) && lesson.outcomesJson.length > 0,
+      hasReviewSummary: Boolean(lesson.reviewSummary)
+    };
+  });
+
+  const missingOutcomes = lessonSummaries.filter((lesson) => !lesson.hasOutcomes);
+  const missingReviewSummary = lessonSummaries.filter((lesson) => !lesson.hasReviewSummary);
+  const lowExerciseLessons = lessonSummaries.filter((lesson) => lesson.exerciseCount < (lesson.isCheckpoint ? 4 : 2));
+  const unitIssues = curriculumUnits
+    .filter((unit) => !unit.planned)
+    .map((unit) => {
+      const unitLessons = lessonSummaries.filter((lesson) => lesson.order >= unit.startOrder && lesson.order <= unit.endOrder);
+      const checkpoints = unitLessons.filter((lesson) => lesson.isCheckpoint);
+      return {
+        slug: unit.slug,
+        label: unit.label,
+        title: unit.title,
+        lessonCount: unitLessons.length,
+        checkpointCount: checkpoints.length,
+        status: !unitLessons.length ? "missing_lessons" : !checkpoints.length ? "missing_checkpoint" : "ok"
+      };
+    })
+    .filter((unit) => unit.status !== "ok");
+  const repeatedImages = [...imageUse.entries()]
+    .filter(([imageKey, slugs]) => slugs.length >= 6 && !/^(grammar-scenes|people-and-family):/.test(imageKey))
+    .map(([imageKey, slugs]) => ({ imageKey, count: slugs.length, examples: slugs.slice(0, 5) }));
+
+  return {
+    counts: {
+      missingOutcomes: missingOutcomes.length,
+      missingReviewSummary: missingReviewSummary.length,
+      lowExerciseLessons: lowExerciseLessons.length,
+      unitIssues: unitIssues.length,
+      repeatedImages: repeatedImages.length
+    },
+    missingOutcomes: missingOutcomes.slice(0, 12),
+    missingReviewSummary: missingReviewSummary.slice(0, 12),
+    lowExerciseLessons: lowExerciseLessons.slice(0, 12),
+    unitIssues,
+    repeatedImages
   };
 }
 
@@ -2455,6 +2523,7 @@ app.get(
       exercises: exercises.map(publicExercise),
       assets,
       users,
+      curriculumQa: buildCurriculumQa({ lessons, exercises }),
       system: buildSystemStatus()
     });
   })

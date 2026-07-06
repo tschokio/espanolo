@@ -210,19 +210,23 @@ Deliverable: Espanolo becomes a long-term Spanish practice system.
 - Added A1 unit checkpoints from A1.0 through A1.7.
 - Reworked the Course tab into a unit-first flow with checkpoint state and expandable lesson lists.
 - Added quality defaults so older seeded lessons have outcomes, concept tags, and review summaries.
+- Built A2.2: irregular present verbs and useful verb frames.
+- Expanded the Conjugation Trainer with tense, person, verb-family, difficulty, and mistake filters.
+- Added admin curriculum QA for missing outcomes, thin lessons, unit checkpoint gaps, and repeated quiz images.
+- Added seed-data tests for lesson order, references, checkpoint coverage, and answer specs.
 
 ## Next 10 Concrete Steps
 
 1. Run a live production seed pass and verify old learner progress recalculates correctly.
 2. Audit A1 checkpoint results after real use and tune overly strict accepted answers.
-3. Build A2.2: irregular present verbs and useful verb frames.
-4. Expand the Conjugation Trainer with person, tense, verb-family, and weak-ending filters.
-5. Build A2.3: gustar, preferences, hobbies, and preference dialogues.
-6. Add first multi-turn scenario pack for restaurant, travel, and pharmacy interactions.
-7. Add a Reading and Listening Lab MVP with transcript reveal and comprehension questions.
-8. Add admin curriculum QA filters for missing outcomes, repeated images, and low exercise counts.
-9. Add seed-data tests for lesson order, checkpoint coverage, and accepted-answer normalization.
-10. Continue the asset pass for A2/B1 lessons before new content goes live.
+3. Build A2.3: gustar, preferences, hobbies, and preference dialogues.
+4. Add first multi-turn scenario pack for restaurant, travel, and pharmacy interactions.
+5. Add a Reading and Listening Lab MVP with transcript reveal and comprehension questions.
+6. Add admin filters to jump from QA findings directly to the affected lesson or exercise.
+7. Add more accepted-answer normalization tests for punctuation, accents, and Spanish question marks.
+8. Continue the asset pass for A2/B1 lessons before new content goes live.
+9. Add weak-ending analytics for the Conjugation Trainer.
+10. Start A2 object-pronoun lessons after the preference unit is stable.
 
 ## Definition of Done
 
