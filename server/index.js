@@ -15,7 +15,7 @@ const {
   scheduleExerciseReview,
   scheduleWordReview
 } = require("./learning-core");
-const { buildLessonProgressState, lessonProgressNeedsSync } = require("./progress-core");
+const { applyCheckpointLocksToSummaries, buildLessonProgressState, lessonProgressNeedsSync } = require("./progress-core");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -864,6 +864,7 @@ const publicLessonSummary = (lesson) => {
     slug: lesson.slug,
     title: lesson.title,
     summary: lesson.summary,
+    order: lesson.order,
     cefrLevel: lesson.cefrLevel,
     theme: lesson.theme,
     situation: lesson.situation,
@@ -1526,31 +1527,51 @@ function recentAchievementFromLessons(lessons) {
   return outcomes[0] || latest.reviewSummary || `You completed ${latest.title}.`;
 }
 
+function lessonSummaryMastery(lesson) {
+  if (typeof lesson.progress === "number") return lesson.progress;
+  return lesson.progress?.[0]?.mastery || 0;
+}
+
+function lessonSummaryReviewDue(lesson, now = new Date()) {
+  if (typeof lesson.reviewDue === "boolean") return lesson.reviewDue;
+  return isLessonReviewDue(lesson.progress?.[0], now);
+}
+
+function pickCurrentLessonSummary(lessons) {
+  const availableLessons = (lessons || []).filter((lesson) => !lesson.isLocked);
+  const now = new Date();
+  return (
+    availableLessons.find((lesson) => {
+      const mastery = lessonSummaryMastery(lesson);
+      return mastery > 0 && mastery < 100;
+    }) ||
+    availableLessons
+      .filter((lesson) => lessonSummaryReviewDue(lesson, now))
+      .sort((a, b) => {
+        const left = new Date(a.reviewDueAt || a.progress?.[0]?.reviewDueAt || 0).getTime();
+        const right = new Date(b.reviewDueAt || b.progress?.[0]?.reviewDueAt || 0).getTime();
+        return left - right || (a.order || 0) - (b.order || 0);
+      })[0] ||
+    availableLessons.find((lesson) => lessonSummaryMastery(lesson) < 100) ||
+    availableLessons[0] ||
+    null
+  );
+}
+
 function buildDailyPlan({ lessons, review }) {
   const now = new Date();
-  const dueLesson = lessons
-    .filter((lesson) => isLessonReviewDue(lesson.progress[0], now))
-    .sort(
-      (a, b) =>
-        new Date(a.progress[0].reviewDueAt).getTime() - new Date(b.progress[0].reviewDueAt).getTime() ||
-        a.order - b.order
-    )[0];
-  const currentLesson =
-    lessons.find((lesson) => (lesson.progress[0]?.mastery || 0) > 0 && (lesson.progress[0]?.mastery || 0) < 100) ||
-    dueLesson ||
-    lessons.find((lesson) => (lesson.progress[0]?.mastery || 0) < 100) ||
-    null;
+  const currentLesson = pickCurrentLessonSummary(lessons);
   const reviewDue = review.counts.total > 0;
   const mistakeDue = review.counts.mistakes > 0;
 
   if (currentLesson) {
-    const currentProgress = currentLesson.progress[0];
-    const due = isLessonReviewDue(currentProgress, now);
+    const currentMastery = lessonSummaryMastery(currentLesson);
+    const due = lessonSummaryReviewDue(currentLesson, now);
     return {
       kind: due ? "lesson_review" : "lesson",
       title: due
         ? `Review: ${currentLesson.title}`
-        : currentProgress?.mastery
+        : currentMastery
           ? `Continue: ${currentLesson.title}`
           : `Start: ${currentLesson.title}`,
       reason: due
@@ -1836,7 +1857,26 @@ async function buildDashboard(userId) {
 
   const badgeCatalog = await prisma.badge.findMany({ orderBy: { title: "asc" } });
   const earnedBadgeIds = new Set(user.badges.map((userBadge) => userBadge.badgeId));
-  const lessonSummaries = lessons.map(publicLessonSummary);
+  const lessonSummaries = applyCheckpointLocksToSummaries(lessons.map(publicLessonSummary));
+  const currentLessonSummary = pickCurrentLessonSummary(lessonSummaries);
+  if (!dueReview && currentLessonSummary && practiceExercise?.lessonId !== currentLessonSummary.id) {
+    const summaryLesson = lessons.find((lesson) => lesson.id === currentLessonSummary.id);
+    if (summaryLesson) {
+      const correctAttempts = await prisma.attempt.findMany({
+        where: {
+          userId,
+          isCorrect: true,
+          exercise: { lessonId: summaryLesson.id }
+        },
+        select: { exerciseId: true }
+      });
+      const correctIds = new Set(correctAttempts.map((attempt) => attempt.exerciseId));
+      practiceExercise =
+        summaryLesson.exercises.find((exercise) => !correctIds.has(exercise.id)) ||
+        summaryLesson.exercises[0] ||
+        null;
+    }
+  }
   const curriculumProgress = curriculumUnits.map((unit) =>
     publicCurriculumUnit(
       unit,
@@ -1860,11 +1900,11 @@ async function buildDashboard(userId) {
       masteredWords,
       totalWords
     },
-    dailyPlan: buildDailyPlan({ lessons, review }),
+    dailyPlan: buildDailyPlan({ lessons: lessonSummaries, review }),
     review,
     curriculumUnits: curriculumProgress,
     recentAchievement: recentAchievementFromLessons(lessons),
-    currentLesson: currentLesson ? publicLessonSummary(currentLesson) : null,
+    currentLesson: currentLessonSummary,
     lessons: lessonSummaries,
     practiceExercise: practiceExercise ? publicExercise(practiceExercise) : null,
     challenge: activeChallenge
@@ -2051,7 +2091,7 @@ app.get(
     });
     await syncLessonProgressForLessons(req.user.id, lessons);
     res.json({
-      lessons: lessons.map(publicLessonSummary)
+      lessons: applyCheckpointLocksToSummaries(lessons.map(publicLessonSummary))
     });
   })
 );

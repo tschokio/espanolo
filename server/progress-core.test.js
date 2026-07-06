@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildLessonProgressState, lessonProgressNeedsSync } = require("./progress-core");
+const { applyCheckpointLocksToSummaries, buildLessonProgressState, lessonProgressNeedsSync } = require("./progress-core");
 
 test("drops old complete progress when a lesson gains new exercises", () => {
   const completedAt = new Date("2026-07-01T00:00:00.000Z");
@@ -58,4 +58,57 @@ test("detects stale stored progress totals", () => {
   const state = buildLessonProgressState(existing, 4, ["a", "b"], new Date("2026-07-06T00:00:00.000Z"));
 
   assert.equal(lessonProgressNeedsSync(existing, state), true);
+});
+
+test("locks checkpoint display progress until earlier unit lessons are complete", () => {
+  const unit = { slug: "a1-final", label: "A1", title: "A1 Foundations" };
+  const lessons = applyCheckpointLocksToSummaries([
+    { id: "lesson-1", title: "Core 1", order: 10, unit, progress: 40, isCheckpoint: false, reviewDue: false, status: "practicing" },
+    { id: "lesson-2", title: "Core 2", order: 20, unit, progress: 0, isCheckpoint: false, reviewDue: false, status: "not_started" },
+    {
+      id: "checkpoint",
+      title: "Final Checkpoint",
+      order: 30,
+      unit,
+      progress: 92,
+      completedExercises: 11,
+      isCheckpoint: true,
+      reviewDue: false,
+      status: "practicing"
+    }
+  ]);
+  const checkpoint = lessons.find((lesson) => lesson.id === "checkpoint");
+
+  assert.equal(checkpoint.isLocked, true);
+  assert.equal(checkpoint.progress, 0);
+  assert.equal(checkpoint.displayProgress, 0);
+  assert.equal(checkpoint.actualProgress, 92);
+  assert.equal(checkpoint.completedExercises, 0);
+  assert.equal(checkpoint.actualCompletedExercises, 11);
+  assert.match(checkpoint.lockedReason, /Complete 2 earlier lessons/);
+});
+
+test("keeps checkpoint progress visible after unit lessons are complete", () => {
+  const unit = { slug: "a1-final", label: "A1", title: "A1 Foundations" };
+  const lessons = applyCheckpointLocksToSummaries([
+    { id: "lesson-1", title: "Core 1", order: 10, unit, progress: 100, isCheckpoint: false, reviewDue: false, status: "completed" },
+    { id: "lesson-2", title: "Core 2", order: 20, unit, progress: 100, isCheckpoint: false, reviewDue: false, status: "completed" },
+    {
+      id: "checkpoint",
+      title: "Final Checkpoint",
+      order: 30,
+      unit,
+      progress: 92,
+      completedExercises: 11,
+      isCheckpoint: true,
+      reviewDue: false,
+      status: "practicing"
+    }
+  ]);
+  const checkpoint = lessons.find((lesson) => lesson.id === "checkpoint");
+
+  assert.equal(checkpoint.isLocked, false);
+  assert.equal(checkpoint.progress, 92);
+  assert.equal(checkpoint.displayProgress, 92);
+  assert.equal(checkpoint.actualProgress, 92);
 });

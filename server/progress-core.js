@@ -49,7 +49,73 @@ function lessonProgressNeedsSync(existingProgress, state) {
   );
 }
 
+function applyCheckpointLocksToSummaries(lessonSummaries = []) {
+  const lessons = lessonSummaries.filter(Boolean);
+  const byUnit = new Map();
+
+  for (const lesson of lessons) {
+    const unitSlug = lesson.unit?.slug || "unassigned";
+    if (!byUnit.has(unitSlug)) byUnit.set(unitSlug, []);
+    byUnit.get(unitSlug).push(lesson);
+  }
+
+  const lockedCheckpointIds = new Set();
+  const lockedReasons = new Map();
+  for (const unitLessons of byUnit.values()) {
+    const ordered = [...unitLessons].sort((left, right) => (left.order || 0) - (right.order || 0));
+    for (const lesson of ordered) {
+      if (!lesson.isCheckpoint) continue;
+      const prerequisites = ordered.filter((candidate) => !candidate.isCheckpoint && (candidate.order || 0) < (lesson.order || 0));
+      const incompletePrerequisites = prerequisites.filter(
+        (candidate) => (candidate.progress || 0) < 100 || Boolean(candidate.reviewDue)
+      );
+      if (!incompletePrerequisites.length) continue;
+
+      lockedCheckpointIds.add(lesson.id);
+      const unitLabel = lesson.unit?.label || "this unit";
+      const count = incompletePrerequisites.length;
+      lockedReasons.set(
+        lesson.id,
+        `Complete ${count} earlier ${count === 1 ? "lesson" : "lessons"} in ${unitLabel} before this checkpoint.`
+      );
+    }
+  }
+
+  return lessons.map((lesson) => {
+    const actualProgress = lesson.progress || 0;
+    const actualCompletedExercises = lesson.completedExercises || 0;
+    const actualStatus = lesson.status || "not_started";
+    const locked = lockedCheckpointIds.has(lesson.id);
+    if (!locked) {
+      return {
+        ...lesson,
+        isLocked: false,
+        lockedReason: "",
+        actualProgress,
+        displayProgress: actualProgress
+      };
+    }
+
+    return {
+      ...lesson,
+      isLocked: true,
+      lockedReason: lockedReasons.get(lesson.id) || "Complete the earlier lessons before this checkpoint.",
+      actualProgress,
+      actualCompletedExercises,
+      actualStatus,
+      displayProgress: 0,
+      progress: 0,
+      completedExercises: 0,
+      completedAt: null,
+      reviewDueAt: null,
+      reviewDue: false,
+      status: "locked"
+    };
+  });
+}
+
 module.exports = {
+  applyCheckpointLocksToSummaries,
   buildLessonProgressState,
   lessonProgressNeedsSync
 };

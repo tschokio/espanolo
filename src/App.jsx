@@ -1403,7 +1403,11 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
       const unitLessons = orderedLessons.filter((lessonItem) => lessonItem.unit?.slug === unit.slug);
       const checkpointLesson = unitLessons.find((lessonItem) => lessonItem.isCheckpoint) || null;
       const coreLessons = unitLessons.filter((lessonItem) => !lessonItem.isCheckpoint);
-      const openLesson = unitLessons.find((lessonItem) => lessonItem.reviewDue || lessonItem.progress < 100) || checkpointLesson || unitLessons[0];
+      const openLesson =
+        unitLessons.find((lessonItem) => !lessonItem.isLocked && (lessonItem.reviewDue || lessonItem.progress < 100)) ||
+        (checkpointLesson && !checkpointLesson.isLocked ? checkpointLesson : null) ||
+        unitLessons.find((lessonItem) => !lessonItem.isLocked) ||
+        unitLessons[0];
       return {
         ...unit,
         lessons: unitLessons,
@@ -1617,12 +1621,18 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
   );
 }
 
+function lessonDisplayProgress(lessonItem) {
+  return typeof lessonItem?.displayProgress === "number" ? lessonItem.displayProgress : lessonItem?.progress || 0;
+}
+
 function CourseUnitCard({ unit, isCurrent, isExpanded, nextLessonId, orderedLessons, onToggle, onSelectLesson }) {
   const checkpoint = unit.checkpointLesson;
   const coreComplete = unit.coreLessons.filter((lessonItem) => lessonItem.progress >= 100 && !lessonItem.reviewDue).length;
   const checkpointStatus = !checkpoint
     ? "No checkpoint"
-    : checkpoint.reviewDue
+    : checkpoint.isLocked
+      ? "Locked"
+      : checkpoint.reviewDue
       ? "Due again"
       : checkpoint.progress >= 100
         ? "Passed"
@@ -1632,6 +1642,8 @@ function CourseUnitCard({ unit, isCurrent, isExpanded, nextLessonId, orderedLess
   const nextAction = unit.nextActionLesson;
   const actionLabel = nextAction?.reviewDue
     ? "Review due"
+    : nextAction?.isLocked
+      ? "Locked"
     : nextAction?.isCheckpoint
       ? nextAction.progress >= 100
         ? "Review checkpoint"
@@ -1673,11 +1685,16 @@ function CourseUnitCard({ unit, isCurrent, isExpanded, nextLessonId, orderedLess
         <div className="grid gap-3">
           {nextAction ? (
             <button
-              onClick={() => onSelectLesson(nextAction.id)}
-              className="rounded-md bg-slate-950 px-4 py-3 text-left font-black text-white hover:bg-slate-800"
+              disabled={nextAction.isLocked}
+              onClick={() => !nextAction.isLocked && onSelectLesson(nextAction.id)}
+              className={classNames(
+                "rounded-md px-4 py-3 text-left font-black text-white",
+                nextAction.isLocked ? "cursor-not-allowed bg-slate-400" : "bg-slate-950 hover:bg-slate-800"
+              )}
             >
               <span className="block text-xs uppercase tracking-wide text-lagoon-100">{actionLabel}</span>
               <span className="mt-1 block">{nextAction.title}</span>
+              {nextAction.isLocked && <span className="mt-1 block text-xs text-white/80">{nextAction.lockedReason}</span>}
             </button>
           ) : (
             <div className="rounded-md border border-stone-200 bg-white px-4 py-3 text-sm font-bold text-slate-600">No lesson available.</div>
@@ -1710,24 +1727,45 @@ function CourseUnitCard({ unit, isCurrent, isExpanded, nextLessonId, orderedLess
 }
 
 function CourseLessonRow({ lessonItem, index, isNext, onSelect }) {
-  const done = lessonItem.progress >= 100 && !lessonItem.reviewDue;
+  const locked = Boolean(lessonItem.isLocked);
+  const displayProgress = lessonDisplayProgress(lessonItem);
+  const done = displayProgress >= 100 && !lessonItem.reviewDue && !locked;
   const checkpoint = lessonItem.isCheckpoint;
-  const actionLabel = lessonItem.reviewDue
+  const actionLabel = locked
+    ? "Locked"
+    : lessonItem.reviewDue
     ? "Review due"
     : done
       ? "Review"
       : checkpoint
         ? "Checkpoint"
-        : lessonItem.progress > 0
+        : displayProgress > 0
           ? "Continue"
           : "Start";
 
   return (
-    <button onClick={onSelect} className="flex w-full items-center gap-3 py-3 text-left hover:bg-white/70 sm:gap-4">
+    <button
+      disabled={locked}
+      onClick={() => !locked && onSelect()}
+      className={classNames(
+        "flex w-full items-center gap-3 py-3 text-left sm:gap-4",
+        locked ? "cursor-not-allowed opacity-65" : "hover:bg-white/70"
+      )}
+    >
       <span
         className={classNames(
           "grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-black text-white",
-          lessonItem.reviewDue ? "bg-honey-600" : done ? "bg-emerald-600" : isNext ? "bg-lagoon-600" : checkpoint ? "bg-coral-500" : "bg-slate-800"
+          locked
+            ? "bg-slate-400"
+            : lessonItem.reviewDue
+              ? "bg-honey-600"
+              : done
+                ? "bg-emerald-600"
+                : isNext
+                  ? "bg-lagoon-600"
+                  : checkpoint
+                    ? "bg-coral-500"
+                    : "bg-slate-800"
         )}
       >
         {index + 1}
@@ -1736,13 +1774,15 @@ function CourseLessonRow({ lessonItem, index, isNext, onSelect }) {
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-black text-slate-950">{lessonItem.title}</p>
           {checkpoint && <span className="rounded-full bg-coral-50 px-2 py-0.5 text-[11px] font-black text-coral-700">Checkpoint</span>}
+          {locked && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-600">Locked</span>}
           {isNext && <span className="rounded-full bg-lagoon-50 px-2 py-0.5 text-[11px] font-black text-lagoon-700">Next</span>}
         </div>
         <p className="mt-1 line-clamp-1 text-sm font-semibold text-slate-600">{lessonItem.summary}</p>
+        {locked && lessonItem.lockedReason && <p className="mt-1 text-xs font-bold text-slate-500">{lessonItem.lockedReason}</p>}
       </div>
       <div className="hidden w-28 shrink-0 sm:block">
-        <ProgressBar value={lessonItem.progress} color={done ? "bg-emerald-500" : lessonItem.reviewDue ? "bg-honey-500" : "bg-lagoon-500"} />
-        <p className="mt-1 text-right text-xs font-black text-slate-500">{lessonItem.progress}%</p>
+        <ProgressBar value={displayProgress} color={locked ? "bg-slate-400" : done ? "bg-emerald-500" : lessonItem.reviewDue ? "bg-honey-500" : "bg-lagoon-500"} />
+        <p className="mt-1 text-right text-xs font-black text-slate-500">{locked ? "Locked" : `${displayProgress}%`}</p>
       </div>
       <span className="shrink-0 text-sm font-black text-lagoon-700">{actionLabel}</span>
     </button>
@@ -1750,18 +1790,23 @@ function CourseLessonRow({ lessonItem, index, isNext, onSelect }) {
 }
 
 function PathLessonCard({ lessonItem, index, state, onSelect }) {
-  const done = lessonItem.progress >= 100;
-  const due = lessonItem.reviewDue;
+  const locked = Boolean(lessonItem.isLocked);
+  const displayProgress = lessonDisplayProgress(lessonItem);
+  const done = displayProgress >= 100 && !locked;
+  const due = lessonItem.reviewDue && !locked;
   const current = state === "current";
   const checkpoint = lessonItem.isCheckpoint;
-  const actionLabel = due ? "Review due" : done ? "Review" : checkpoint ? "Checkpoint" : lessonItem.progress > 0 ? "Continue" : "Start";
+  const actionLabel = locked ? "Locked" : due ? "Review due" : done ? "Review" : checkpoint ? "Checkpoint" : displayProgress > 0 ? "Continue" : "Start";
 
   return (
     <button
-      onClick={onSelect}
+      disabled={locked}
+      onClick={() => !locked && onSelect()}
       className={classNames(
         "group flex min-h-36 w-full flex-col rounded-lg border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-soft",
-        current
+        locked
+          ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-75"
+          : current
           ? "border-honey-500 bg-amber-50"
           : due
             ? "border-honey-300 bg-amber-50"
@@ -1778,7 +1823,7 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
           <span
             className={classNames(
               "absolute -left-2 -top-2 grid h-7 w-7 place-items-center rounded-full text-xs font-black text-white",
-              due ? "bg-honey-600" : done ? "bg-emerald-600" : current ? "bg-honey-600" : "bg-slate-950"
+              locked ? "bg-slate-400" : due ? "bg-honey-600" : done ? "bg-emerald-600" : current ? "bg-honey-600" : "bg-slate-950"
             )}
           >
             {index + 1}
@@ -1791,24 +1836,26 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
               <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-slate-700">{lessonItem.unit.label}</span>
             )}
             {checkpoint && <span className="rounded-full bg-coral-500 px-2 py-1 text-xs font-black text-white">Checkpoint</span>}
+            {locked && <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-black text-slate-700">Locked</span>}
             <span className="text-xs font-black uppercase tracking-wide text-slate-500">{lessonItem.theme}</span>
           </div>
           <h3 className="mt-2 text-lg font-black leading-tight text-slate-950">{lessonItem.title}</h3>
           <p className="mt-2 line-clamp-2 text-sm font-semibold text-slate-600">{lessonItem.summary}</p>
+          {locked && lessonItem.lockedReason && <p className="mt-2 text-xs font-bold text-slate-500">{lessonItem.lockedReason}</p>}
         </div>
       </div>
       <div className="mt-auto pt-4">
         <div className="flex items-center justify-between gap-3">
           <ProgressBar
-            value={lessonItem.progress}
+            value={displayProgress}
             className="flex-1"
-            color={due ? "bg-honey-500" : done ? "bg-emerald-500" : current ? "bg-honey-500" : "bg-lagoon-500"}
+            color={locked ? "bg-slate-400" : due ? "bg-honey-500" : done ? "bg-emerald-500" : current ? "bg-honey-500" : "bg-lagoon-500"}
           />
-          <span className="text-sm font-black text-slate-700">{lessonItem.progress}%</span>
+          <span className="text-sm font-black text-slate-700">{locked ? "Locked" : `${displayProgress}%`}</span>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="font-bold text-slate-500">
-            {lessonItem.completedExercises || 0}/{lessonItem.exerciseCount || lessonItem.totalExercises || 0} checks mastered · {lessonItem.estimatedMinutes} min
+            {locked ? "Checkpoint opens after the unit lessons" : `${lessonItem.completedExercises || 0}/${lessonItem.exerciseCount || lessonItem.totalExercises || 0} checks mastered`} · {lessonItem.estimatedMinutes} min
           </span>
           <span className="font-black text-lagoon-700 group-hover:text-lagoon-900">{actionLabel}</span>
         </div>
