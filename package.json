@@ -14,7 +14,8 @@
     "db:seed": "node prisma/seed.js",
     "db:seed:learning-loop": "node prisma/seed-learning-loop.js",
     "db:seed:lesson-practice": "node prisma/seed-lesson-practice.js",
-    "assets:audit": "node scripts/audit-assets.js"
+    "assets:audit": "node scripts/audit-assets.js",
+    "spanish:audit": "node scripts/audit-spanish.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

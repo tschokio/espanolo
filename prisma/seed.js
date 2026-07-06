@@ -128,7 +128,7 @@ const topics = [
   {
     slug: "question-words",
     title: "Question Words",
-    description: "Build practical questions with que, quien, donde, cuando, como, and cuanto.",
+    description: "Build practical questions with qué, quién, dónde, cuándo, cómo, and cuánto.",
     cefrLevel: "A1",
     imageKey: "grammar-scenes:11",
     order: 11
@@ -145,9 +145,9 @@ const vocabularyGroups = [
     words: [
       ["el estudiante", "student", "noun", "masculine", "El estudiante lee.", "classroom-basics:1"],
       ["la profesora", "teacher", "noun", "feminine", "La profesora explica.", "classroom-basics:2"],
-      ["el libro", "book", "noun", "masculine", "El libro esta en la mesa.", "classroom-basics:3"],
-      ["el lapiz", "pencil", "noun", "masculine", "El lapiz esta en la mesa.", "classroom-basics:4"],
-      ["la silla", "chair", "noun", "feminine", "La silla esta al lado del escritorio.", "classroom-basics:6"],
+      ["el libro", "book", "noun", "masculine", "El libro está en la mesa.", "classroom-basics:3"],
+      ["el lápiz", "pencil", "noun", "masculine", "El lápiz está en la mesa.", "classroom-basics:4"],
+      ["la silla", "chair", "noun", "feminine", "La silla está al lado del escritorio.", "classroom-basics:6"],
       ["la biblioteca", "library", "noun", "feminine", "Estoy en la biblioteca.", "classroom-basics:10"]
     ]
   },
@@ -158,10 +158,10 @@ const vocabularyGroups = [
     situation: "daily life",
     imageKey: "daily-actions:1",
     words: [
-      ["hablar", "to speak", "verb", null, "Yo hablo espanol.", "daily-actions:1"],
-      ["estudiar", "to study", "verb", null, "Ella estudia gramatica.", "daily-actions:2"],
+      ["hablar", "to speak", "verb", null, "Yo hablo español.", "daily-actions:1"],
+      ["estudiar", "to study", "verb", null, "Ella estudia gramática.", "daily-actions:2"],
       ["trabajar", "to work", "verb", null, "Nosotros trabajamos hoy.", "daily-actions:3"],
-      ["comprar", "to buy", "verb", null, "Tu compras pan.", "daily-actions:4"],
+      ["comprar", "to buy", "verb", null, "Tú compras pan.", "daily-actions:4"],
       ["caminar", "to walk", "verb", null, "Nosotros caminamos al parque.", "daily-actions:5"],
       ["leer", "to read", "verb", null, "Leo un libro.", "daily-actions:7"]
     ]
@@ -173,12 +173,12 @@ const vocabularyGroups = [
     situation: "city",
     imageKey: "places-around-town:1",
     words: [
-      ["el cafe", "cafe", "noun", "masculine", "Estoy en el cafe.", "places-around-town:1"],
-      ["la tienda", "store", "noun", "feminine", "La tienda esta cerca.", "places-around-town:2"],
-      ["el parque", "park", "noun", "masculine", "Los ninos estan en el parque.", "places-around-town:3"],
-      ["la estacion", "station", "noun", "feminine", "La estacion esta lejos.", "places-around-town:4"],
+      ["el café", "café", "noun", "masculine", "Estoy en el café.", "places-around-town:1"],
+      ["la tienda", "store", "noun", "feminine", "La tienda está cerca.", "places-around-town:2"],
+      ["el parque", "park", "noun", "masculine", "Los niños están en el parque.", "places-around-town:3"],
+      ["la estación", "station", "noun", "feminine", "La estación está lejos.", "places-around-town:4"],
       ["la casa", "home", "noun", "feminine", "Estoy en casa.", "places-around-town:7"],
-      ["el restaurante", "restaurant", "noun", "masculine", "El restaurante esta abierto.", "places-around-town:10"]
+      ["el restaurante", "restaurant", "noun", "masculine", "El restaurante está abierto.", "places-around-town:10"]
     ]
   },
   {
@@ -189,9 +189,9 @@ const vocabularyGroups = [
     imageKey: "emotions-and-states:1",
     words: [
       ["feliz", "happy", "adjective", null, "Estoy feliz.", "emotions-and-states:1"],
-      ["triste", "sad", "adjective", null, "Ella esta triste.", "emotions-and-states:2"],
-      ["cansado", "tired", "adjective", "masculine", "El estudiante esta cansado.", "emotions-and-states:3"],
-      ["nerviosa", "nervous", "adjective", "feminine", "Ana esta nerviosa.", "emotions-and-states:4"],
+      ["triste", "sad", "adjective", null, "Ella está triste.", "emotions-and-states:2"],
+      ["cansado", "tired", "adjective", "masculine", "El estudiante está cansado.", "emotions-and-states:3"],
+      ["nerviosa", "nervous", "adjective", "feminine", "Ana está nerviosa.", "emotions-and-states:4"],
       ["enfermo", "sick", "adjective", "masculine", "Estoy enfermo hoy.", "emotions-and-states:7"],
       ["emocionado", "excited", "adjective", "masculine", "Estoy emocionado.", "emotions-and-states:11"]
     ]
@@ -199,14 +199,14 @@ const vocabularyGroups = [
   {
     slug: "food-and-ordering",
     title: "Food and Ordering",
-    description: "Food, drink, and cafe phrases for practical beginner conversations.",
+    description: "Food, drink, and café phrases for practical beginner conversations.",
     situation: "restaurant",
     imageKey: "food-and-ordering:17",
     words: [
       ["el agua", "water", "noun", "masculine", "Quiero agua, por favor.", "food-and-ordering:1"],
-      ["el cafe", "coffee", "noun", "masculine", "Quiero un cafe.", "food-and-ordering:2"],
-      ["el pan", "bread", "noun", "masculine", "El pan esta fresco.", "food-and-ordering:3"],
-      ["la sopa", "soup", "noun", "feminine", "La sopa esta caliente.", "food-and-ordering:5"],
+      ["el café", "coffee", "noun", "masculine", "Quiero un café.", "food-and-ordering:2"],
+      ["el pan", "bread", "noun", "masculine", "El pan está fresco.", "food-and-ordering:3"],
+      ["la sopa", "soup", "noun", "feminine", "La sopa está caliente.", "food-and-ordering:5"],
       ["la manzana", "apple", "noun", "feminine", "La manzana es roja.", "fruit-and-produce:1"],
       ["la cuenta", "bill", "noun", "feminine", "La cuenta, por favor.", "food-and-ordering:18"]
     ]
@@ -218,12 +218,12 @@ const vocabularyGroups = [
     situation: "travel",
     imageKey: "travel-and-survival:1",
     words: [
-      ["el hotel", "hotel", "noun", "masculine", "El hotel esta cerca.", "travel-and-survival:2"],
+      ["el hotel", "hotel", "noun", "masculine", "El hotel está cerca.", "travel-and-survival:2"],
       ["el tren", "train", "noun", "masculine", "Necesito un boleto de tren.", "city-transport:2"],
       ["el mapa", "map", "noun", "masculine", "Tengo un mapa.", "travel-and-survival:5"],
       ["el taxi", "taxi", "noun", "masculine", "Busco un taxi.", "city-transport:3"],
-      ["el museo", "museum", "noun", "masculine", "El museo esta abierto.", "travel-and-survival:9"],
-      ["la estacion", "station", "noun", "feminine", "La estacion esta alli.", "city-transport:7"]
+      ["el museo", "museum", "noun", "masculine", "El museo está abierto.", "travel-and-survival:9"],
+      ["la estación", "station", "noun", "feminine", "La estación está allí.", "city-transport:7"]
     ]
   },
   {
@@ -234,16 +234,16 @@ const vocabularyGroups = [
     imageKey: "fruit-and-produce:1",
     words: [
       ["la manzana", "apple", "noun", "feminine", "La manzana es roja.", "fruit-and-produce:1"],
-      ["el platano", "banana", "noun", "masculine", "El platano es amarillo.", "fruit-and-produce:2"],
+      ["el plátano", "banana", "noun", "masculine", "El plátano es amarillo.", "fruit-and-produce:2"],
       ["la naranja", "orange", "noun", "feminine", "Quiero una naranja.", "fruit-and-produce:3"],
-      ["el limon", "lemon", "noun", "masculine", "El limon es amarillo.", "fruit-and-produce:4"],
+      ["el limón", "lemon", "noun", "masculine", "El limón es amarillo.", "fruit-and-produce:4"],
       ["la fresa", "strawberry", "noun", "feminine", "La fresa es roja.", "fruit-and-produce:5"],
-      ["las uvas", "grapes", "noun", "feminine plural", "Las uvas estan frescas.", "fruit-and-produce:6"],
+      ["las uvas", "grapes", "noun", "feminine plural", "Las uvas están frescas.", "fruit-and-produce:6"],
       ["la pera", "pear", "noun", "feminine", "Quiero una pera.", "fruit-and-produce:7"],
-      ["el tomate", "tomato", "noun", "masculine", "El tomate esta fresco.", "fruit-and-produce:11"],
+      ["el tomate", "tomato", "noun", "masculine", "El tomate está fresco.", "fruit-and-produce:11"],
       ["la zanahoria", "carrot", "noun", "feminine", "La zanahoria es naranja.", "fruit-and-produce:13"],
-      ["la ensalada", "salad", "noun", "feminine", "La ensalada esta en la mesa.", "fruit-and-produce:24"],
-      ["la fruta", "fruit", "noun", "feminine", "La fruta esta en la cesta.", "fruit-and-produce:20"],
+      ["la ensalada", "salad", "noun", "feminine", "La ensalada está en la mesa.", "fruit-and-produce:24"],
+      ["la fruta", "fruit", "noun", "feminine", "La fruta está en la cesta.", "fruit-and-produce:20"],
       ["el mercado", "market", "noun", "masculine", "Compro fruta en el mercado.", "fruit-and-produce:21"]
     ]
   },
@@ -257,13 +257,13 @@ const vocabularyGroups = [
       ["hola", "hello", "phrase", null, "Hola, soy Ana.", null],
       ["me llamo", "my name is", "phrase", null, "Hola, me llamo Ana.", "people-and-family:1"],
       ["soy de", "I am from", "phrase", null, "Soy de Austria.", "travel-and-survival:5"],
-      ["por favor", "please", "phrase", null, "Un cafe, por favor.", null],
+      ["por favor", "please", "phrase", null, "Un café, por favor.", null],
       ["gracias", "thank you", "phrase", null, "Gracias por la ayuda.", null],
-      ["perdon", "sorry / excuse me", "phrase", null, "Perdon, ¿donde esta el hotel?", "travel-and-survival:1"],
+      ["perdón", "sorry / excuse me", "phrase", null, "Perdón, ¿dónde está el hotel?", "travel-and-survival:1"],
       ["necesito ayuda", "I need help", "phrase", null, "Necesito ayuda, por favor.", "travel-and-survival:12"],
       ["no entiendo", "I do not understand", "phrase", null, "No entiendo la pregunta.", "grammar-scenes:12"],
-      ["mas despacio", "more slowly", "phrase", null, "Mas despacio, por favor.", "daily-actions:6"],
-      ["¿cuanto cuesta?", "how much does it cost?", "phrase", null, "¿Cuanto cuesta el pan?", "travel-and-survival:19"],
+      ["más despacio", "more slowly", "phrase", null, "Más despacio, por favor.", "daily-actions:6"],
+      ["¿cuánto cuesta?", "how much does it cost?", "phrase", null, "¿Cuánto cuesta el pan?", "travel-and-survival:19"],
       ["la cuenta, por favor", "the bill, please", "phrase", null, "La cuenta, por favor.", "food-and-ordering:18"]
     ]
   },
@@ -274,18 +274,18 @@ const vocabularyGroups = [
     situation: "home",
     imageKey: "home-objects:1",
     words: [
-      ["la mesa", "table", "noun", "feminine", "El libro esta en la mesa.", "home-objects:1"],
-      ["la silla", "chair", "noun", "feminine", "La silla esta aqui.", "home-objects:2"],
-      ["la cama", "bed", "noun", "feminine", "La cama esta en el dormitorio.", "home-objects:3"],
-      ["el sofa", "sofa", "noun", "masculine", "El sofa esta en casa.", "home-objects:4"],
-      ["la puerta", "door", "noun", "feminine", "La puerta esta abierta.", "home-objects:5"],
-      ["la ventana", "window", "noun", "feminine", "La ventana esta cerrada.", "home-objects:6"],
-      ["la lampara", "lamp", "noun", "feminine", "La lampara esta en la mesa.", "home-objects:7"],
+      ["la mesa", "table", "noun", "feminine", "El libro está en la mesa.", "home-objects:1"],
+      ["la silla", "chair", "noun", "feminine", "La silla está aquí.", "home-objects:2"],
+      ["la cama", "bed", "noun", "feminine", "La cama está en el dormitorio.", "home-objects:3"],
+      ["el sofá", "sofa", "noun", "masculine", "El sofá está en casa.", "home-objects:4"],
+      ["la puerta", "door", "noun", "feminine", "La puerta está abierta.", "home-objects:5"],
+      ["la ventana", "window", "noun", "feminine", "La ventana está cerrada.", "home-objects:6"],
+      ["la lámpara", "lamp", "noun", "feminine", "La lámpara está en la mesa.", "home-objects:7"],
       ["la llave", "key", "noun", "feminine", "Busco la llave.", "home-objects:8"],
       ["la cocina", "kitchen", "noun", "feminine", "Estoy en la cocina.", "home-objects:11"],
-      ["el vaso", "cup", "noun", "masculine", "El vaso esta en la mesa.", "home-objects:17"],
-      ["la mochila", "backpack", "noun", "feminine", "La mochila esta en la silla.", "classroom-basics:8"],
-      ["el reloj", "clock", "noun", "masculine", "El reloj esta en la pared.", "weather-and-time:13"]
+      ["el vaso", "cup", "noun", "masculine", "El vaso está en la mesa.", "home-objects:17"],
+      ["la mochila", "backpack", "noun", "feminine", "La mochila está en la silla.", "classroom-basics:8"],
+      ["el reloj", "clock", "noun", "masculine", "El reloj está en la pared.", "weather-and-time:13"]
     ]
   },
   {
@@ -296,16 +296,16 @@ const vocabularyGroups = [
     imageKey: "people-and-family:1",
     words: [
       ["yo", "I", "pronoun", null, "Yo soy estudiante.", "people-and-family:1"],
-      ["tu", "you", "pronoun", null, "Tu estudias mucho.", "people-and-family:2"],
-      ["el", "he", "pronoun", null, "El trabaja hoy.", "people-and-family:10"],
-      ["ella", "she", "pronoun", null, "Ella esta feliz.", "people-and-family:1"],
+      ["tú", "you", "pronoun", null, "Tú estudias mucho.", "people-and-family:2"],
+      ["él", "he", "pronoun", null, "Él trabaja hoy.", "people-and-family:10"],
+      ["ella", "she", "pronoun", null, "Ella está feliz.", "people-and-family:1"],
       ["nosotros", "we", "pronoun", null, "Nosotros caminamos.", "people-and-family:16"],
-      ["ellos", "they", "pronoun", null, "Ellos estan en el parque.", "people-and-family:16"],
-      ["la persona", "person", "noun", "feminine", "La persona habla espanol.", "people-and-family:1"],
+      ["ellos", "they", "pronoun", null, "Ellos están en el parque.", "people-and-family:16"],
+      ["la persona", "person", "noun", "feminine", "La persona habla español.", "people-and-family:1"],
       ["el amigo", "friend", "noun", "masculine", "Llamo a mi amigo.", "people-and-family:2"],
       ["el estudiante", "student", "noun", "masculine", "El estudiante lee.", "people-and-family:3"],
       ["la profesora", "teacher", "noun", "feminine", "La profesora explica.", "people-and-family:4"],
-      ["la familia", "family", "noun", "feminine", "La familia esta en casa.", "people-and-family:9"]
+      ["la familia", "family", "noun", "feminine", "La familia está en casa.", "people-and-family:9"]
     ]
   },
   {
@@ -316,15 +316,15 @@ const vocabularyGroups = [
     imageKey: "clothing-basics:1",
     words: [
       ["la camisa", "shirt", "noun", "feminine", "La camisa es blanca.", "clothing-basics:1"],
-      ["la camiseta", "t-shirt", "noun", "feminine", "La camiseta esta limpia.", "clothing-basics:2"],
+      ["la camiseta", "t-shirt", "noun", "feminine", "La camiseta está limpia.", "clothing-basics:2"],
       ["los pantalones", "pants", "noun", "masculine plural", "Los pantalones son azules.", "clothing-basics:3"],
       ["el vestido", "dress", "noun", "masculine", "El vestido es bonito.", "clothing-basics:5"],
       ["la chaqueta", "jacket", "noun", "feminine", "Necesito una chaqueta.", "clothing-basics:7"],
-      ["los zapatos", "shoes", "noun", "masculine plural", "Los zapatos estan aqui.", "clothing-basics:10"],
+      ["los zapatos", "shoes", "noun", "masculine plural", "Los zapatos están aquí.", "clothing-basics:10"],
       ["el sombrero", "hat", "noun", "masculine", "El sombrero es nuevo.", "clothing-basics:12"],
       ["la bufanda", "scarf", "noun", "feminine", "La bufanda es roja.", "clothing-basics:13"],
-      ["la mochila", "backpack", "noun", "feminine", "La mochila esta en la silla.", "clothing-basics:16"],
-      ["las botas", "boots", "noun", "feminine plural", "Las botas estan en casa.", "clothing-basics:23"]
+      ["la mochila", "backpack", "noun", "feminine", "La mochila está en la silla.", "clothing-basics:16"],
+      ["las botas", "boots", "noun", "feminine plural", "Las botas están en casa.", "clothing-basics:23"]
     ]
   },
   {
@@ -334,13 +334,13 @@ const vocabularyGroups = [
     situation: "transport",
     imageKey: "city-transport:1",
     words: [
-      ["el autobus", "bus", "noun", "masculine", "El autobus esta aqui.", "city-transport:1"],
+      ["el autobús", "bus", "noun", "masculine", "El autobús está aquí.", "city-transport:1"],
       ["el tren", "train", "noun", "masculine", "Necesito un boleto de tren.", "city-transport:2"],
       ["el taxi", "taxi", "noun", "masculine", "Busco un taxi.", "city-transport:3"],
       ["la bicicleta", "bicycle", "noun", "feminine", "La bicicleta es nueva.", "city-transport:4"],
-      ["el metro", "subway", "noun", "masculine", "El metro esta cerca.", "city-transport:5"],
-      ["el aeropuerto", "airport", "noun", "masculine", "El aeropuerto esta lejos.", "city-transport:6"],
-      ["la plataforma", "platform", "noun", "feminine", "La plataforma esta alli.", "city-transport:7"],
+      ["el metro", "subway", "noun", "masculine", "El metro está cerca.", "city-transport:5"],
+      ["el aeropuerto", "airport", "noun", "masculine", "El aeropuerto está lejos.", "city-transport:6"],
+      ["la plataforma", "platform", "noun", "feminine", "La plataforma está allí.", "city-transport:7"],
       ["la maleta", "suitcase", "noun", "feminine", "Tengo una maleta.", "city-transport:10"],
       ["el pasaporte", "passport", "noun", "masculine", "Necesito el pasaporte.", "city-transport:11"],
       ["el mapa", "map", "noun", "masculine", "Tengo un mapa.", "city-transport:12"]
@@ -355,11 +355,11 @@ const vocabularyGroups = [
     words: [
       ["hace sol", "it is sunny", "phrase", null, "Hoy hace sol.", "weather-and-time:1"],
       ["llueve", "it is raining", "verb", null, "Hoy llueve.", "weather-and-time:2"],
-      ["esta nublado", "it is cloudy", "phrase", null, "El cielo esta nublado.", "weather-and-time:3"],
+      ["está nublado", "it is cloudy", "phrase", null, "El cielo está nublado.", "weather-and-time:3"],
       ["hace viento", "it is windy", "phrase", null, "Hoy hace viento.", "weather-and-time:4"],
-      ["hace frio", "it is cold", "phrase", null, "Hace frio hoy.", "weather-and-time:7"],
+      ["hace frío", "it is cold", "phrase", null, "Hace frío hoy.", "weather-and-time:7"],
       ["hace calor", "it is hot", "phrase", null, "Hace calor hoy.", "weather-and-time:6"],
-      ["la manana", "morning", "noun", "feminine", "Estudio por la manana.", "weather-and-time:8"],
+      ["la mañana", "morning", "noun", "feminine", "Estudio por la mañana.", "weather-and-time:8"],
       ["la tarde", "afternoon", "noun", "feminine", "Trabajo por la tarde.", "weather-and-time:9"],
       ["la noche", "night", "noun", "feminine", "Leo por la noche.", "weather-and-time:11"],
       ["el paraguas", "umbrella", "noun", "masculine", "Necesito un paraguas.", "weather-and-time:14"]
@@ -374,12 +374,12 @@ const vocabularyGroups = [
     words: [
       ["la cabeza", "head", "noun", "feminine", "Me duele la cabeza.", "body-and-health:1"],
       ["la mano", "hand", "noun", "feminine", "Levanto la mano.", "body-and-health:2"],
-      ["el ojo", "eye", "noun", "masculine", "El ojo esta rojo.", "body-and-health:3"],
-      ["la boca", "mouth", "noun", "feminine", "La boca esta seca.", "body-and-health:4"],
+      ["el ojo", "eye", "noun", "masculine", "El ojo está rojo.", "body-and-health:3"],
+      ["la boca", "mouth", "noun", "feminine", "La boca está seca.", "body-and-health:4"],
       ["el pie", "foot", "noun", "masculine", "Me duele el pie.", "body-and-health:5"],
-      ["el cuerpo", "body", "noun", "masculine", "El cuerpo esta cansado.", "body-and-health:6"],
+      ["el cuerpo", "body", "noun", "masculine", "El cuerpo está cansado.", "body-and-health:6"],
       ["me duele", "it hurts me", "phrase", null, "Me duele la cabeza.", "body-and-health:7"],
-      ["tengo frio", "I am cold", "phrase", null, "Tengo frio hoy.", "body-and-health:8"],
+      ["tengo frío", "I am cold", "phrase", null, "Tengo frío hoy.", "body-and-health:8"],
       ["tengo calor", "I am hot", "phrase", null, "Tengo calor hoy.", "body-and-health:9"],
       ["tengo hambre", "I am hungry", "phrase", null, "Tengo hambre.", "body-and-health:10"],
       ["tengo sed", "I am thirsty", "phrase", null, "Tengo sed.", "body-and-health:11"],
@@ -402,9 +402,9 @@ const vocabularyGroups = [
       ["roja", "red", "adjective", "feminine", "La manzana es roja.", "numbers-and-colors:7"],
       ["azul", "blue", "adjective", null, "La camisa es azul.", "numbers-and-colors:8"],
       ["verde", "green", "adjective", null, "La ensalada es verde.", "numbers-and-colors:9"],
-      ["amarillo", "yellow", "adjective", "masculine", "El platano es amarillo.", "numbers-and-colors:10"],
+      ["amarillo", "yellow", "adjective", "masculine", "El plátano es amarillo.", "numbers-and-colors:10"],
       ["blanco", "white", "adjective", "masculine", "El pan es blanco.", "numbers-and-colors:11"],
-      ["negro", "black", "adjective", "masculine", "El cafe es negro.", "numbers-and-colors:12"]
+      ["negro", "black", "adjective", "masculine", "El café es negro.", "numbers-and-colors:12"]
     ]
   },
   {
@@ -414,15 +414,15 @@ const vocabularyGroups = [
     situation: "outside",
     imageKey: "nature-and-animals:10",
     words: [
-      ["el arbol", "tree", "noun", "masculine", "El arbol esta en el parque.", "nature-and-animals:1"],
+      ["el árbol", "tree", "noun", "masculine", "El árbol está en el parque.", "nature-and-animals:1"],
       ["la flor", "flower", "noun", "feminine", "La flor es roja.", "nature-and-animals:2"],
-      ["el perro", "dog", "noun", "masculine", "El perro esta en casa.", "nature-and-animals:3"],
-      ["el gato", "cat", "noun", "masculine", "El gato esta en la silla.", "nature-and-animals:4"],
-      ["el pajaro", "bird", "noun", "masculine", "El pajaro esta en el arbol.", "nature-and-animals:5"],
+      ["el perro", "dog", "noun", "masculine", "El perro está en casa.", "nature-and-animals:3"],
+      ["el gato", "cat", "noun", "masculine", "El gato está en la silla.", "nature-and-animals:4"],
+      ["el pájaro", "bird", "noun", "masculine", "El pájaro está en el árbol.", "nature-and-animals:5"],
       ["el sol", "sun", "noun", "masculine", "Hace sol.", "nature-and-animals:6"],
-      ["la lluvia", "rain", "noun", "feminine", "La lluvia esta fuerte.", "nature-and-animals:7"],
+      ["la lluvia", "rain", "noun", "feminine", "La lluvia está fuerte.", "nature-and-animals:7"],
       ["la playa", "beach", "noun", "feminine", "Estoy en la playa.", "nature-and-animals:8"],
-      ["el agua", "water", "noun", "masculine", "El agua esta fria.", "nature-and-animals:9"],
+      ["el agua", "water", "noun", "masculine", "El agua está fría.", "nature-and-animals:9"],
       ["bonito", "pretty", "adjective", "masculine", "El parque es bonito.", "nature-and-animals:10"]
     ]
   }
@@ -457,7 +457,7 @@ const lessons = [
   },
   {
     slug: "zero-pronouns",
-    title: "Zero: Yo, Tu, El, Ella",
+    title: "Zero: Yo, Tú, Él, Ella",
     summary: "Learn the tiny person words before building sentences.",
     cefrLevel: "A1",
     theme: "Absolute Basics",
@@ -469,8 +469,8 @@ const lessons = [
     estimatedMinutes: 4,
     sentences: [
       ["yo", "I", "Use yo when you talk about yourself."],
-      ["tu", "you", "Use tu when speaking to one person informally."],
-      ["el", "he", "El can mean he. Later you also see el as the masculine article."],
+      ["tú", "you", "Use tú when speaking to one person informally."],
+      ["él", "he", "Él can mean he. Later you also see el as the masculine article."],
       ["ella", "she", "Ella means she."]
     ]
   },
@@ -512,7 +512,7 @@ const lessons = [
   },
   {
     slug: "zero-es-esta",
-    title: "Zero: Es and Esta",
+    title: "Zero: Es and Está",
     summary: "Learn he/she/it is forms before longer sentences.",
     cefrLevel: "A1",
     theme: "Absolute Basics",
@@ -524,9 +524,9 @@ const lessons = [
     estimatedMinutes: 6,
     sentences: [
       ["es", "he/she/it is", "Es comes from ser and is used for identity or traits."],
-      ["esta", "he/she/it is", "Esta comes from estar and is used for state or location."],
+      ["está", "he/she/it is", "Está comes from estar and is used for state or location."],
       ["Ella es profesora.", "She is a teacher.", "Identity uses es."],
-      ["Ella esta en casa.", "She is at home.", "Location uses esta."]
+      ["Ella está en casa.", "She is at home.", "Location uses está."]
     ]
   },
   {
@@ -544,7 +544,7 @@ const lessons = [
     sentences: [
       ["Yo soy estudiante.", "I am a student.", "Ser describes identity or profession."],
       ["Estoy en la biblioteca.", "I am in the library.", "Estar describes location."],
-      ["Ella esta cansada.", "She is tired.", "Estar describes a temporary state."]
+      ["Ella está cansada.", "She is tired.", "Estar describes a temporary state."]
     ]
   },
   {
@@ -561,7 +561,7 @@ const lessons = [
     estimatedMinutes: 7,
     sentences: [
       ["El libro es nuevo.", "The book is new.", "Libro is masculine singular."],
-      ["La tienda esta abierta.", "The store is open.", "Tienda is feminine singular."],
+      ["La tienda está abierta.", "The store is open.", "Tienda is feminine singular."],
       ["Los estudiantes hablan.", "The students speak.", "Los marks masculine plural."]
     ]
   },
@@ -578,8 +578,8 @@ const lessons = [
     order: 7,
     estimatedMinutes: 9,
     sentences: [
-      ["Yo hablo espanol.", "I speak Spanish.", "Yo uses the -o ending."],
-      ["Tu estudias mucho.", "You study a lot.", "Tu uses the -as ending."],
+      ["Yo hablo español.", "I speak Spanish.", "Yo uses the -o ending."],
+      ["Tú estudias mucho.", "You study a lot.", "Tú uses the -as ending."],
       ["Ellos trabajan hoy.", "They work today.", "Ellos uses the -an ending."],
       ["Nosotros caminamos al parque.", "We walk to the park.", "Nosotros uses the -amos ending."]
     ]
@@ -598,29 +598,29 @@ const lessons = [
     estimatedMinutes: 8,
     sentences: [
       ["Estoy feliz hoy.", "I am happy today.", "Use estar for feelings that can change."],
-      ["Ella esta cansada.", "She is tired.", "Cansada agrees with ella."],
+      ["Ella está cansada.", "She is tired.", "Cansada agrees with ella."],
       ["Estamos nerviosos.", "We are nervous.", "Estamos matches nosotros."],
-      ["El estudiante esta enfermo.", "The student is sick.", "Use estar for temporary health states."],
-      ["Ana esta nerviosa.", "Ana is nervous.", "Use esta with Ana because she is one person."]
+      ["El estudiante está enfermo.", "The student is sick.", "Use estar for temporary health states."],
+      ["Ana está nerviosa.", "Ana is nervous.", "Use está with Ana because she is one person."]
     ]
   },
   {
     slug: "food-ordering-basics",
     title: "Food Ordering Basics",
-    summary: "Use quiero, articles, and polite phrases at a cafe or restaurant.",
+    summary: "Use quiero, articles, and polite phrases at a café or restaurant.",
     cefrLevel: "A1",
     theme: "Food and Ordering",
-    situation: "restaurant and cafe",
+    situation: "restaurant and café",
     imageKey: "food-and-ordering:17",
     topicSlug: "ordering-food",
     vocabularySlugs: ["food-and-ordering"],
     order: 9,
     estimatedMinutes: 9,
     sentences: [
-      ["Quiero un cafe, por favor.", "I want a coffee, please.", "Use un before masculine singular cafe."],
-      ["La sopa esta caliente.", "The soup is hot.", "La matches feminine singular sopa."],
+      ["Quiero un café, por favor.", "I want a coffee, please.", "Use un before masculine singular café."],
+      ["La sopa está caliente.", "The soup is hot.", "La matches feminine singular sopa."],
       ["La cuenta, por favor.", "The bill, please.", "A useful restaurant phrase."],
-      ["El pan esta fresco.", "The bread is fresh.", "El matches masculine singular pan."]
+      ["El pan está fresco.", "The bread is fresh.", "El matches masculine singular pan."]
     ]
   },
   {
@@ -636,9 +636,9 @@ const lessons = [
     order: 10,
     estimatedMinutes: 9,
     sentences: [
-      ["¿Donde esta el hotel?", "Where is the hotel?", "Donde asks for location."],
+      ["¿Dónde está el hotel?", "Where is the hotel?", "Dónde asks for location."],
       ["Necesito un taxi.", "I need a taxi.", "Necesito is a high-frequency survival verb."],
-      ["La estacion esta cerca.", "The station is nearby.", "Use estar for location."],
+      ["La estación está cerca.", "The station is nearby.", "Use estar for location."],
       ["Tengo un mapa.", "I have a map.", "Tengo is useful for travel situations."]
     ]
   },
@@ -655,10 +655,10 @@ const lessons = [
     order: 11,
     estimatedMinutes: 9,
     sentences: [
-      ["El libro esta en la mesa.", "The book is on the table.", "Use estar for object location."],
-      ["La mochila esta en la silla.", "The backpack is on the chair.", "La mochila needs esta."],
-      ["La tienda esta cerca.", "The store is nearby.", "Cerca is a simple location word."],
-      ["Las llaves estan en la cocina.", "The keys are in the kitchen.", "Plural keys use estan."]
+      ["El libro está en la mesa.", "The book is on the table.", "Use estar for object location."],
+      ["La mochila está en la silla.", "The backpack is on the chair.", "La mochila needs está."],
+      ["La tienda está cerca.", "The store is nearby.", "Cerca is a simple location word."],
+      ["Las llaves están en la cocina.", "The keys are in the kitchen.", "Plural keys use están."]
     ]
   },
   {
@@ -674,7 +674,7 @@ const lessons = [
     order: 12,
     estimatedMinutes: 8,
     sentences: [
-      ["Los estudiantes estan en clase.", "The students are in class.", "Los marks masculine or mixed plural."],
+      ["Los estudiantes están en clase.", "The students are in class.", "Los marks masculine or mixed plural."],
       ["Las sillas son nuevas.", "The chairs are new.", "Las and nuevas are feminine plural."],
       ["Ellos trabajan hoy.", "They work today.", "Ellos needs the plural verb ending."],
       ["Las manzanas son rojas.", "The apples are red.", "Plural nouns often add -s."]
@@ -693,10 +693,10 @@ const lessons = [
     order: 13,
     estimatedMinutes: 8,
     sentences: [
-      ["¿Que quieres?", "What do you want?", "Que asks what."],
-      ["¿Donde esta la estacion?", "Where is the station?", "Donde asks where."],
-      ["¿Cuanto cuesta?", "How much does it cost?", "Cuanto asks how much."],
-      ["¿Quien habla?", "Who is speaking?", "Quien asks who."]
+      ["¿Qué quieres?", "What do you want?", "Qué asks what."],
+      ["¿Dónde está la estación?", "Where is the station?", "Dónde asks where."],
+      ["¿Cuánto cuesta?", "How much does it cost?", "Cuánto asks how much."],
+      ["¿Quién habla?", "Who is speaking?", "Quién asks who."]
     ]
   },
   {
@@ -753,7 +753,7 @@ const lessons = [
       ["Yo compro pan.", "I buy bread.", "Comprar is a regular -ar verb."],
       ["Nosotros caminamos al parque.", "We walk to the park.", "Nosotros uses -amos."],
       ["Ella lee un libro.", "She reads a book.", "Leer is useful even before full -er verb study."],
-      ["Tu hablas con un amigo.", "You speak with a friend.", "Tu uses -as for regular -ar verbs."]
+      ["Tú hablas con un amigo.", "You speak with a friend.", "Tú uses -as for regular -ar verbs."]
     ]
   },
   {
@@ -770,9 +770,9 @@ const lessons = [
     estimatedMinutes: 8,
     sentences: [
       ["Quiero una manzana.", "I want an apple.", "Una matches feminine singular manzana."],
-      ["El platano es amarillo.", "The banana is yellow.", "Use ser for a normal trait."],
+      ["El plátano es amarillo.", "The banana is yellow.", "Use ser for a normal trait."],
       ["Compro fruta en el mercado.", "I buy fruit at the market.", "Compro is the yo form of comprar."],
-      ["La ensalada esta fresca.", "The salad is fresh.", "La and fresca agree."]
+      ["La ensalada está fresca.", "The salad is fresh.", "La and fresca agree."]
     ]
   },
   {
@@ -788,16 +788,16 @@ const lessons = [
     order: 18,
     estimatedMinutes: 9,
     sentences: [
-      ["Un cafe, por favor.", "A coffee, please.", "A short polite order is enough."],
+      ["Un café, por favor.", "A coffee, please.", "A short polite order is enough."],
       ["La cuenta, por favor.", "The bill, please.", "A complete restaurant phrase."],
-      ["No entiendo el menu.", "I do not understand the menu.", "Use no before entiendo."],
-      ["¿Cuanto cuesta el postre?", "How much does the dessert cost?", "Cuanto asks price."]
+      ["No entiendo el menú.", "I do not understand the menu.", "Use no before entiendo."],
+      ["¿Cuánto cuesta el postre?", "How much does the dessert cost?", "Cuánto asks price."]
     ]
   },
   {
     slug: "polite-words-one-at-a-time",
     title: "Polite Words One at a Time",
-    summary: "Slow down and practice por favor, gracias, and perdon as separate building blocks.",
+    summary: "Slow down and practice por favor, gracias, and perdón as separate building blocks.",
     cefrLevel: "A1",
     theme: "Conversation Repair",
     situation: "polite basics",
@@ -809,8 +809,8 @@ const lessons = [
     sentences: [
       ["Por favor.", "Please.", "Use por favor to make a request polite."],
       ["Gracias.", "Thank you.", "Gracias is the basic thank-you phrase."],
-      ["Perdon.", "Sorry / excuse me.", "Use perdon to apologize or get attention."],
-      ["Perdon, por favor.", "Excuse me, please.", "Two short phrases can work together."]
+      ["Perdón.", "Sorry / excuse me.", "Use perdón to apologize or get attention."],
+      ["Perdón, por favor.", "Excuse me, please.", "Two short phrases can work together."]
     ]
   },
   {
@@ -826,10 +826,10 @@ const lessons = [
     order: 20,
     estimatedMinutes: 5,
     sentences: [
-      ["Mas despacio.", "More slowly.", "Use mas despacio when someone speaks too fast."],
-      ["Mas despacio, por favor.", "More slowly, please.", "Add por favor to make the request polite."],
+      ["Más despacio.", "More slowly.", "Use más despacio when someone speaks too fast."],
+      ["Más despacio, por favor.", "More slowly, please.", "Add por favor to make the request polite."],
       ["No entiendo.", "I do not understand.", "Use this when you are lost."],
-      ["No entiendo, mas despacio.", "I do not understand, more slowly.", "Combine repair phrases in one sentence."]
+      ["No entiendo, más despacio.", "I do not understand, more slowly.", "Combine repair phrases in one sentence."]
     ]
   },
   {
@@ -867,7 +867,7 @@ const lessons = [
       ["Soy de Austria.", "I am from Austria.", "Use soy de for origin."],
       ["Yo soy de Austria.", "I am from Austria.", "Yo is optional but useful for beginners."],
       ["Ella es de Austria.", "She is from Austria.", "Use es de for he, she, or it."],
-      ["El es de Austria.", "He is from Austria.", "El plus es gives he is."]
+      ["Él es de Austria.", "He is from Austria.", "Él plus es gives he is."]
     ]
   },
   {
@@ -905,7 +905,7 @@ const lessons = [
       ["La silla.", "The chair.", "Silla uses la."],
       ["La tienda.", "The store.", "Tienda uses la."],
       ["La profesora.", "The teacher.", "Profesora uses la."],
-      ["La tienda esta abierta.", "The store is open.", "La marks a feminine singular noun."]
+      ["La tienda está abierta.", "The store is open.", "La marks a feminine singular noun."]
     ]
   },
   {
@@ -921,9 +921,9 @@ const lessons = [
     order: 25,
     estimatedMinutes: 6,
     sentences: [
-      ["Un cafe.", "A coffee.", "Cafe uses un."],
+      ["Un café.", "A coffee.", "Café uses un."],
       ["Una manzana.", "An apple.", "Manzana uses una."],
-      ["Quiero un cafe.", "I want a coffee.", "Use un before cafe."],
+      ["Quiero un café.", "I want a coffee.", "Use un before café."],
       ["Quiero una manzana.", "I want an apple.", "Use una before manzana."]
     ]
   },
@@ -941,15 +941,15 @@ const lessons = [
     estimatedMinutes: 6,
     sentences: [
       ["Estoy en casa.", "I am at home.", "Estoy en gives your current location."],
-      ["Estoy en el cafe.", "I am in the cafe.", "Use en el before masculine place nouns."],
+      ["Estoy en el café.", "I am in the café.", "Use en el before masculine place nouns."],
       ["Estoy en la tienda.", "I am in the store.", "Use en la before feminine place nouns."],
       ["Estoy en la biblioteca.", "I am in the library.", "Estar handles location."]
     ]
   },
   {
     slug: "esta-cerca-y-lejos",
-    title: "Esta Cerca y Lejos",
-    summary: "Say that a place is near or far with esta.",
+    title: "Está Cerca y Lejos",
+    summary: "Say that a place is near or far with está.",
     cefrLevel: "A1",
     theme: "Location",
     situation: "finding places",
@@ -959,10 +959,10 @@ const lessons = [
     order: 27,
     estimatedMinutes: 6,
     sentences: [
-      ["La tienda esta cerca.", "The store is nearby.", "Use esta for location."],
-      ["La estacion esta lejos.", "The station is far.", "Lejos means far."],
-      ["El hotel esta cerca.", "The hotel is nearby.", "Hotel uses el."],
-      ["El museo esta lejos.", "The museum is far.", "Museo uses el."]
+      ["La tienda está cerca.", "The store is nearby.", "Use está for location."],
+      ["La estación está lejos.", "The station is far.", "Lejos means far."],
+      ["El hotel está cerca.", "The hotel is nearby.", "Hotel uses el."],
+      ["El museo está lejos.", "The museum is far.", "Museo uses el."]
     ]
   },
   {
@@ -979,7 +979,7 @@ const lessons = [
     estimatedMinutes: 6,
     sentences: [
       ["No entiendo.", "I do not understand.", "No goes before entiendo."],
-      ["No hablo espanol.", "I do not speak Spanish.", "No goes before hablo."],
+      ["No hablo español.", "I do not speak Spanish.", "No goes before hablo."],
       ["No soy estudiante.", "I am not a student.", "No goes before soy."],
       ["Ella no trabaja hoy.", "She does not work today.", "No stays before the conjugated verb."]
     ]
@@ -990,7 +990,7 @@ const lessons = [
     summary: "Use quiero with one food or drink before building longer orders.",
     cefrLevel: "A1",
     theme: "Ordering",
-    situation: "cafe",
+    situation: "café",
     imageKey: "food-and-ordering:2",
     topicSlug: "ordering-food",
     vocabularySlugs: ["food-and-ordering", "fruit-and-produce"],
@@ -998,7 +998,7 @@ const lessons = [
     estimatedMinutes: 6,
     sentences: [
       ["Quiero agua.", "I want water.", "Quiero can be followed directly by a noun."],
-      ["Quiero un cafe.", "I want a coffee.", "Add un before cafe."],
+      ["Quiero un café.", "I want a coffee.", "Add un before café."],
       ["Quiero pan.", "I want bread.", "Some food requests do not need an article."],
       ["Quiero una naranja.", "I want an orange.", "Una matches naranja."]
     ]
@@ -1043,8 +1043,8 @@ const lessons = [
   },
   {
     slug: "donde-esta-frame",
-    title: "Donde Esta Frame",
-    summary: "Learn one question frame: donde esta plus a place.",
+    title: "Dónde Está Frame",
+    summary: "Learn one question frame: dónde está plus a place.",
     cefrLevel: "A1",
     theme: "Questions",
     situation: "asking for location",
@@ -1054,16 +1054,16 @@ const lessons = [
     order: 32,
     estimatedMinutes: 6,
     sentences: [
-      ["¿Donde esta el hotel?", "Where is the hotel?", "Donde asks where."],
-      ["¿Donde esta la estacion?", "Where is the station?", "Use la before estacion."],
-      ["¿Donde esta el museo?", "Where is the museum?", "Use el before museo."],
-      ["¿Donde esta el restaurante?", "Where is the restaurant?", "One frame works with many places."]
+      ["¿Dónde está el hotel?", "Where is the hotel?", "Dónde asks where."],
+      ["¿Dónde está la estación?", "Where is the station?", "Use la before estación."],
+      ["¿Dónde está el museo?", "Where is the museum?", "Use el before museo."],
+      ["¿Dónde está el restaurante?", "Where is the restaurant?", "One frame works with many places."]
     ]
   },
   {
     slug: "que-quieres-frame",
-    title: "Que Quieres Frame",
-    summary: "Use que quieres to ask what someone wants.",
+    title: "Qué Quieres Frame",
+    summary: "Use qué quieres to ask what someone wants.",
     cefrLevel: "A1",
     theme: "Questions",
     situation: "simple choices",
@@ -1073,15 +1073,15 @@ const lessons = [
     order: 33,
     estimatedMinutes: 6,
     sentences: [
-      ["¿Que quieres?", "What do you want?", "Que asks what."],
+      ["¿Qué quieres?", "What do you want?", "Qué asks what."],
       ["Quiero agua.", "I want water.", "Answer with quiero."],
-      ["Quiero un cafe.", "I want a coffee.", "A short answer is natural."],
+      ["Quiero un café.", "I want a coffee.", "A short answer is natural."],
       ["No entiendo la pregunta.", "I do not understand the question.", "Use a repair phrase when needed."]
     ]
   },
   {
     slug: "cuanto-cuesta-frame",
-    title: "Cuanto Cuesta Frame",
+    title: "Cuánto Cuesta Frame",
     summary: "Practice one price question before using it in restaurants and markets.",
     cefrLevel: "A1",
     theme: "Questions",
@@ -1092,9 +1092,9 @@ const lessons = [
     order: 34,
     estimatedMinutes: 6,
     sentences: [
-      ["¿Cuanto cuesta?", "How much does it cost?", "A complete useful question."],
-      ["¿Cuanto cuesta el pan?", "How much does the bread cost?", "Use el before pan."],
-      ["¿Cuanto cuesta la manzana?", "How much does the apple cost?", "Use la before manzana."],
+      ["¿Cuánto cuesta?", "How much does it cost?", "A complete useful question."],
+      ["¿Cuánto cuesta el pan?", "How much does the bread cost?", "Use el before pan."],
+      ["¿Cuánto cuesta la manzana?", "How much does the apple cost?", "Use la before manzana."],
       ["La cuenta, por favor.", "The bill, please.", "Useful after asking about prices."]
     ]
   },
@@ -1111,7 +1111,7 @@ const lessons = [
     order: 35,
     estimatedMinutes: 7,
     sentences: [
-      ["Yo hablo espanol.", "I speak Spanish.", "Yo uses the -o ending."],
+      ["Yo hablo español.", "I speak Spanish.", "Yo uses the -o ending."],
       ["Yo estudio hoy.", "I study today.", "Estudiar becomes estudio."],
       ["Yo trabajo hoy.", "I work today.", "Trabajar becomes trabajo."],
       ["Yo compro pan.", "I buy bread.", "Comprar becomes compro."]
@@ -1119,7 +1119,7 @@ const lessons = [
   },
   {
     slug: "tu-ar-verbs",
-    title: "Tu with -ar Verbs",
+    title: "Tú with -ar Verbs",
     summary: "Practice just the you form of common -ar verbs.",
     cefrLevel: "A1",
     theme: "Verbs",
@@ -1130,16 +1130,16 @@ const lessons = [
     order: 36,
     estimatedMinutes: 7,
     sentences: [
-      ["Tu hablas espanol.", "You speak Spanish.", "Tu uses the -as ending."],
-      ["Tu estudias hoy.", "You study today.", "Estudiar becomes estudias."],
-      ["Tu trabajas hoy.", "You work today.", "Trabajar becomes trabajas."],
-      ["Tu compras pan.", "You buy bread.", "Comprar becomes compras."]
+      ["Tú hablas español.", "You speak Spanish.", "Tú uses the -as ending."],
+      ["Tú estudias hoy.", "You study today.", "Estudiar becomes estudias."],
+      ["Tú trabajas hoy.", "You work today.", "Trabajar becomes trabajas."],
+      ["Tú compras pan.", "You buy bread.", "Comprar becomes compras."]
     ]
   },
   {
     slug: "nosotros-and-ellos-ar-verbs",
     title: "Nosotros and Ellos with -ar Verbs",
-    summary: "Practice we and they forms after yo and tu feel familiar.",
+    summary: "Practice we and they forms after yo and tú feel familiar.",
     cefrLevel: "A1",
     theme: "Verbs",
     situation: "groups",
@@ -1149,7 +1149,7 @@ const lessons = [
     order: 37,
     estimatedMinutes: 7,
     sentences: [
-      ["Nosotros hablamos espanol.", "We speak Spanish.", "Nosotros uses -amos."],
+      ["Nosotros hablamos español.", "We speak Spanish.", "Nosotros uses -amos."],
       ["Nosotros caminamos al parque.", "We walk to the park.", "Caminar becomes caminamos."],
       ["Ellos trabajan hoy.", "They work today.", "Ellos uses -an."],
       ["Ellos estudian hoy.", "They study today.", "Estudiar becomes estudian."]
@@ -1172,8 +1172,8 @@ const lessons = [
       ["Estoy triste.", "I am sad.", "Triste works for masculine and feminine."],
       ["Estoy cansado.", "I am tired.", "Cansado is a masculine form."],
       ["Estoy emocionado.", "I am excited.", "Use estar for current emotional state."],
-      ["Ella esta triste.", "She is sad.", "Use esta for one person: ella."],
-      ["Ana esta nerviosa.", "Ana is nervous.", "Nerviosa is a feminine form."]
+      ["Ella está triste.", "She is sad.", "Use está for one person: ella."],
+      ["Ana está nerviosa.", "Ana is nervous.", "Nerviosa is a feminine form."]
     ]
   },
   {
@@ -1189,10 +1189,10 @@ const lessons = [
     order: 39,
     estimatedMinutes: 7,
     sentences: [
-      ["El libro esta en la mesa.", "The book is on the table.", "Use estar for object location."],
-      ["El lapiz esta en la mesa.", "The pencil is on the table.", "El marks lapiz."],
-      ["La mochila esta en la silla.", "The backpack is on the chair.", "La marks mochila."],
-      ["La llave esta en la mesa.", "The key is on the table.", "La marks llave."]
+      ["El libro está en la mesa.", "The book is on the table.", "Use estar for object location."],
+      ["El lápiz está en la mesa.", "The pencil is on the table.", "El marks lápiz."],
+      ["La mochila está en la silla.", "The backpack is on the chair.", "La marks mochila."],
+      ["La llave está en la mesa.", "The key is on the table.", "La marks llave."]
     ]
   },
   {
@@ -1210,7 +1210,7 @@ const lessons = [
     sentences: [
       ["Los estudiantes.", "The students.", "Los marks masculine or mixed plural."],
       ["Las sillas.", "The chairs.", "Las marks feminine plural."],
-      ["Las uvas estan frescas.", "The grapes are fresh.", "Las works with feminine plural nouns."],
+      ["Las uvas están frescas.", "The grapes are fresh.", "Las works with feminine plural nouns."],
       ["Los estudiantes hablan.", "The students speak.", "Plural people use a plural verb form."]
     ]
   },
@@ -1228,9 +1228,9 @@ const lessons = [
     estimatedMinutes: 12,
     sentences: [
       ["Yo soy estudiante y estoy en la biblioteca.", "I am a student and I am in the library.", "Mix ser for identity and estar for location."],
-      ["Quiero un cafe, por favor.", "I want a coffee, please.", "Use un with cafe."],
-      ["¿Donde esta la estacion?", "Where is the station?", "Travel question frame."],
-      ["No entiendo, mas despacio por favor.", "I do not understand, more slowly please.", "Conversation repair phrase."]
+      ["Quiero un café, por favor.", "I want a coffee, please.", "Use un with café."],
+      ["¿Dónde está la estación?", "Where is the station?", "Travel question frame."],
+      ["No entiendo, más despacio por favor.", "I do not understand, more slowly please.", "Conversation repair phrase."]
     ]
   },
   {
@@ -1249,7 +1249,7 @@ const lessons = [
       ["La cabeza.", "The head.", "Cabeza uses la."],
       ["La mano.", "The hand.", "Mano uses la."],
       ["El pie.", "The foot.", "Pie uses el."],
-      ["El cuerpo esta cansado.", "The body is tired.", "Use estar for a current state."]
+      ["El cuerpo está cansado.", "The body is tired.", "Use estar for a current state."]
     ]
   },
   {
@@ -1286,7 +1286,7 @@ const lessons = [
     sentences: [
       ["Tengo hambre.", "I am hungry.", "Spanish uses tengo with hunger."],
       ["Tengo sed.", "I am thirsty.", "Spanish uses tengo with thirst."],
-      ["Tengo frio.", "I am cold.", "Spanish uses tengo with cold."],
+      ["Tengo frío.", "I am cold.", "Spanish uses tengo with cold."],
       ["Tengo calor.", "I am hot.", "Spanish uses tengo with heat."]
     ]
   },
@@ -1325,7 +1325,7 @@ const lessons = [
       ["La manzana es roja.", "The apple is red.", "Roja agrees with manzana."],
       ["El tomate es rojo.", "The tomato is red.", "Rojo agrees with tomate."],
       ["La camisa es azul.", "The shirt is blue.", "Azul works for masculine and feminine."],
-      ["El platano es amarillo.", "The banana is yellow.", "Amarillo agrees with platano."]
+      ["El plátano es amarillo.", "The banana is yellow.", "Amarillo agrees with plátano."]
     ]
   },
   {
@@ -1341,9 +1341,9 @@ const lessons = [
     order: 47,
     estimatedMinutes: 7,
     sentences: [
-      ["El arbol esta en el parque.", "The tree is in the park.", "Use estar for location."],
+      ["El árbol está en el parque.", "The tree is in the park.", "Use estar for location."],
       ["La flor es roja.", "The flower is red.", "Use ser for a normal description."],
-      ["El perro esta en casa.", "The dog is at home.", "Use estar for location."],
+      ["El perro está en casa.", "The dog is at home.", "Use estar for location."],
       ["El parque es bonito.", "The park is pretty.", "Use ser for a general description."]
     ]
   },
@@ -1362,7 +1362,7 @@ const lessons = [
     sentences: [
       ["Hace sol en el parque.", "It is sunny in the park.", "Hace sol describes sunny weather."],
       ["Llueve en la ciudad.", "It rains in the city.", "Llueve means it rains."],
-      ["El agua esta fria.", "The water is cold.", "Use estar for current temperature."],
+      ["El agua está fría.", "The water is cold.", "Use estar for current temperature."],
       ["Estoy en la playa.", "I am at the beach.", "Use estar for where you are."]
     ]
   }
@@ -1556,9 +1556,9 @@ const exercises = [
     type: ExerciseType.MULTIPLE_CHOICE,
     prompt: "Tiny word meaning.",
     instruction: "Choose the meaning.",
-    questionText: "tu",
+    questionText: "tú",
     answerJson: { correct: "you", accepted: ["you"] },
-    explanation: "Tu means you, when speaking to one person informally.",
+    explanation: "Tú means you, when speaking to one person informally.",
     difficulty: 1,
     order: 2,
     xpReward: 8,
@@ -1695,16 +1695,16 @@ const exercises = [
     topicSlug: "absolute-basics",
     type: ExerciseType.CLOZE,
     prompt: "State or location.",
-    instruction: "Use esta for she is located.",
+    instruction: "Use está for she is located.",
     questionText: "Ella ____ en casa.",
-    answerJson: { correct: "esta", accepted: ["esta", "está"] },
-    explanation: "Ella esta en casa uses esta because it tells location.",
+    answerJson: { correct: "está", accepted: ["esta", "está"] },
+    explanation: "Ella está en casa uses está because it tells location.",
     difficulty: 1,
     order: 2,
     xpReward: 10,
     imageKey: "places-around-town:7",
     options: [
-      ["esta", "esta", true],
+      ["está", "está", true],
       ["es", "es", false],
       ["soy", "soy", false]
     ]
@@ -1737,14 +1737,14 @@ const exercises = [
     prompt: "Choose the location form.",
     instruction: "Use estar for location.",
     questionText: "Ellos ____ en la biblioteca.",
-    answerJson: { correct: "estan", accepted: ["estan", "están"] },
-    explanation: "Use estar for location. Ellos estan en la biblioteca.",
+    answerJson: { correct: "están", accepted: ["estan", "están"] },
+    explanation: "Use estar for location. Ellos están en la biblioteca.",
     difficulty: 1,
     order: 2,
     xpReward: 12,
     imageKey: "classroom-basics:10",
     options: [
-      ["estan", "estan", true],
+      ["están", "están", true],
       ["son", "son", false],
       ["es", "es", false]
     ]
@@ -1757,14 +1757,14 @@ const exercises = [
     prompt: "Temporary state or identity?",
     instruction: "Choose the best verb.",
     questionText: "Ana ____ cansada hoy.",
-    answerJson: { correct: "esta", accepted: ["esta", "está"] },
-    explanation: "Use estar for temporary states: Ana esta cansada hoy.",
+    answerJson: { correct: "está", accepted: ["esta", "está"] },
+    explanation: "Use estar for temporary states: Ana está cansada hoy.",
     difficulty: 2,
     order: 3,
     xpReward: 14,
     imageKey: "emotions-and-states:3",
     options: [
-      ["esta", "esta", true],
+      ["está", "está", true],
       ["es", "es", false],
       ["soy", "soy", false]
     ]
@@ -1857,7 +1857,7 @@ const exercises = [
     type: ExerciseType.CONJUGATION,
     prompt: "Conjugate hablar.",
     instruction: "Write the present tense form.",
-    questionText: "Yo ____ espanol. (hablar)",
+    questionText: "Yo ____ español. (hablar)",
     answerJson: { correct: "hablo", accepted: ["hablo"] },
     explanation: "For yo, regular -ar verbs use -o: hablar -> hablo.",
     difficulty: 1,
@@ -1877,9 +1877,9 @@ const exercises = [
     type: ExerciseType.CONJUGATION,
     prompt: "Conjugate estudiar.",
     instruction: "Choose the present tense form.",
-    questionText: "Tu ____ mucho. (estudiar)",
+    questionText: "Tú ____ mucho. (estudiar)",
     answerJson: { correct: "estudias", accepted: ["estudias"] },
-    explanation: "For tu, regular -ar verbs use -as: estudiar -> estudias.",
+    explanation: "For tú, regular -ar verbs use -as: estudiar -> estudias.",
     difficulty: 1,
     order: 2,
     xpReward: 12,
@@ -1934,14 +1934,14 @@ const exercises = [
     prompt: "Match verb and adjective.",
     instruction: "Choose the form that fits ella.",
     questionText: "Ella ____ cansada.",
-    answerJson: { correct: "esta", accepted: ["esta", "está"] },
-    explanation: "Ella uses esta, and cansada agrees with ella.",
+    answerJson: { correct: "está", accepted: ["esta", "está"] },
+    explanation: "Ella uses está, and cansada agrees with ella.",
     difficulty: 1,
     order: 2,
     xpReward: 12,
     imageKey: "emotions-and-states:3",
     options: [
-      ["esta", "esta", true],
+      ["está", "está", true],
       ["estoy", "estoy", false],
       ["son", "son", false]
     ]
@@ -1962,7 +1962,7 @@ const exercises = [
     imageKey: "emotions-and-states:4",
     options: [
       ["estamos", "estamos", true],
-      ["estan", "estan", false],
+      ["están", "están", false],
       ["somos", "somos", false]
     ]
   },
@@ -1972,10 +1972,10 @@ const exercises = [
     topicSlug: "ordering-food",
     type: ExerciseType.MULTIPLE_CHOICE,
     prompt: "Order politely.",
-    instruction: "Choose the article for cafe.",
-    questionText: "Quiero ____ cafe, por favor.",
+    instruction: "Choose the article for café.",
+    questionText: "Quiero ____ café, por favor.",
     answerJson: { correct: "un", accepted: ["un"] },
-    explanation: "Cafe is masculine singular, so use un: Quiero un cafe.",
+    explanation: "Café is masculine singular, so use un: Quiero un café.",
     difficulty: 1,
     order: 1,
     xpReward: 12,
@@ -1993,7 +1993,7 @@ const exercises = [
     type: ExerciseType.ARTICLE_MATCH,
     prompt: "Choose the article.",
     instruction: "Pick the article that matches sopa.",
-    questionText: "____ sopa esta caliente.",
+    questionText: "____ sopa está caliente.",
     answerJson: { correct: "la", accepted: ["la"] },
     explanation: "Sopa is feminine singular, so it uses la.",
     difficulty: 1,
@@ -2035,17 +2035,17 @@ const exercises = [
     type: ExerciseType.MULTIPLE_CHOICE,
     prompt: "Ask for a location.",
     instruction: "Choose the question word.",
-    questionText: "¿____ esta el hotel?",
-    answerJson: { correct: "Donde", accepted: ["donde", "dónde", "Donde", "Dónde"] },
-    explanation: "Use donde to ask where something is: ¿Donde esta el hotel?",
+    questionText: "¿____ está el hotel?",
+    answerJson: { correct: "Dónde", accepted: ["donde", "dónde", "Donde", "Dónde"] },
+    explanation: "Use dónde to ask where something is: ¿Dónde está el hotel?",
     difficulty: 1,
     order: 1,
     xpReward: 12,
     imageKey: "travel-and-survival:2",
     options: [
-      ["Donde", "Donde", true],
-      ["Cuando", "Cuando", false],
-      ["Quien", "Quien", false]
+      ["Dónde", "Dónde", true],
+      ["Cuándo", "Cuándo", false],
+      ["Quién", "Quién", false]
     ]
   },
   {
@@ -2055,15 +2055,15 @@ const exercises = [
     type: ExerciseType.CLOZE,
     prompt: "Use location with estar.",
     instruction: "Choose the correct verb.",
-    questionText: "La estacion ____ cerca.",
-    answerJson: { correct: "esta", accepted: ["esta", "está"] },
-    explanation: "Use estar for location: La estacion esta cerca.",
+    questionText: "La estación ____ cerca.",
+    answerJson: { correct: "está", accepted: ["esta", "está"] },
+    explanation: "Use estar for location: La estación está cerca.",
     difficulty: 1,
     order: 2,
     xpReward: 12,
     imageKey: "city-transport:7",
     options: [
-      ["esta", "esta", true],
+      ["está", "está", true],
       ["es", "es", false],
       ["son", "son", false]
     ]
@@ -2097,14 +2097,14 @@ const exercises = [
     prompt: "Put the object in place.",
     instruction: "Use estar for object location.",
     questionText: "El libro ____ en la mesa.",
-    answerJson: { correct: "esta", accepted: ["esta", "está"] },
-    explanation: "Use estar for location: El libro esta en la mesa.",
+    answerJson: { correct: "está", accepted: ["esta", "está"] },
+    explanation: "Use estar for location: El libro está en la mesa.",
     difficulty: 1,
     order: 1,
     xpReward: 12,
     imageKey: "grammar-scenes:13",
     options: [
-      ["esta", "esta", true],
+      ["está", "está", true],
       ["es", "es", false],
       ["soy", "soy", false]
     ]
@@ -2117,15 +2117,15 @@ const exercises = [
     prompt: "Choose the plural location verb.",
     instruction: "Las llaves is plural.",
     questionText: "Las llaves ____ en la cocina.",
-    answerJson: { correct: "estan", accepted: ["estan", "están"] },
-    explanation: "Las llaves is plural, so use estan.",
+    answerJson: { correct: "están", accepted: ["estan", "están"] },
+    explanation: "Las llaves is plural, so use están.",
     difficulty: 1,
     order: 2,
     xpReward: 12,
     imageKey: "home-objects:8",
     options: [
-      ["estan", "estan", true],
-      ["esta", "esta", false],
+      ["están", "están", true],
+      ["está", "está", false],
       ["son", "son", false]
     ]
   },
@@ -2137,8 +2137,8 @@ const exercises = [
     prompt: "Build the location sentence.",
     instruction: "Put the words in order.",
     questionText: "The backpack is on the chair.",
-    answerJson: { correctWords: ["La", "mochila", "esta", "en", "la", "silla", "."] },
-    explanation: "Use estar for location: La mochila esta en la silla.",
+    answerJson: { correctWords: ["La", "mochila", "está", "en", "la", "silla", "."] },
+    explanation: "Use estar for location: La mochila está en la silla.",
     difficulty: 2,
     order: 3,
     xpReward: 16,
@@ -2146,7 +2146,7 @@ const exercises = [
     options: [
       ["La", "La", false],
       ["mochila", "mochila", false],
-      ["esta", "esta", false],
+      ["está", "está", false],
       ["en", "en", false],
       ["la", "la", false],
       ["silla", "silla", false],
@@ -2160,7 +2160,7 @@ const exercises = [
     type: ExerciseType.ARTICLE_MATCH,
     prompt: "Choose the plural article.",
     instruction: "Match the plural noun.",
-    questionText: "____ estudiantes estan en clase.",
+    questionText: "____ estudiantes están en clase.",
     answerJson: { correct: "Los", accepted: ["los", "Los"] },
     explanation: "Use los for masculine or mixed plural nouns.",
     difficulty: 1,
@@ -2223,16 +2223,16 @@ const exercises = [
     prompt: "Choose the question word.",
     instruction: "Ask what someone wants.",
     questionText: "¿____ quieres?",
-    answerJson: { correct: "Que", accepted: ["que", "qué", "Que", "Qué"] },
-    explanation: "Use que to ask what: ¿Que quieres?",
+    answerJson: { correct: "Qué", accepted: ["que", "qué", "Que", "Qué"] },
+    explanation: "Use qué to ask what: ¿Qué quieres?",
     difficulty: 1,
     order: 1,
     xpReward: 12,
     imageKey: "grammar-scenes:11",
     options: [
-      ["Que", "Que", true],
-      ["Donde", "Donde", false],
-      ["Quien", "Quien", false]
+      ["Qué", "Qué", true],
+      ["Dónde", "Dónde", false],
+      ["Quién", "Quién", false]
     ]
   },
   {
@@ -2243,16 +2243,16 @@ const exercises = [
     prompt: "Ask the price.",
     instruction: "Choose the price question word.",
     questionText: "¿____ cuesta?",
-    answerJson: { correct: "Cuanto", accepted: ["cuanto", "cuánto", "Cuanto", "Cuánto"] },
-    explanation: "Use cuanto to ask how much something costs.",
+    answerJson: { correct: "Cuánto", accepted: ["cuanto", "cuánto", "Cuanto", "Cuánto"] },
+    explanation: "Use cuánto to ask how much something costs.",
     difficulty: 1,
     order: 2,
     xpReward: 12,
     imageKey: "travel-and-survival:19",
     options: [
-      ["Cuanto", "Cuanto", true],
-      ["Cuando", "Cuando", false],
-      ["Quien", "Quien", false]
+      ["Cuánto", "Cuánto", true],
+      ["Cuándo", "Cuándo", false],
+      ["Quién", "Quién", false]
     ]
   },
   {
@@ -2263,17 +2263,17 @@ const exercises = [
     prompt: "Build the question.",
     instruction: "Put the words in order.",
     questionText: "Where is the station?",
-    answerJson: { correctWords: ["Donde", "esta", "la", "estacion", "?"] },
-    explanation: "Use donde with estar for location questions.",
+    answerJson: { correctWords: ["Dónde", "está", "la", "estación", "?"] },
+    explanation: "Use dónde with estar for location questions.",
     difficulty: 2,
     order: 3,
     xpReward: 16,
     imageKey: "travel-and-survival:22",
     options: [
-      ["Donde", "Donde", false],
-      ["esta", "esta", false],
+      ["Dónde", "Dónde", false],
+      ["está", "está", false],
       ["la", "la", false],
-      ["estacion", "estacion", false],
+      ["estación", "estación", false],
       ["?", "?", false]
     ]
   },
@@ -2314,7 +2314,7 @@ const exercises = [
     options: [
       ["No", "No", true],
       ["Soy", "Soy", false],
-      ["Esta", "Esta", false]
+      ["Está", "Está", false]
     ]
   },
   {
@@ -2441,14 +2441,14 @@ const exercises = [
     prompt: "Build the action sentence.",
     instruction: "Put the words in order.",
     questionText: "You speak with a friend.",
-    answerJson: { correctWords: ["Tu", "hablas", "con", "un", "amigo", "."] },
-    explanation: "Tu uses hablas for regular -ar verbs.",
+    answerJson: { correctWords: ["Tú", "hablas", "con", "un", "amigo", "."] },
+    explanation: "Tú uses hablas for regular -ar verbs.",
     difficulty: 2,
     order: 3,
     xpReward: 16,
     imageKey: "daily-actions:1",
     options: [
-      ["Tu", "Tu", false],
+      ["Tú", "Tú", false],
       ["hablas", "hablas", false],
       ["con", "con", false],
       ["un", "un", false],
@@ -2483,16 +2483,16 @@ const exercises = [
     type: ExerciseType.CLOZE,
     prompt: "Describe the fruit.",
     instruction: "Use ser for a normal trait.",
-    questionText: "El platano ____ amarillo.",
+    questionText: "El plátano ____ amarillo.",
     answerJson: { correct: "es", accepted: ["es"] },
-    explanation: "Use ser for a normal characteristic: El platano es amarillo.",
+    explanation: "Use ser for a normal characteristic: El plátano es amarillo.",
     difficulty: 1,
     order: 2,
     xpReward: 12,
     imageKey: "fruit-and-produce:2",
     options: [
       ["es", "es", true],
-      ["esta", "esta", false],
+      ["está", "está", false],
       ["soy", "soy", false]
     ]
   },
@@ -2527,15 +2527,15 @@ const exercises = [
     prompt: "Build the order.",
     instruction: "Put the words in order.",
     questionText: "A coffee, please.",
-    answerJson: { correctWords: ["Un", "cafe", "por", "favor", "."] },
-    explanation: "A short polite order is: Un cafe, por favor.",
+    answerJson: { correctWords: ["Un", "café", "por", "favor", "."] },
+    explanation: "A short polite order is: Un café, por favor.",
     difficulty: 1,
     order: 1,
     xpReward: 14,
     imageKey: "food-and-ordering:2",
     options: [
       ["Un", "Un", false],
-      ["cafe", "cafe", false],
+      ["café", "café", false],
       ["por", "por", false],
       ["favor", "favor", false],
       [".", ".", false]
@@ -2548,9 +2548,9 @@ const exercises = [
     type: ExerciseType.ERROR_CORRECTION,
     prompt: "Fix the sentence.",
     instruction: "Use no before entiendo.",
-    questionText: "Entiendo no el menu.",
-    answerJson: { correct: "No entiendo el menu.", accepted: ["no entiendo el menu", "no entiendo el menu."] },
-    explanation: "No goes before the verb: No entiendo el menu.",
+    questionText: "Entiendo no el menú.",
+    answerJson: { correct: "No entiendo el menú.", accepted: ["no entiendo el menu", "no entiendo el menu."] },
+    explanation: "No goes before the verb: No entiendo el menú.",
     difficulty: 2,
     order: 2,
     xpReward: 16,
@@ -2563,18 +2563,18 @@ const exercises = [
     topicSlug: "ordering-food",
     type: ExerciseType.CLOZE,
     prompt: "Ask the price.",
-    instruction: "Use cuanto for price.",
+    instruction: "Use cuánto for price.",
     questionText: "¿____ cuesta el postre?",
-    answerJson: { correct: "Cuanto", accepted: ["cuanto", "cuánto", "Cuanto", "Cuánto"] },
-    explanation: "Use cuanto to ask how much something costs.",
+    answerJson: { correct: "Cuánto", accepted: ["cuanto", "cuánto", "Cuanto", "Cuánto"] },
+    explanation: "Use cuánto to ask how much something costs.",
     difficulty: 1,
     order: 3,
     xpReward: 12,
     imageKey: "food-and-ordering:15",
     options: [
-      ["Cuanto", "Cuanto", true],
-      ["Donde", "Donde", false],
-      ["Quien", "Quien", false]
+      ["Cuánto", "Cuánto", true],
+      ["Dónde", "Dónde", false],
+      ["Quién", "Quién", false]
     ]
   },
   {
@@ -2605,8 +2605,8 @@ const exercises = [
     prompt: "Mixed checkpoint.",
     instruction: "Build the order.",
     questionText: "I want a coffee, please.",
-    answerJson: { correctWords: ["Quiero", "un", "cafe", "por", "favor", "."] },
-    explanation: "Quiero un cafe, por favor is a complete polite order.",
+    answerJson: { correctWords: ["Quiero", "un", "café", "por", "favor", "."] },
+    explanation: "Quiero un café, por favor is a complete polite order.",
     difficulty: 2,
     order: 2,
     xpReward: 18,
@@ -2614,7 +2614,7 @@ const exercises = [
     options: [
       ["Quiero", "Quiero", false],
       ["un", "un", false],
-      ["cafe", "cafe", false],
+      ["café", "café", false],
       ["por", "por", false],
       ["favor", "favor", false],
       [".", ".", false]
@@ -2627,17 +2627,17 @@ const exercises = [
     type: ExerciseType.CLOZE,
     prompt: "Mixed checkpoint.",
     instruction: "Ask for the station.",
-    questionText: "¿____ esta la estacion?",
-    answerJson: { correct: "Donde", accepted: ["donde", "dónde", "Donde", "Dónde"] },
-    explanation: "Use donde to ask where a place is.",
+    questionText: "¿____ está la estación?",
+    answerJson: { correct: "Dónde", accepted: ["donde", "dónde", "Donde", "Dónde"] },
+    explanation: "Use dónde to ask where a place is.",
     difficulty: 2,
     order: 3,
     xpReward: 18,
     imageKey: "city-transport:7",
     options: [
-      ["Donde", "Donde", true],
-      ["Cuanto", "Cuanto", false],
-      ["Que", "Que", false]
+      ["Dónde", "Dónde", true],
+      ["Cuánto", "Cuánto", false],
+      ["Qué", "Qué", false]
     ]
   },
   {
@@ -2648,7 +2648,7 @@ const exercises = [
     prompt: "Mixed checkpoint.",
     instruction: "Build a repair phrase.",
     questionText: "I do not understand, more slowly please.",
-    answerJson: { correctWords: ["No", "entiendo", "mas", "despacio", "por", "favor", "."] },
+    answerJson: { correctWords: ["No", "entiendo", "más", "despacio", "por", "favor", "."] },
     explanation: "This phrase helps you slow down real conversations.",
     difficulty: 2,
     order: 4,
@@ -2657,7 +2657,7 @@ const exercises = [
     options: [
       ["No", "No", false],
       ["entiendo", "entiendo", false],
-      ["mas", "mas", false],
+      ["más", "más", false],
       ["despacio", "despacio", false],
       ["por", "por", false],
       ["favor", "favor", false],
