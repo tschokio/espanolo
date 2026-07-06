@@ -7,6 +7,14 @@ The main learning flow now has two equal pillars:
 - `Path`: a guided A1 map with category nodes, teach/example sections, vocabulary previews, active recall, and checkpoint quizzes.
 - `Words`: grouped vocabulary decks with image cards, recognition practice, typing recall, XP, and spaced review scheduling.
 
+## Product Roadmap
+
+The long-term curriculum and implementation plan live in `docs/`:
+
+- [Spanish Learning Roadmap](docs/spanish-learning-roadmap.md): learner journey from near-zero Spanish to advanced maintenance.
+- [Curriculum Map](docs/curriculum-map.md): CEFR units, lesson standards, checkpoints, and content scope.
+- [Implementation Plan](docs/implementation-plan.md): milestones and the next concrete build steps.
+
 ## Stack
 
 - Node 20
@@ -83,6 +91,8 @@ Vocabulary cards include a listen button that streams real external pronunciatio
 See [asset.md](asset.md) for detailed 4x4 and 5x5 image-sheet prompts. The app does not generate images itself; those prompts are intended for external AI image generation and later import.
 
 See [asset-vocabulary.md](asset-vocabulary.md) for the next batch of vocabulary-focused image prompts.
+
+See [asset-roadmap.md](asset-roadmap.md) for future A2/B1 asset needs and the image-to-question alignment rules.
 
 Generated WebP sheets live in `images/` and are served from `/images/...`. Lessons, words, and exercises reference cropped cells with `imageKey` values in this format:
 
