@@ -1221,7 +1221,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Checkpoint",
     situation: "mixed review",
-    imageKey: "rewards-and-progress:15",
+    imageKey: "grammar-scenes:1",
     topicSlug: "question-words",
     vocabularySlugs: ["classroom-basics", "daily-actions", "food-and-ordering", "travel-and-survival", "useful-phrases"],
     order: 41,
@@ -2590,7 +2590,7 @@ const exercises = [
     difficulty: 2,
     order: 1,
     xpReward: 18,
-    imageKey: "rewards-and-progress:15",
+    imageKey: "grammar-scenes:1",
     options: [
       ["soy / estoy", "soy / estoy", true],
       ["estoy / soy", "estoy / soy", false],

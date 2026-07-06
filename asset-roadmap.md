@@ -240,6 +240,213 @@ Cells:
 ...
 ```
 
+## Copy-Paste Prompt Pack
+
+Use these prompts directly when generating the next asset sheets.
+
+### Prompt: A2 Daily Routine
+
+```text
+Create a 4x4 educational Spanish learning image sheet.
+Style: clean, bright, consistent app illustration, simple background, readable at small card size, no text labels inside cells.
+Subject: A2 daily routine, reflexive verbs, time, and frequency.
+Each cell should show one clear concept only.
+Avoid surreal objects, decorative symbols, random reward icons, text labels, flags, or ambiguous scenes.
+Output as a square WebP-compatible image sheet.
+
+Cells:
+1. Person waking up in bed
+2. Person getting out of bed
+3. Person showering
+4. Person brushing teeth
+5. Person getting dressed
+6. Person eating breakfast
+7. Person going to work
+8. Person studying at a desk
+9. Person cooking dinner
+10. Person cleaning a room
+11. Person going to bed
+12. Person reading at night
+13. Clock showing morning
+14. Clock showing afternoon
+15. Weekly calendar
+16. Person tired after work
+```
+
+### Prompt: A2 Irregular Verbs
+
+```text
+Create a 4x4 educational Spanish learning image sheet.
+Style: clean, bright, consistent app illustration, simple background, readable at small card size, no text labels inside cells.
+Subject: A2 high-frequency irregular Spanish verbs shown as concrete actions.
+Each cell should show one clear concept only.
+Avoid surreal objects, decorative symbols, random reward icons, text labels, flags, or ambiguous scenes.
+Output as a square WebP-compatible image sheet.
+
+Cells:
+1. Person going to a store
+2. Person coming home
+3. Person leaving a house
+4. Person putting an object on a table
+5. Person bringing a bag
+6. Person saying something in conversation
+7. Person doing homework
+8. Person making food
+9. Person seeing a street sign
+10. Person hearing music with headphones
+11. Person knowing a fact with a lightbulb-style thought
+12. Person meeting another person
+13. Person able to open a door
+14. Person wanting a ticket
+15. Person having to work
+16. Person giving an item to someone
+```
+
+### Prompt: A2 Preferences and Hobbies
+
+```text
+Create a 4x4 educational Spanish learning image sheet.
+Style: clean, bright, consistent app illustration, simple background, readable at small card size, no text labels inside cells.
+Subject: A2 preferences, hobbies, likes, dislikes, and simple opinions.
+Each cell should show one clear concept only.
+Avoid surreal objects, decorative symbols, random reward icons, text labels, flags, or ambiguous scenes.
+Output as a square WebP-compatible image sheet.
+
+Cells:
+1. Person enjoying music
+2. Person watching a movie
+3. Person playing soccer
+4. Person reading a book
+5. Person cooking happily
+6. Person enjoying travel with suitcase
+7. Person enjoying coffee
+8. Person annoyed by rain
+9. Person choosing tea over coffee
+10. Person choosing the beach
+11. Favorite restaurant table
+12. Person choosing a favorite color
+13. Hobby class with teacher and learner
+14. Weekend activity outdoors
+15. Bored person
+16. Excited person
+```
+
+### Prompt: A2 Object Pronouns and Shopping
+
+```text
+Create a 4x4 educational Spanish learning image sheet.
+Style: clean, bright, consistent app illustration, simple background, readable at small card size, no text labels inside cells.
+Subject: A2 object pronouns, shopping, giving, receiving, seeing, and asking.
+Each cell should show one clear concept only.
+Avoid surreal objects, decorative symbols, random reward icons, text labels, flags, or ambiguous scenes.
+Output as a square WebP-compatible image sheet.
+
+Cells:
+1. Buying bread
+2. Buying apples
+3. Giving a book to someone
+4. Giving keys to someone
+5. Showing a map
+6. Seeing a movie
+7. Reading a menu
+8. Calling a friend
+9. Writing a message
+10. Paying a bill
+11. Carrying shopping bags
+12. Returning an item at a store
+13. Asking for help
+14. Offering water
+15. Sending a photo
+16. Receiving a package
+```
+
+### Prompt: A2 Past Events
+
+```text
+Create a 4x4 educational Spanish learning image sheet.
+Style: clean, bright, consistent app illustration, simple background, readable at small card size, no text labels inside cells.
+Subject: A2 preterite and imperfect story scenes, past events, and background situations.
+Each cell should show one clear concept only.
+Avoid surreal objects, decorative symbols, random reward icons, text labels, flags, or ambiguous scenes.
+Output as a square WebP-compatible image sheet.
+
+Cells:
+1. Yesterday at a cafe
+2. Last week trip with suitcase
+3. Childhood home memory
+4. Old school memory
+5. Person was tired
+6. Person went to a train station
+7. Person bought food
+8. Person met a friend
+9. Rain during a trip
+10. Lost passport
+11. Found keys
+12. Called a doctor
+13. Took a bus
+14. Worked yesterday
+15. Studied last night
+16. Walked in a park
+```
+
+### Prompt: B1 Conversation and Opinion
+
+```text
+Create a 4x4 educational Spanish learning image sheet.
+Style: clean, bright, consistent app illustration, simple background, readable at small card size, no text labels inside cells.
+Subject: B1 Spanish conversation, opinions, explanations, disagreement, and planning.
+Each cell should show one clear concept only.
+Avoid surreal objects, decorative symbols, random reward icons, text labels, flags, or ambiguous scenes.
+Output as a square WebP-compatible image sheet.
+
+Cells:
+1. Two people discussing plans
+2. Person explaining a problem
+3. Person giving an opinion
+4. Friendly disagreement
+5. Work meeting
+6. Phone call
+7. Asking for clarification
+8. Apologizing
+9. Making a recommendation
+10. Comparing two options
+11. Reading news
+12. Writing an email
+13. Presenting an idea
+14. Planning a trip
+15. Interview conversation
+16. Group discussion
+```
+
+### Prompt: Reading and Listening Lab
+
+```text
+Create a 4x4 educational Spanish learning image sheet.
+Style: clean, bright, consistent app illustration, simple background, readable at small card size, no text labels inside cells.
+Subject: Spanish reading practice, listening practice, transcripts, vocabulary extraction, and writing correction.
+Each cell should show one clear concept only.
+Avoid surreal objects, decorative symbols, random reward icons, text labels, flags, or ambiguous scenes.
+Output as a square WebP-compatible image sheet.
+
+Cells:
+1. Reading a short article
+2. Listening with headphones
+3. Transcript document
+4. Highlighted vocabulary
+5. Comprehension question
+6. Notebook summary
+7. Audio waveform interface
+8. Podcast scene
+9. News article
+10. Story page
+11. Dictionary lookup
+12. Saved word list
+13. Corrected writing
+14. Speaking practice
+15. Shadowing audio
+16. Review notes
+```
+
 ## Implementation Requirement
 
 Whenever new assets are imported:
@@ -248,5 +455,4 @@ Whenever new assets are imported:
 - Register the sheet in `imageSheets` in `src/App.jsx`.
 - Add or update asset prompt metadata in seed data if needed.
 - Map lesson, word, and exercise `imageKey` values intentionally.
-- Run a visual audit of affected lessons/quizzes before committing.
-
+- Run `npm run assets:audit` before committing.

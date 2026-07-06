@@ -103,3 +103,11 @@ sheet-slug:cell-number
 Examples: `food-and-ordering:17`, `travel-and-survival:8`, `emotions-and-states:3`.
 
 Current image sheets include classroom, daily actions, emotions, food, grammar scenes, places, rewards, travel, fruit/produce, clothing, home objects, city transport, weather/time, people/family, body/health, numbers/colors, nature/animals, and mini-game UI rewards.
+
+Run the asset audit before committing curriculum or quiz image changes:
+
+```bash
+npm run assets:audit
+```
+
+The audit validates referenced `imageKey` values and warns when non-content artwork appears in active exercises.

@@ -35,7 +35,7 @@ Tasks:
 - Replace generic or confusing images in active quiz cards.
 - Use reward imagery only for completion, progress, badges, and challenge summaries.
 - Create the next asset backlog from `asset-roadmap.md`.
-- Add an admin or script-based image audit that lists missing and reused `imageKey` values.
+- Run `npm run assets:audit` before committing quiz, lesson, or asset mapping changes.
 
 Deliverable: no active question shows a strange or unrelated picture.
 
@@ -222,6 +222,7 @@ For content changes:
 
 - Lessons have goals, examples, vocabulary, exercises, and review summaries.
 - Images match the actual prompt, word, or scenario.
+- `npm run assets:audit` passes when image mappings changed.
 - Exercises can be completed without seeing answers first.
 - Mistakes flow into Review.
 - Seed data runs cleanly.

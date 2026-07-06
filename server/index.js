@@ -569,10 +569,161 @@ const publicExercise = (exercise) => ({
 const isLessonReviewDue = (progress, now = new Date()) =>
   Boolean(progress?.completedAt && progress?.reviewDueAt && new Date(progress.reviewDueAt).getTime() <= now.getTime());
 
+const curriculumUnits = [
+  {
+    slug: "a1-0-absolute-start",
+    label: "A1.0",
+    title: "Absolute Start",
+    phase: "A1 Foundation",
+    description: "Tiny words, first identity sentences, and the first ser/estar split.",
+    order: 1,
+    startOrder: 0,
+    endOrder: 4
+  },
+  {
+    slug: "a1-1-core-grammar",
+    label: "A1.1",
+    title: "Core Grammar",
+    phase: "A1 Foundation",
+    description: "Ser, estar, articles, first verbs, and feelings.",
+    order: 2,
+    startOrder: 5,
+    endOrder: 8
+  },
+  {
+    slug: "a1-2-survival-spanish",
+    label: "A1.2",
+    title: "Survival Spanish",
+    phase: "A1 Practical",
+    description: "Food, travel, location, questions, negation, and useful needs.",
+    order: 3,
+    startOrder: 9,
+    endOrder: 15
+  },
+  {
+    slug: "a1-3-daily-life",
+    label: "A1.3",
+    title: "Daily Life",
+    phase: "A1 Practical",
+    description: "Daily actions, market phrases, restaurant conversation, and repair phrases.",
+    order: 4,
+    startOrder: 16,
+    endOrder: 20
+  },
+  {
+    slug: "a1-4-building-blocks",
+    label: "A1.4",
+    title: "Building Blocks",
+    phase: "A1 Precision",
+    description: "Identity, articles, location frames, and simple negation one pattern at a time.",
+    order: 5,
+    startOrder: 21,
+    endOrder: 28
+  },
+  {
+    slug: "a1-5-frames-and-checkpoint",
+    label: "A1.5",
+    title: "Frames and Checkpoint",
+    phase: "A1 Mastery",
+    description: "Ordering, questions, verb forms, feelings, location, plurals, and the A1 checkpoint.",
+    order: 6,
+    startOrder: 29,
+    endOrder: 41
+  },
+  {
+    slug: "a1-6-practical-world",
+    label: "A1.6",
+    title: "Practical World",
+    phase: "A1 Expansion",
+    description: "Health, body states, numbers, colors, nature, and weather.",
+    order: 7,
+    startOrder: 42,
+    endOrder: 48
+  },
+  {
+    slug: "a2-1-daily-routine",
+    label: "A2.1",
+    title: "Daily Routine and Time",
+    phase: "Planned A2",
+    description: "Routine, reflexive verbs, time, frequency, and simple schedule talk.",
+    order: 8,
+    planned: true
+  },
+  {
+    slug: "a2-2-verb-frames",
+    label: "A2.2",
+    title: "Irregular Verbs and Useful Frames",
+    phase: "Planned A2",
+    description: "Ir, hacer, decir, venir, poder, querer, tener que, and ir a.",
+    order: 9,
+    planned: true
+  },
+  {
+    slug: "a2-3-preferences-and-past",
+    label: "A2.3",
+    title: "Preferences and Past Events",
+    phase: "Planned A2",
+    description: "Gustar, object pronouns, preterite, imperfect, and practical scenarios.",
+    order: 10,
+    planned: true
+  },
+  {
+    slug: "b1-bridge",
+    label: "B1",
+    title: "Intermediate Bridge",
+    phase: "Planned B1",
+    description: "Past tense control, opinions, reading, listening, and guided production.",
+    order: 11,
+    planned: true
+  }
+];
+
+function lessonUnitForOrder(order) {
+  return curriculumUnits.find((unit) => !unit.planned && order >= unit.startOrder && order <= unit.endOrder) || curriculumUnits[0];
+}
+
+function publicCurriculumUnit(unit, lessons = []) {
+  const lessonCount = lessons.length;
+  const completedCount = lessons.filter((lesson) => lesson.progress >= 100 && !lesson.reviewDue).length;
+  const dueCount = lessons.filter((lesson) => lesson.reviewDue).length;
+  const inProgressCount = lessons.filter((lesson) => lesson.progress > 0 && lesson.progress < 100).length;
+  const averageProgress = lessonCount
+    ? Math.round(lessons.reduce((sum, lesson) => sum + lesson.progress, 0) / lessonCount)
+    : 0;
+
+  return {
+    slug: unit.slug,
+    label: unit.label,
+    title: unit.title,
+    phase: unit.phase,
+    description: unit.description,
+    order: unit.order,
+    planned: Boolean(unit.planned),
+    lessonCount,
+    completedCount,
+    dueCount,
+    inProgressCount,
+    averageProgress,
+    status: unit.planned
+      ? "planned"
+      : lessonCount && completedCount === lessonCount
+        ? "complete"
+        : dueCount
+          ? "review_due"
+          : inProgressCount
+            ? "in_progress"
+            : averageProgress > 0
+              ? "started"
+              : "not_started"
+  };
+}
+
 const publicLessonSummary = (lesson) => {
   const progress = lesson.progress?.[0] || null;
   const reviewDue = isLessonReviewDue(progress);
   const mastery = progress?.mastery || 0;
+  const unit = lessonUnitForOrder(lesson.order);
+  const isCheckpoint = /checkpoint/i.test(`${lesson.theme} ${lesson.title}`);
   const status = reviewDue
     ? "review_due"
     : progress?.completedAt
@@ -591,6 +742,15 @@ const publicLessonSummary = (lesson) => {
     situation: lesson.situation,
     imageKey: lesson.imageKey,
     estimatedMinutes: lesson.estimatedMinutes,
+    unit: {
+      slug: unit.slug,
+      label: unit.label,
+      title: unit.title,
+      phase: unit.phase,
+      description: unit.description,
+      order: unit.order
+    },
+    isCheckpoint,
     progress: mastery,
     completedAt: progress?.completedAt || null,
     reviewDueAt: progress?.reviewDueAt || null,
@@ -1485,6 +1645,13 @@ async function buildDashboard(userId) {
 
   const badgeCatalog = await prisma.badge.findMany({ orderBy: { title: "asc" } });
   const earnedBadgeIds = new Set(user.badges.map((userBadge) => userBadge.badgeId));
+  const lessonSummaries = lessons.map(publicLessonSummary);
+  const curriculumProgress = curriculumUnits.map((unit) =>
+    publicCurriculumUnit(
+      unit,
+      lessonSummaries.filter((lesson) => lesson.unit?.slug === unit.slug)
+    )
+  );
 
   return {
     user: publicUser(user),
@@ -1504,9 +1671,10 @@ async function buildDashboard(userId) {
     },
     dailyPlan: buildDailyPlan({ lessons, review }),
     review,
+    curriculumUnits: curriculumProgress,
     recentAchievement: recentAchievementFromLessons(lessons),
     currentLesson: currentLesson ? publicLessonSummary(currentLesson) : null,
-    lessons: lessons.map(publicLessonSummary),
+    lessons: lessonSummaries,
     practiceExercise: practiceExercise ? publicExercise(practiceExercise) : null,
     challenge: activeChallenge
       ? {
@@ -1712,11 +1880,14 @@ app.get(
     });
 
     if (!lesson) return res.status(404).json({ error: "Lesson not found" });
+    const summary = publicLessonSummary(lesson);
 
     res.json({
       lesson: {
         ...lesson,
         progress: lesson.progress[0]?.mastery || 0,
+        unit: summary.unit,
+        isCheckpoint: summary.isCheckpoint,
         outcomes: Array.isArray(lesson.outcomesJson) ? lesson.outcomesJson : [],
         conceptKeys: Array.isArray(lesson.conceptKeys) ? lesson.conceptKeys : [],
         reviewSummary: lesson.reviewSummary || "",

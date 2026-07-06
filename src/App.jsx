@@ -933,7 +933,17 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
     ? Math.round(dashboard.lessons.reduce((sum, item) => sum + item.progress, 0) / dashboard.lessons.length)
     : 0;
   const nextIndex = nextLesson ? orderedLessons.findIndex((lessonItem) => lessonItem.id === nextLesson.id) : -1;
-  const upcomingLessons = activeLessons;
+  const curriculumUnits = dashboard.curriculumUnits || [];
+  const currentUnit = nextLesson?.unit
+    ? curriculumUnits.find((unit) => unit.slug === nextLesson.unit.slug) || nextLesson.unit
+    : curriculumUnits.find((unit) => unit.lessonCount > 0 && unit.status !== "complete");
+  const activeUnitGroups = curriculumUnits
+    .filter((unit) => !unit.planned && unit.lessonCount > 0)
+    .map((unit) => ({
+      ...unit,
+      lessons: orderedLessons.filter((lessonItem) => lessonItem.unit?.slug === unit.slug)
+    }));
+  const plannedUnits = curriculumUnits.filter((unit) => unit.planned);
 
   if (selectedId) {
     return loadingLesson || !lesson ? (
@@ -970,9 +980,9 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
               <ProgressBar value={averageProgress} className="mt-3" color="bg-honey-500" />
             </div>
             <div className="rounded-lg bg-white/10 p-4">
-              <p className="text-xs font-black uppercase tracking-wide text-slate-300">Next step</p>
-              <p className="mt-2 text-2xl font-black">{nextIndex >= 0 ? `${nextIndex + 1}/${orderedLessons.length}` : "0/0"}</p>
-              <p className="mt-1 text-xs font-bold text-slate-300">{dueLessons.length ? `${dueLessons.length} due` : "Path active"}</p>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-300">Current unit</p>
+              <p className="mt-2 text-2xl font-black">{currentUnit?.label || "A1"}</p>
+              <p className="mt-1 text-xs font-bold text-slate-300">{currentUnit?.title || "Path active"}</p>
             </div>
             <div className="rounded-lg bg-white/10 p-4">
               <p className="text-xs font-black uppercase tracking-wide text-slate-300">Completed</p>
@@ -1010,21 +1020,42 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
             </div>
           )}
 
-          {upcomingLessons.length > 0 && (
+          {activeUnitGroups.length > 0 && (
             <div>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-black">Coming up and due</h2>
-                <span className="text-sm font-bold text-slate-500">{upcomingLessons.length} lessons</span>
+                <h2 className="text-lg font-black">Curriculum units</h2>
+                <span className="text-sm font-bold text-slate-500">{activeUnitGroups.length} active units</span>
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {upcomingLessons.map((lessonItem) => (
-                  <PathLessonCard
-                    key={lessonItem.id}
-                    lessonItem={lessonItem}
-                    index={orderedLessons.findIndex((item) => item.id === lessonItem.id)}
-                    state="upcoming"
-                    onSelect={() => setSelectedId(lessonItem.id)}
-                  />
+              <div className="space-y-4">
+                {activeUnitGroups.map((unit) => (
+                  <section key={unit.slug} className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">{unit.label} · {unit.phase}</p>
+                        <h3 className="mt-1 text-xl font-black text-slate-950">{unit.title}</h3>
+                        <p className="mt-1 text-sm font-semibold text-slate-600">{unit.description}</p>
+                      </div>
+                      <div className="grid min-w-[210px] gap-2 text-sm font-black text-slate-700">
+                        <div className="flex items-center justify-between gap-3">
+                          <span>{unit.completedCount}/{unit.lessonCount} complete</span>
+                          <span>{unit.averageProgress}%</span>
+                        </div>
+                        <ProgressBar value={unit.averageProgress} color={unit.status === "complete" ? "bg-emerald-500" : unit.dueCount ? "bg-honey-500" : "bg-lagoon-500"} />
+                        {!!unit.dueCount && <span className="text-xs text-honey-700">{unit.dueCount} due again</span>}
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      {unit.lessons.map((lessonItem) => (
+                        <PathLessonCard
+                          key={lessonItem.id}
+                          lessonItem={lessonItem}
+                          index={orderedLessons.findIndex((item) => item.id === lessonItem.id)}
+                          state={nextLesson?.id === lessonItem.id ? "current" : "upcoming"}
+                          onSelect={() => setSelectedId(lessonItem.id)}
+                        />
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             </div>
@@ -1084,6 +1115,7 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
               <InfoTile label="Due again" value={dueLessons.length} />
               <InfoTile label="Completed" value={completedLessons.length} />
               <InfoTile label="Average mastery" value={`${averageProgress}%`} />
+              <InfoTile label="Current unit" value={currentUnit ? `${currentUnit.label} ${currentUnit.title}` : "A1"} />
             </div>
             {nextLesson && (
               <button
@@ -1108,6 +1140,20 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
               </div>
             </div>
           </Panel>
+
+          {!!plannedUnits.length && (
+            <Panel title="Planned Roadmap" icon={GraduationCap}>
+              <div className="grid gap-3">
+                {plannedUnits.map((unit) => (
+                  <div key={unit.slug} className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3">
+                    <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">{unit.label} · {unit.phase}</p>
+                    <p className="mt-1 font-black text-slate-950">{unit.title}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-600">{unit.description}</p>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
         </aside>
       </div>
     </div>
@@ -1118,7 +1164,8 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
   const done = lessonItem.progress >= 100;
   const due = lessonItem.reviewDue;
   const current = state === "current";
-  const actionLabel = due ? "Review due" : done ? "Review" : lessonItem.progress > 0 ? "Continue" : "Start";
+  const checkpoint = lessonItem.isCheckpoint;
+  const actionLabel = due ? "Review due" : done ? "Review" : checkpoint ? "Checkpoint" : lessonItem.progress > 0 ? "Continue" : "Start";
 
   return (
     <button
@@ -1131,6 +1178,8 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
             ? "border-honey-300 bg-amber-50"
             : done
             ? "border-emerald-200 bg-emerald-50"
+            : checkpoint
+            ? "border-coral-300 bg-coral-50"
             : "border-stone-200 bg-white hover:bg-stone-50"
       )}
     >
@@ -1149,6 +1198,10 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-lagoon-700">{lessonItem.cefrLevel}</span>
+            {lessonItem.unit?.label && (
+              <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-slate-700">{lessonItem.unit.label}</span>
+            )}
+            {checkpoint && <span className="rounded-full bg-coral-500 px-2 py-1 text-xs font-black text-white">Checkpoint</span>}
             <span className="text-xs font-black uppercase tracking-wide text-slate-500">{lessonItem.theme}</span>
           </div>
           <h3 className="mt-2 text-lg font-black leading-tight text-slate-950">{lessonItem.title}</h3>
