@@ -55,6 +55,7 @@ function primaryNavKey(active) {
 const THEME_STORAGE_KEY = "vamos-espanolo-theme";
 
 const imageSheets = {
+  "a2-daily-routine": { src: "/images/a2-daily-routine.png", grid: 4 },
   "body-and-health": { src: "/images/body-and-health.webp", grid: 4 },
   "city-transport": { src: "/images/city-transport.webp", grid: 4 },
   "classroom-basics": { src: "/images/classroom-basics.webp", grid: 4 },
