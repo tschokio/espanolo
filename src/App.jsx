@@ -17,7 +17,6 @@ import {
   NotebookTabs,
   PenTool,
   Plus,
-  Puzzle,
   Rocket,
   Search,
   Settings,
@@ -48,6 +47,7 @@ const navItems = [
 ];
 
 const imageSheets = {
+  "body-and-health": { src: "/images/body-and-health.webp", grid: 4 },
   "city-transport": { src: "/images/city-transport.webp", grid: 4 },
   "classroom-basics": { src: "/images/classroom-basics.webp", grid: 4 },
   "clothing-basics": { src: "/images/clothing-basics.webp", grid: 5 },
@@ -57,6 +57,9 @@ const imageSheets = {
   "fruit-and-produce": { src: "/images/fruit-and-produce.webp", grid: 5 },
   "grammar-scenes": { src: "/images/grammar-scenes.webp", grid: 4 },
   "home-objects": { src: "/images/home-objects.webp", grid: 5 },
+  "minigame-ui-rewards": { src: "/images/minigame-ui-rewards.webp", grid: 4 },
+  "nature-and-animals": { src: "/images/nature-and-animals.webp", grid: 4 },
+  "numbers-and-colors": { src: "/images/numbers-and-colors.webp", grid: 4 },
   "people-and-family": { src: "/images/people-and-family.webp", grid: 4 },
   "places-around-town": { src: "/images/places-around-town.webp", grid: 4 },
   "rewards-and-progress": { src: "/images/rewards-and-progress.webp", grid: 4 },
@@ -69,6 +72,13 @@ const badgeImageKeys = {
   "grammar-guru": "rewards-and-progress:2",
   "challenge-ace": "rewards-and-progress:3",
   "article-scout": "rewards-and-progress:11"
+};
+
+const miniGameImageKeys = {
+  "conjugation-sprint": "minigame-ui-rewards:3",
+  "sentence-builder": "minigame-ui-rewards:10",
+  "article-match": "minigame-ui-rewards:1",
+  "word-catcher": "minigame-ui-rewards:2"
 };
 
 const api = async (path, options = {}) => {
@@ -3180,9 +3190,7 @@ function MiniGameCards({ games, onViewAll }) {
         {games.map((game) => (
           <div key={game.key} className={classNames("rounded-lg border p-4", game.color === "honey" ? "border-amber-200 bg-amber-50" : game.color === "blue" ? "border-sky-200 bg-sky-50" : "border-lagoon-200 bg-lagoon-50")}>
             <div className="flex items-start gap-3">
-              <div className="grid h-14 w-14 place-items-center rounded-full bg-white text-lagoon-600 shadow-sm">
-                {game.key.includes("article") ? <Puzzle /> : game.key.includes("sentence") ? <ListChecks /> : <PenTool />}
-              </div>
+              <AssetImage imageKey={miniGameImageKeys[game.key] || "minigame-ui-rewards:9"} alt={game.title} className="h-14 w-14 shrink-0 rounded-full" />
               <div>
                 <h3 className="font-extrabold text-slate-900">{game.title}</h3>
                 <p className="mt-1 text-sm text-slate-600">{game.description}</p>
@@ -3528,9 +3536,7 @@ function MiniGamesView({ dashboard, refreshDashboard }) {
             onClick={() => startGame(game)}
             className="rounded-lg border border-stone-200 bg-white p-5 text-left shadow-sm hover:border-lagoon-300"
           >
-            <div className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-lagoon-50 text-lagoon-600">
-              <Gamepad2 />
-            </div>
+            <AssetImage imageKey={miniGameImageKeys[game.key] || "minigame-ui-rewards:9"} alt={game.title} className="mb-4 h-12 w-12 rounded-full" />
             <h3 className="font-extrabold">{game.title}</h3>
             <p className="mt-1 text-sm text-slate-600">{game.description}</p>
             <p className="mt-4 text-sm font-bold text-honey-600">Start round</p>
@@ -3672,7 +3678,7 @@ function PracticeMiniGameRound({ game, exercises, loading, refreshDashboard }) {
     return (
       <Panel title={`${game.title} Complete`} icon={Trophy}>
         <div className="grid gap-4 md:grid-cols-[120px_1fr] md:items-center">
-          <AssetImage imageKey="rewards-and-progress:15" alt="Complete" className="h-28 w-28" />
+          <AssetImage imageKey="minigame-ui-rewards:8" alt="Complete" className="h-28 w-28" />
           <div>
             <h2 className="text-3xl font-black text-slate-950">{correct}/{results.length} correct</h2>
             <p className="mt-2 font-semibold text-slate-600">{saving ? "Saving score..." : "Score saved."}</p>

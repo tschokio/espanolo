@@ -92,4 +92,4 @@ sheet-slug:cell-number
 
 Examples: `food-and-ordering:17`, `travel-and-survival:8`, `emotions-and-states:3`.
 
-Current image sheets include classroom, daily actions, emotions, food, grammar scenes, places, rewards, travel, fruit/produce, clothing, home objects, city transport, weather/time, and people/family.
+Current image sheets include classroom, daily actions, emotions, food, grammar scenes, places, rewards, travel, fruit/produce, clothing, home objects, city transport, weather/time, people/family, body/health, numbers/colors, nature/animals, and mini-game UI rewards.

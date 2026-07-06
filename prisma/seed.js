@@ -370,20 +370,20 @@ const vocabularyGroups = [
     title: "Body and Health",
     description: "Simple body words and health states for saying what hurts or how you feel.",
     situation: "health",
-    imageKey: "emotions-and-states:7",
+    imageKey: "body-and-health:6",
     words: [
-      ["la cabeza", "head", "noun", "feminine", "Me duele la cabeza.", "people-and-family:1"],
-      ["la mano", "hand", "noun", "feminine", "Levanto la mano.", "people-and-family:16"],
-      ["el ojo", "eye", "noun", "masculine", "El ojo esta rojo.", "emotions-and-states:10"],
-      ["la boca", "mouth", "noun", "feminine", "La boca esta seca.", "emotions-and-states:14"],
-      ["el pie", "foot", "noun", "masculine", "Me duele el pie.", "daily-actions:5"],
-      ["el cuerpo", "body", "noun", "masculine", "El cuerpo esta cansado.", "emotions-and-states:3"],
-      ["me duele", "it hurts me", "phrase", null, "Me duele la cabeza.", "emotions-and-states:7"],
-      ["tengo frio", "I am cold", "phrase", null, "Tengo frio hoy.", "weather-and-time:7"],
-      ["tengo calor", "I am hot", "phrase", null, "Tengo calor hoy.", "weather-and-time:6"],
-      ["tengo hambre", "I am hungry", "phrase", null, "Tengo hambre.", "emotions-and-states:13"],
-      ["tengo sed", "I am thirsty", "phrase", null, "Tengo sed.", "emotions-and-states:14"],
-      ["el doctor", "doctor", "noun", "masculine", "Necesito un doctor.", "people-and-family:11"]
+      ["la cabeza", "head", "noun", "feminine", "Me duele la cabeza.", "body-and-health:1"],
+      ["la mano", "hand", "noun", "feminine", "Levanto la mano.", "body-and-health:2"],
+      ["el ojo", "eye", "noun", "masculine", "El ojo esta rojo.", "body-and-health:3"],
+      ["la boca", "mouth", "noun", "feminine", "La boca esta seca.", "body-and-health:4"],
+      ["el pie", "foot", "noun", "masculine", "Me duele el pie.", "body-and-health:5"],
+      ["el cuerpo", "body", "noun", "masculine", "El cuerpo esta cansado.", "body-and-health:6"],
+      ["me duele", "it hurts me", "phrase", null, "Me duele la cabeza.", "body-and-health:7"],
+      ["tengo frio", "I am cold", "phrase", null, "Tengo frio hoy.", "body-and-health:8"],
+      ["tengo calor", "I am hot", "phrase", null, "Tengo calor hoy.", "body-and-health:9"],
+      ["tengo hambre", "I am hungry", "phrase", null, "Tengo hambre.", "body-and-health:10"],
+      ["tengo sed", "I am thirsty", "phrase", null, "Tengo sed.", "body-and-health:11"],
+      ["el doctor", "doctor", "noun", "masculine", "Necesito un doctor.", "body-and-health:12"]
     ]
   },
   {
@@ -391,20 +391,20 @@ const vocabularyGroups = [
     title: "Numbers and Colors",
     description: "Tiny quantity and color words used in descriptions and shopping.",
     situation: "describing things",
-    imageKey: "grammar-scenes:8",
+    imageKey: "numbers-and-colors:16",
     words: [
-      ["uno", "one", "number", null, "Tengo uno.", "grammar-scenes:8"],
-      ["dos", "two", "number", null, "Tengo dos manzanas.", "fruit-and-produce:1"],
-      ["tres", "three", "number", null, "Tengo tres libros.", "classroom-basics:3"],
-      ["cuatro", "four", "number", null, "Quiero cuatro uvas.", "fruit-and-produce:6"],
-      ["cinco", "five", "number", null, "Tengo cinco minutos.", "weather-and-time:13"],
-      ["rojo", "red", "adjective", "masculine", "El tomate es rojo.", "fruit-and-produce:11"],
-      ["roja", "red", "adjective", "feminine", "La manzana es roja.", "fruit-and-produce:1"],
-      ["azul", "blue", "adjective", null, "La camisa es azul.", "clothing-basics:1"],
-      ["verde", "green", "adjective", null, "La ensalada es verde.", "fruit-and-produce:24"],
-      ["amarillo", "yellow", "adjective", "masculine", "El platano es amarillo.", "fruit-and-produce:2"],
-      ["blanco", "white", "adjective", "masculine", "El pan es blanco.", "food-and-ordering:3"],
-      ["negro", "black", "adjective", "masculine", "El cafe es negro.", "food-and-ordering:2"]
+      ["uno", "one", "number", null, "Tengo uno.", "numbers-and-colors:1"],
+      ["dos", "two", "number", null, "Tengo dos manzanas.", "numbers-and-colors:2"],
+      ["tres", "three", "number", null, "Tengo tres libros.", "numbers-and-colors:3"],
+      ["cuatro", "four", "number", null, "Quiero cuatro uvas.", "numbers-and-colors:4"],
+      ["cinco", "five", "number", null, "Tengo cinco minutos.", "numbers-and-colors:5"],
+      ["rojo", "red", "adjective", "masculine", "El tomate es rojo.", "numbers-and-colors:6"],
+      ["roja", "red", "adjective", "feminine", "La manzana es roja.", "numbers-and-colors:7"],
+      ["azul", "blue", "adjective", null, "La camisa es azul.", "numbers-and-colors:8"],
+      ["verde", "green", "adjective", null, "La ensalada es verde.", "numbers-and-colors:9"],
+      ["amarillo", "yellow", "adjective", "masculine", "El platano es amarillo.", "numbers-and-colors:10"],
+      ["blanco", "white", "adjective", "masculine", "El pan es blanco.", "numbers-and-colors:11"],
+      ["negro", "black", "adjective", "masculine", "El cafe es negro.", "numbers-and-colors:12"]
     ]
   },
   {
@@ -412,18 +412,18 @@ const vocabularyGroups = [
     title: "Nature and Animals",
     description: "Friendly outdoor words for parks, weather, and simple descriptions.",
     situation: "outside",
-    imageKey: "places-around-town:3",
+    imageKey: "nature-and-animals:10",
     words: [
-      ["el arbol", "tree", "noun", "masculine", "El arbol esta en el parque.", "places-around-town:3"],
-      ["la flor", "flower", "noun", "feminine", "La flor es roja.", "places-around-town:3"],
-      ["el perro", "dog", "noun", "masculine", "El perro esta en casa.", "people-and-family:15"],
-      ["el gato", "cat", "noun", "masculine", "El gato esta en la silla.", "home-objects:2"],
-      ["el pajaro", "bird", "noun", "masculine", "El pajaro esta en el arbol.", "places-around-town:3"],
-      ["el sol", "sun", "noun", "masculine", "Hace sol.", "weather-and-time:1"],
-      ["la lluvia", "rain", "noun", "feminine", "La lluvia esta fuerte.", "weather-and-time:2"],
-      ["la playa", "beach", "noun", "feminine", "Estoy en la playa.", "places-around-town:16"],
-      ["el agua", "water", "noun", "masculine", "El agua esta fria.", "food-and-ordering:1"],
-      ["bonito", "pretty", "adjective", "masculine", "El parque es bonito.", "places-around-town:3"]
+      ["el arbol", "tree", "noun", "masculine", "El arbol esta en el parque.", "nature-and-animals:1"],
+      ["la flor", "flower", "noun", "feminine", "La flor es roja.", "nature-and-animals:2"],
+      ["el perro", "dog", "noun", "masculine", "El perro esta en casa.", "nature-and-animals:3"],
+      ["el gato", "cat", "noun", "masculine", "El gato esta en la silla.", "nature-and-animals:4"],
+      ["el pajaro", "bird", "noun", "masculine", "El pajaro esta en el arbol.", "nature-and-animals:5"],
+      ["el sol", "sun", "noun", "masculine", "Hace sol.", "nature-and-animals:6"],
+      ["la lluvia", "rain", "noun", "feminine", "La lluvia esta fuerte.", "nature-and-animals:7"],
+      ["la playa", "beach", "noun", "feminine", "Estoy en la playa.", "nature-and-animals:8"],
+      ["el agua", "water", "noun", "masculine", "El agua esta fria.", "nature-and-animals:9"],
+      ["bonito", "pretty", "adjective", "masculine", "El parque es bonito.", "nature-and-animals:10"]
     ]
   }
 ];
@@ -1240,7 +1240,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Health",
     situation: "body vocabulary",
-    imageKey: "emotions-and-states:7",
+    imageKey: "body-and-health:6",
     topicSlug: "tener-necesitar",
     vocabularySlugs: ["body-and-health"],
     order: 42,
@@ -1259,7 +1259,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Health",
     situation: "saying what hurts",
-    imageKey: "emotions-and-states:7",
+    imageKey: "body-and-health:7",
     topicSlug: "tener-necesitar",
     vocabularySlugs: ["body-and-health", "useful-phrases"],
     order: 43,
@@ -1278,7 +1278,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Health",
     situation: "body states",
-    imageKey: "emotions-and-states:13",
+    imageKey: "body-and-health:10",
     topicSlug: "tener-necesitar",
     vocabularySlugs: ["body-and-health", "food-and-ordering", "weather-and-time"],
     order: 44,
@@ -1297,7 +1297,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Numbers",
     situation: "counting",
-    imageKey: "grammar-scenes:8",
+    imageKey: "numbers-and-colors:5",
     topicSlug: "plural-agreement",
     vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "classroom-basics"],
     order: 45,
@@ -1316,7 +1316,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Descriptions",
     situation: "describing objects",
-    imageKey: "fruit-and-produce:1",
+    imageKey: "numbers-and-colors:16",
     topicSlug: "articles-gender",
     vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "clothing-basics"],
     order: 46,
@@ -1335,7 +1335,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Outside",
     situation: "in the park",
-    imageKey: "places-around-town:3",
+    imageKey: "nature-and-animals:10",
     topicSlug: "location-prepositions",
     vocabularySlugs: ["nature-and-animals", "places-around-town"],
     order: 47,
@@ -1354,7 +1354,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Weather",
     situation: "outside",
-    imageKey: "weather-and-time:1",
+    imageKey: "nature-and-animals:6",
     topicSlug: "question-words",
     vocabularySlugs: ["weather-and-time", "nature-and-animals"],
     order: 48,
@@ -2756,6 +2756,33 @@ const assetPrompts = [
     promptMarkdown: "4x4 weather and time sheet. Cells include sunny, rainy, cloudy, windy, snowy, hot, cold, morning, afternoon, evening, night, calendar, clock, umbrella, sunglasses, scarf."
   },
   {
+    slug: "body-and-health",
+    title: "Body and Health",
+    category: "Vocabulary",
+    gridSize: 4,
+    canvasSize: 1200,
+    imagePath: "/images/body-and-health.webp",
+    promptMarkdown: "4x4 body and health sheet. Cells include head, hand, eye, mouth, foot, full body, headache, cold, hot, hungry, thirsty, doctor, pharmacy, first-aid kit, bed rest, and drinking water."
+  },
+  {
+    slug: "numbers-and-colors",
+    title: "Numbers and Colors",
+    category: "Vocabulary",
+    gridSize: 4,
+    canvasSize: 1200,
+    imagePath: "/images/numbers-and-colors.webp",
+    promptMarkdown: "4x4 numbers and colors sheet. Cells include one apple, two apples, three books, four grapes, five objects, red tomato, red apple, blue shirt, green salad, yellow banana, white bread, black coffee, colorful clothes, mixed fruit, colored pencils, and color swatches."
+  },
+  {
+    slug: "nature-and-animals",
+    title: "Nature and Animals",
+    category: "Vocabulary",
+    gridSize: 4,
+    canvasSize: 1200,
+    imagePath: "/images/nature-and-animals.webp",
+    promptMarkdown: "4x4 nature and animals sheet. Cells include tree, flower, dog, cat, bird, sun, rain, beach, water, park, walking outside, family in park, picnic, garden path, cloud, and person enjoying nature."
+  },
+  {
     slug: "people-and-family",
     title: "People and Family",
     category: "Vocabulary",
@@ -2799,6 +2826,15 @@ const assetPrompts = [
     canvasSize: 1254,
     imagePath: "/images/rewards-and-progress.webp",
     promptMarkdown: "4x4 rewards and progress sheet. Cells include flame badge, book badge, trophy badge, medal badge, XP star, calendar, path, rocket, shield, puzzle, check sparkle, crown, mystery badge, unlocked badge, target, celebration."
+  },
+  {
+    slug: "minigame-ui-rewards",
+    title: "Mini Game UI Rewards",
+    category: "Rewards",
+    gridSize: 4,
+    canvasSize: 1200,
+    imagePath: "/images/minigame-ui-rewards.webp",
+    promptMarkdown: "4x4 mini-game UI rewards sheet. Cells include falling word card, catch basket, timer, life heart, correct glow, missed answer, combo flame, trophy, arena, target card, speed boost, focus icon, confetti, replay arrow, locked badge, and unlocked badge."
   }
 ];
 
