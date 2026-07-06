@@ -249,216 +249,340 @@ const topicTeachingCards = {
   "absolute-basics": [
     {
       title: "Start with small sentence pieces",
-      body: "Spanish lets you build useful sentences from tiny parts: a person word, one verb form, and one phrase.",
-      example: "Yo soy Ana. Estoy en casa."
+      body: "Build the sentence around one clear verb form first, then add the person or place.",
+      example: "Yo soy Ana. Estoy en casa.",
+      pitfall: "Do not translate word by word before you know which verb is carrying the meaning."
     },
     {
       title: "Subject words are often optional",
       body: "Yo, tú, él, and ella are useful for learning, but the verb ending often already shows the person.",
-      example: "Soy Ana can mean I am Ana."
+      example: "Soy Ana can mean I am Ana.",
+      pitfall: "Keep yo and tú while learning, but expect real Spanish to drop them often."
     }
   ],
   "ser-estar": [
     {
       title: "Ser identifies",
-      body: "Use ser for identity, roles, origin, and stable descriptions.",
-      example: "Soy estudiante. Ella es profesora."
+      body: "Use ser when the sentence says what someone or something is: identity, role, origin, or a normal trait.",
+      example: "Soy estudiante. Ella es profesora.",
+      pitfall: "Origin uses ser: soy de Austria, not estoy de Austria."
     },
     {
       title: "Estar locates or describes a current state",
-      body: "Use estar for where someone or something is, and for states that can change.",
-      example: "Estoy en casa. Ella está cansada."
+      body: "Use estar for where something is and how someone is right now.",
+      example: "Estoy en casa. Ella está cansada.",
+      pitfall: "Location usually uses estar even when the place feels permanent."
     }
   ],
   "articles-gender": [
     {
       title: "Learn nouns with their article",
       body: "Spanish nouns have grammatical gender. Treat the article as part of the word while learning.",
-      example: "el libro, la silla, un café, una manzana"
+      example: "el libro, la silla, un café, una manzana",
+      pitfall: "Do not memorize libro alone; memorize el libro."
     },
     {
       title: "Articles agree with the noun",
-      body: "El and un go with many masculine singular nouns. La and una go with many feminine singular nouns.",
-      example: "el pan, la sopa"
+      body: "The article must match the noun in gender and number.",
+      example: "el pan, la sopa",
+      pitfall: "English has one the; Spanish forces you to choose el, la, los, or las."
     }
   ],
   "present-tense-ar": [
     {
       title: "Regular -ar verbs follow a pattern",
       body: "Remove -ar, then add the ending that matches the person.",
-      example: "hablar: yo hablo, tú hablas, nosotros hablamos"
+      example: "hablar: yo hablo, tú hablas, nosotros hablamos",
+      pitfall: "Do not keep the -ar ending after conjugating: yo hablar is not the present-tense sentence."
     },
     {
       title: "The ending carries meaning",
       body: "Spanish verb endings often tell you who is doing the action, so endings are meaning, not decoration.",
-      example: "hablo = I speak, hablas = you speak"
+      example: "hablo = I speak, hablas = you speak",
+      pitfall: "One wrong ending can change who is doing the action."
     }
   ],
   "estar-emotions": [
     {
       title: "Feelings use estar",
-      body: "Use estar for how someone feels right now or for temporary conditions.",
-      example: "Estoy feliz. Ana está nerviosa."
+      body: "Use estar for feelings, health, and conditions that describe the current state.",
+      example: "Estoy feliz. Ana está nerviosa.",
+      pitfall: "Do not use soy for a temporary feeling unless you mean a permanent identity trait."
     },
     {
       title: "Adjectives can agree",
       body: "Many adjectives change form to match the person or thing they describe.",
-      example: "cansado, cansada, nervioso, nerviosa"
+      example: "cansado, cansada, nervioso, nerviosa",
+      pitfall: "Match the person: Ana está cansada, not Ana está cansado."
     }
   ],
   "ordering-food": [
     {
       title: "Quiero is a direct request",
-      body: "Quiero plus a noun is simple and useful. Add por favor to make it polite.",
-      example: "Quiero un café, por favor."
+      body: "Quiero plus a noun is a direct, usable request. Add por favor to soften it.",
+      example: "Quiero un café, por favor.",
+      pitfall: "For a service setting, quisiera is more polite, but quiero is still understandable."
     },
     {
       title: "Countable items often need un or una",
       body: "Use un or una when asking for one countable item.",
-      example: "un café, una manzana"
+      example: "un café, una manzana",
+      pitfall: "The article still has to match the noun: un café, una sopa."
     }
   ],
   "travel-questions": [
     {
       title: "Dónde asks for location",
       body: "Use dónde with está when asking where a place or object is.",
-      example: "¿Dónde está el hotel?"
+      example: "¿Dónde está el hotel?",
+      pitfall: "Use está for the place location; do not switch to es here."
     },
     {
       title: "Survival phrases should stay short",
       body: "In travel situations, short correct phrases are more useful than long sentences.",
-      example: "Necesito ayuda. Tengo un mapa."
+      example: "Necesito ayuda. Tengo un mapa.",
+      pitfall: "If you are stuck, use a repair phrase first: No entiendo. Más despacio, por favor."
     }
   ],
   "location-prepositions": [
     {
       title: "Location uses estar",
       body: "Use estar to place people and objects in a location.",
-      example: "El libro está en la mesa."
+      example: "El libro está en la mesa.",
+      pitfall: "Do not use es for location in these beginner sentences."
     },
     {
       title: "En covers many location meanings",
       body: "En can mean in, on, or at depending on context.",
-      example: "en casa, en la mesa, en la biblioteca"
+      example: "en casa, en la mesa, en la biblioteca",
+      pitfall: "English changes prepositions often; Spanish en covers many of those cases."
     }
   ],
   "plural-agreement": [
     {
       title: "Plural changes more than one word",
       body: "Articles, nouns, adjectives, and verbs can all show plural meaning.",
-      example: "Las manzanas son rojas."
+      example: "Las manzanas son rojas.",
+      pitfall: "Do not pluralize only the noun and leave the article singular."
     },
     {
       title: "Los can be mixed plural",
       body: "Los is used for masculine plural groups and for mixed groups.",
-      example: "Los estudiantes hablan."
+      example: "Los estudiantes hablan.",
+      pitfall: "A mixed group uses los, even if only one person in the group is masculine."
     }
   ],
   "negation-basics": [
     {
       title: "No goes before the verb",
       body: "The basic negative pattern is simple: put no directly before the conjugated verb.",
-      example: "No entiendo. Ella no trabaja hoy."
+      example: "No entiendo. Ella no trabaja hoy.",
+      pitfall: "Do not add an English-style helper verb. Spanish does not need do not here."
     }
   ],
   "tener-necesitar": [
     {
       title: "Tener does more than have",
       body: "Tener means to have, but Spanish also uses it for some body states.",
-      example: "Tengo un mapa. Tengo hambre."
+      example: "Tengo un mapa. Tengo hambre.",
+      pitfall: "Spanish says tengo hambre and tengo frío, not soy hambre or estoy frío for these states."
     },
     {
       title: "Necesito is practical",
       body: "Necesito plus a noun gives you a direct way to ask for help or objects.",
-      example: "Necesito ayuda. Necesito el pasaporte."
+      example: "Necesito ayuda. Necesito el pasaporte.",
+      pitfall: "Use necesito plus the thing; do not add para unless you are explaining purpose."
     }
   ],
   "question-words": [
     {
       title: "Question words carry accents",
       body: "Qué, quién, dónde, cuándo, cómo, and cuánto use accents in direct questions.",
-      example: "¿Qué quieres? ¿Cuánto cuesta?"
+      example: "¿Qué quieres? ¿Cuánto cuesta?",
+      pitfall: "The accent is part of the question word in direct questions."
     },
     {
       title: "Question frames are reusable",
       body: "Keep the frame and swap the noun or place to make new questions.",
-      example: "¿Dónde está el hotel? ¿Dónde está la estación?"
+      example: "¿Dónde está el hotel? ¿Dónde está la estación?",
+      pitfall: "Change only the noun until the frame feels automatic."
     }
   ],
   "daily-routine-time": [
     {
       title: "Some routine verbs are reflexive",
       body: "Use me with actions you do to yourself in the yo form. The me is part of the meaning.",
-      example: "Me despierto. Me levanto. Me ducho."
+      example: "Me despierto. Me levanto. Me ducho.",
+      pitfall: "Do not drop me from reflexive routine verbs in the yo form."
     },
     {
       title: "Not every routine verb needs me",
       body: "Normal action verbs like desayunar, estudiar, trabajar, cocinar, and leer do not use me in basic routine sentences.",
-      example: "Desayuno a las ocho. Estudio por la tarde."
+      example: "Desayuno a las ocho. Estudio por la tarde.",
+      pitfall: "Do not add me to normal action verbs just because they are part of a routine."
     },
     {
       title: "Time phrases usually follow the action",
       body: "Use por la mañana, por la tarde, por la noche, and cada semana to place habits in time.",
-      example: "Trabajo por la mañana. Limpio cada semana."
+      example: "Trabajo por la mañana. Limpio cada semana.",
+      pitfall: "Learn time chunks as phrases; por la mañana is not translated word by word."
     }
   ],
   "irregular-present-frames": [
     {
       title: "Common verbs often have irregular yo forms",
       body: "The most useful verbs do not always follow the regular pattern in the yo form, so learn them as complete chunks.",
-      example: "voy, hago, digo, vengo, salgo, pongo"
+      example: "voy, hago, digo, vengo, salgo, pongo",
+      pitfall: "Do not force regular endings onto high-frequency irregular verbs."
     },
     {
       title: "Frames take an infinitive after them",
       body: "Use the unchanged verb after puedo, quiero, necesito, and tengo que.",
-      example: "Puedo estudiar. Quiero ir. Tengo que trabajar."
+      example: "Puedo estudiar. Quiero ir. Tengo que trabajar.",
+      pitfall: "After puedo or quiero, the next verb stays in the infinitive."
     },
     {
       title: "Voy a makes a near-future plan",
       body: "Use voy a plus an infinitive for something you are going to do.",
-      example: "Voy a estudiar mañana."
+      example: "Voy a estudiar mañana.",
+      pitfall: "The a is required in this pattern: voy a estudiar."
     }
   ],
   "likes-preferences": [
     {
       title: "Gustar works from the liked thing",
       body: "Use gusta with one thing or an activity, and gustan with plural things.",
-      example: "Me gusta el café. Me gustan las películas."
+      example: "Me gusta el café. Me gustan las películas.",
+      pitfall: "Do not conjugate gustar to match yo here; the liked thing controls gusta/gustan."
     },
     {
       title: "No goes before me gusta",
       body: "Make a dislike by placing no before the whole me gusta pattern.",
-      example: "No me gusta la lluvia."
+      example: "No me gusta la lluvia.",
+      pitfall: "Keep no before me, not after gusta."
     },
     {
       title: "Preferir has the yo form prefiero",
       body: "Use prefiero when choosing one option over another.",
-      example: "Me gusta el café, pero prefiero el té."
+      example: "Me gusta el café, pero prefiero el té.",
+      pitfall: "Preferir is stem-changing: yo prefiero, not yo prefero."
     }
   ],
   "scenario-practice": [
     {
       title: "Scenarios use short useful replies",
       body: "In service and travel contexts, a clear phrase is better than an overly long sentence.",
-      example: "La cuenta, por favor. Perdón, ¿dónde está la estación?"
+      example: "La cuenta, por favor. Perdón, ¿dónde está la estación?",
+      pitfall: "Do not try to say everything at once; finish the immediate task first."
     },
     {
       title: "Polite requests use quisiera",
       body: "Quisiera is useful when ordering or asking for something in a restaurant, shop, or pharmacy.",
-      example: "Quisiera dos cafés para llevar."
+      example: "Quisiera dos cafés para llevar.",
+      pitfall: "Quiero is understandable, but quisiera sounds more polite in service situations."
     }
   ],
   "input-comprehension": [
     {
       title: "Read or listen for the main action first",
       body: "Identify who acts, what they do, and when it happens before focusing on every word.",
-      example: "Ana trabaja por la mañana."
+      example: "Ana trabaja por la mañana.",
+      pitfall: "Do not pause on every unknown word before you know the main idea."
     },
     {
       title: "Use the transcript as a check",
       body: "Try the audio first, then reveal the transcript to compare what you heard with the real sentence.",
-      example: "Mañana voy a la tienda."
+      example: "Mañana voy a la tienda.",
+      pitfall: "Read the transcript after listening, not before, when you want listening practice."
     }
+  ]
+};
+
+const topicRememberPoints = {
+  "absolute-basics": [
+    "Start with one verb form: soy, estoy, es, or está.",
+    "Subject words like yo are helpful for learning, but Spanish often drops them.",
+    "Origin and identity use ser; current location and state use estar."
+  ],
+  "ser-estar": [
+    "Ser answers what someone or something is.",
+    "Estar answers where something is or how it is right now.",
+    "Use soy de for origin; do not use estoy de."
+  ],
+  "articles-gender": [
+    "Memorize nouns with the article: el libro, la silla.",
+    "The article, noun, and adjective must agree.",
+    "Spanish article choice carries meaning that English the does not show."
+  ],
+  "present-tense-ar": [
+    "Remove -ar before adding the present-tense ending.",
+    "The ending tells who is doing the action.",
+    "Yo uses -o; tú uses -as; nosotros uses -amos; ellos uses -an."
+  ],
+  "estar-emotions": [
+    "Use estar for feelings and temporary conditions.",
+    "Adjectives often change to match masculine/feminine and singular/plural.",
+    "Estoy cansado and estoy cansada depend on the speaker."
+  ],
+  "ordering-food": [
+    "Quiero plus a noun is direct and useful.",
+    "Add por favor for politeness.",
+    "Use un or una for one countable item when needed."
+  ],
+  "travel-questions": [
+    "Use dónde está for asking where a place is.",
+    "Use necesito for practical needs.",
+    "Use no entiendo and más despacio when you need repair."
+  ],
+  "location-prepositions": [
+    "Location uses estar.",
+    "En can mean in, on, or at.",
+    "Plural locations or objects need están."
+  ],
+  "plural-agreement": [
+    "Plural agreement can affect article, noun, adjective, and verb.",
+    "Los can mean masculine plural or mixed plural.",
+    "Las is only feminine plural."
+  ],
+  "negation-basics": [
+    "Put no directly before the conjugated verb.",
+    "Do not add an English helper like do.",
+    "The verb form stays normal after no."
+  ],
+  "tener-necesitar": [
+    "Tengo means I have, but also appears in body-state phrases.",
+    "Necesito plus a noun is the simplest way to ask for a needed thing.",
+    "Use tengo hambre, tengo sed, tengo frío, and tengo calor as fixed chunks."
+  ],
+  "question-words": [
+    "Direct question words need accents: qué, dónde, cuándo, cómo, cuánto.",
+    "Keep reusable frames intact and swap the noun.",
+    "Use cuánto cuesta for prices."
+  ],
+  "daily-routine-time": [
+    "Use me with reflexive routine verbs in the yo form.",
+    "Do not add me to normal verbs like desayuno or estudio.",
+    "Time phrases such as por la mañana usually follow the action."
+  ],
+  "irregular-present-frames": [
+    "Learn common irregular yo forms as chunks.",
+    "Puedo, quiero, necesito, and tengo que are followed by an infinitive.",
+    "Voy a plus infinitive makes a near-future plan."
+  ],
+  "likes-preferences": [
+    "Use gusta for one thing or an activity; use gustan for plural things.",
+    "No me gusta means I do not like.",
+    "Prefiero is the yo form of preferir."
+  ],
+  "scenario-practice": [
+    "Use the shortest correct phrase that solves the situation.",
+    "Quisiera is polite for requests in service contexts.",
+    "Conversation repair phrases are success tools, not failures."
+  ],
+  "input-comprehension": [
+    "Find the main idea before worrying about every word.",
+    "Listen once before revealing the transcript.",
+    "Use comprehension questions to prove what you understood."
   ]
 };
 
@@ -480,30 +604,83 @@ function lessonGuideCards(lesson) {
     .slice(0, 5);
 }
 
-function lessonGuideSteps(lesson) {
-  const outcomes = Array.isArray(lesson?.outcomes) ? lesson.outcomes : [];
-  const conceptKeys = Array.isArray(lesson?.conceptKeys) ? lesson.conceptKeys : [];
-  const guideCards = lessonGuideCards(lesson).map((card) => `${card.title}: ${card.body}`);
-  const exampleNotes = (lesson?.sentences || [])
-    .map((sentence) => sentence.note)
+function lessonRememberPoints(lesson) {
+  const topicSlug = lesson?.topic?.slug || lesson?.topicSlug || "";
+  const cards = topicTeachingCards[topicSlug] || [];
+  const sentenceNotes = (lesson?.sentences || [])
+    .map((sentence) => sentence?.note)
     .filter(Boolean);
-  const steps = [
-    ...outcomes,
-    ...guideCards,
-    ...conceptKeys.map((key) => `Focus: ${String(key).replace(/-/g, " ")}.`),
-    ...exampleNotes
-  ]
-    .map((step) => String(step || "").trim())
-    .filter(Boolean)
-    .filter((step, index, list) => list.findIndex((item) => normalizeText(item) === normalizeText(step)) === index);
-
-  if (steps.length) return steps.slice(0, 8);
-  return [
-    `Read the examples for ${lesson?.title || "this lesson"} before answering.`,
-    "Say each Spanish sentence out loud once.",
-    "Notice the small pattern that repeats across the examples.",
-    "Then use the quiz to retrieve the pattern from memory."
+  const points = [
+    ...(topicRememberPoints[topicSlug] || []),
+    ...cards.map((card) => card.pitfall).filter(Boolean),
+    ...(lesson?.isCheckpoint ? ["A checkpoint is a proof step: answer before looking for the model."] : []),
+    ...(lesson?.reviewSummary ? [lesson.reviewSummary] : []),
+    ...sentenceNotes
   ];
+
+  return points
+    .map((point) => String(point || "").replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .filter((point, index, list) => list.findIndex((item) => normalizeText(item) === normalizeText(point)) === index)
+    .slice(0, 6);
+}
+
+function LessonRememberBlock({ lesson, title = "Important to Remember", className = "" }) {
+  const points = lessonRememberPoints(lesson);
+  if (!points.length) return null;
+
+  return (
+    <div className={classNames("rounded-lg border border-honey-200 bg-honey-50 p-4", className)}>
+      <p className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-honey-800">
+        <Star size={16} /> {title}
+      </p>
+      <div className="mt-3 grid gap-2">
+        {points.map((point) => (
+          <p key={point} className="flex items-start gap-2 text-sm font-bold leading-6 text-slate-800">
+            <CheckCircle2 className="mt-1 shrink-0 text-honey-700" size={15} /> {point}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LessonGuidePanel({ lesson }) {
+  const cards = lessonGuideCards(lesson);
+  const outcomes = Array.isArray(lesson?.outcomes) ? lesson.outcomes : [];
+
+  return (
+    <Panel title="Lesson Guide" icon={ListChecks}>
+      {!!outcomes.length && (
+        <div className="mb-4 grid gap-3 md:grid-cols-3">
+          {outcomes.slice(0, 3).map((outcome) => (
+            <div key={outcome} className="rounded-lg border border-lagoon-100 bg-lagoon-50 p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">Goal</p>
+              <p className="mt-2 text-sm font-bold leading-6 text-lagoon-950">{outcome}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="grid gap-3 md:grid-cols-2">
+        {cards.map((card) => (
+          <div key={`${card.title}-${card.body}`} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+            <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">Rule</p>
+            <p className="mt-2 text-base font-black text-slate-950">{card.title}</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">{card.body}</p>
+            {card.example && (
+              <p className="mt-3 rounded-md bg-white px-3 py-2 text-sm font-black text-lagoon-800">{card.example}</p>
+            )}
+            {card.pitfall && (
+              <p className="mt-3 rounded-md border border-honey-200 bg-honey-50 px-3 py-2 text-sm font-bold text-honey-900">
+                Remember: {card.pitfall}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+      <LessonRememberBlock lesson={lesson} className="mt-4" />
+    </Panel>
+  );
 }
 
 function sessionPromptMode(type, word, position, repeated = false) {
@@ -1710,6 +1887,7 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
               </div>
             </div>
           )}
+          <LessonRememberBlock lesson={lesson} className="mx-auto mt-5 max-w-md text-left" />
           <div className="mx-auto mt-5 max-w-sm">
             <div className="flex justify-between text-sm font-bold text-slate-500">
               <span>Recall score</span>
@@ -1775,6 +1953,7 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
                   ))}
                 </div>
               )}
+              <LessonRememberBlock lesson={lesson} className="mt-5" />
               {!!totalChecks && (
                 <div className="mt-5 rounded-lg border border-stone-200 bg-stone-50 p-4">
                   <div className="flex items-center justify-between gap-3 text-sm font-black text-slate-700">
@@ -1824,9 +2003,15 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
                 {card.example && (
                   <p className="mt-3 rounded-md bg-white px-3 py-2 text-sm font-black text-lagoon-800">{card.example}</p>
                 )}
+                {card.pitfall && (
+                  <p className="mt-3 rounded-md border border-honey-200 bg-honey-50 px-3 py-2 text-sm font-bold text-honey-900">
+                    Remember: {card.pitfall}
+                  </p>
+                )}
               </div>
             ))}
           </div>
+          <LessonRememberBlock lesson={lesson} className="mt-4" />
           <button
             onClick={() => setStep((value) => value + 1)}
             className="mt-6 w-full rounded-md bg-lagoon-500 px-5 py-4 font-black text-white hover:bg-lagoon-600"
@@ -4384,22 +4569,7 @@ function LessonsView({ lessons, refreshDashboard }) {
               </div>
             </Panel>
 
-            <Panel title="Lesson Guide" icon={ListChecks}>
-              <div className="grid gap-3 md:grid-cols-2">
-                {lessonGuideSteps(lesson).map((step, index) => (
-                  <div key={`${lesson.id}-guide-${index}`} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-                    <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">Step {index + 1}</p>
-                    <p className="mt-2 font-bold text-slate-800">{step}</p>
-                  </div>
-                ))}
-              </div>
-              {lesson.reviewSummary && (
-                <div className="mt-4 rounded-lg border border-lagoon-100 bg-lagoon-50 p-4">
-                  <p className="text-xs font-black uppercase tracking-wide text-lagoon-700">What should stick</p>
-                  <p className="mt-2 font-bold text-lagoon-950">{lesson.reviewSummary}</p>
-                </div>
-              )}
-            </Panel>
+            <LessonGuidePanel lesson={lesson} />
 
             <Panel title="Examples" icon={NotebookTabs}>
               <div className="grid gap-3">

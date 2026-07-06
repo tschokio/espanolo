@@ -5908,9 +5908,9 @@ function normalizeSeedLesson(lesson) {
   const outcomes = lesson.outcomes?.length
     ? lesson.outcomes
     : [
-        `You can recognize the main ${lesson.theme.toLowerCase()} pattern.`,
-        `You can use one model sentence for ${lesson.situation}.`,
-        "You can answer an active recall check before seeing the answer."
+        `You can state the main ${lesson.theme.toLowerCase()} rule in your own words.`,
+        `You can use the model sentence for ${lesson.situation} without seeing the answer first.`,
+        "You can name the common mistake this lesson is trying to prevent."
       ];
 
   return {
