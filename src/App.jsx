@@ -2711,8 +2711,10 @@ function PracticePanel({
   const isSentenceBuilder = exercise.type === "SENTENCE_BUILDER";
   const selectedValue = isSentenceBuilder ? words.join(" ") : answer;
   const locked = Boolean(feedback && typeof feedback.correct === "boolean");
-  const canSubmit = selectedValue.trim().length > 0 && !locked;
+  const canSubmit = selectedValue.trim().length > 0 && !locked && !busy;
   const acceptedValues = feedback?.accepted?.map(normalizeText) || [];
+  const autoAdvancingFeedback =
+    locked && autoAdvance && !feedback?.submissionError && (feedback.correct || autoAdvanceOnWrong);
 
   const resetAttempt = () => {
     setAnswer("");
@@ -2765,7 +2767,13 @@ function PracticePanel({
         }, autoAdvanceDelay);
       }
     } catch (err) {
-      const errorResult = { correct: false, explanation: err.message, submitted: submittedValue, expected: "" };
+      const errorResult = {
+        correct: false,
+        submissionError: true,
+        explanation: err.message,
+        submitted: submittedValue,
+        expected: ""
+      };
       setFeedback(errorResult);
       onResult?.(errorResult);
     } finally {
@@ -2922,14 +2930,14 @@ function PracticePanel({
             </button>
             <button
               disabled={!canSubmit || busy}
-              onClick={submit}
+              onClick={() => submit()}
               className="ml-auto rounded-md bg-lagoon-500 px-5 py-2 font-bold text-white hover:bg-lagoon-600 disabled:opacity-50"
             >
               {busy ? "Checking..." : "Check Answer"}
             </button>
           </>
         )}
-        {locked && (!autoAdvance || (!feedback.correct && !autoAdvanceOnWrong)) && (
+        {locked && !autoAdvancingFeedback && (
           <div>
             <button
               onClick={feedback.correct ? continueAfterFeedback : resetAttempt}
@@ -2941,7 +2949,7 @@ function PracticePanel({
             >
               {continuing ? "Loading..." : feedback.correct ? "Continue" : "Try Again"}
             </button>
-            {!feedback.correct && (
+            {!feedback.correct && !feedback.submissionError && (
               <button
                 onClick={continueAfterFeedback}
                 disabled={continuing}
@@ -2952,7 +2960,7 @@ function PracticePanel({
             )}
           </div>
         )}
-        {locked && autoAdvance && (feedback.correct || autoAdvanceOnWrong) && (
+        {autoAdvancingFeedback && (
           <div className="rounded-md border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-slate-600">
             Next question loading...
           </div>
@@ -4439,6 +4447,8 @@ function AdminView({ refreshDashboard }) {
         </div>
       </Panel>
 
+      <SystemStatusPanel system={content.system} />
+
       <div className="grid gap-5 xl:grid-cols-2">
         <AdminForm
           title="Grammar Topic"
@@ -4557,6 +4567,92 @@ function AdminView({ refreshDashboard }) {
         </AdminForm>
       </div>
     </div>
+  );
+}
+
+function SystemStatusPanel({ system }) {
+  if (!system) return null;
+  const active = system.activeCommit;
+  const checkedOut = system.checkedOutCommit;
+  const statusClass =
+    system.restartRequired || system.behind > 0
+      ? "bg-honey-100 text-honey-800"
+      : system.dirty
+        ? "bg-sky-100 text-sky-800"
+        : "bg-emerald-100 text-emerald-800";
+
+  return (
+    <Panel
+      title="Active Code"
+      icon={Shield}
+      action={<span className={classNames("rounded-full px-3 py-1 text-xs font-black", statusClass)}>{system.status}</span>}
+    >
+      <div className="grid gap-3 lg:grid-cols-4">
+        <InfoTile label="Active" value={active?.shortHash || "unknown"} />
+        <InfoTile label="Checked out" value={checkedOut?.shortHash || "unknown"} />
+        <InfoTile label="Branch" value={system.branch || "unknown"} />
+        <InfoTile label="Started" value={system.processStartedAt ? new Date(system.processStartedAt).toLocaleString() : "unknown"} />
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+          <p className="text-xs font-black uppercase tracking-wide text-slate-500">Deployment State</p>
+          <div className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+            <div className="flex justify-between gap-3">
+              <span>Restart needed</span>
+              <span className={system.restartRequired ? "text-honey-700" : "text-emerald-700"}>{system.restartRequired ? "Yes" : "No"}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Uncommitted files</span>
+              <span className={system.dirty ? "text-sky-700" : "text-emerald-700"}>{system.dirty ? system.changes.length : "No"}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Upstream</span>
+              <span>{system.upstream || "not configured"}</span>
+            </div>
+            {system.upstream && (
+              <div className="flex justify-between gap-3">
+                <span>Ahead / behind</span>
+                <span>{system.ahead || 0} / {system.behind || 0}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+          <p className="text-xs font-black uppercase tracking-wide text-slate-500">Current Commit</p>
+          <p className="mt-3 font-black text-slate-950">{active?.subject || "Commit unavailable"}</p>
+          <p className="mt-1 text-sm font-bold text-slate-600">{active?.hash || "unknown"}</p>
+          {checkedOut?.hash && active?.hash && checkedOut.hash !== active.hash && (
+            <p className="mt-3 rounded-md border border-honey-200 bg-honey-50 px-3 py-2 text-sm font-bold text-honey-900">
+              Checkout is newer than the running service. Restart the service to activate it.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {!!system.changes?.length && (
+        <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-4">
+          <p className="text-xs font-black uppercase tracking-wide text-sky-700">Local Changes</p>
+          <div className="mt-2 grid gap-1 font-mono text-xs text-slate-700">
+            {system.changes.slice(0, 8).map((change) => (
+              <span key={change}>{change}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!!system.recentCommits?.length && (
+        <div className="mt-4 rounded-lg border border-stone-200 bg-white p-4">
+          <p className="text-xs font-black uppercase tracking-wide text-slate-500">Recent Commits</p>
+          <div className="mt-2 grid gap-1 font-mono text-xs text-slate-700">
+            {system.recentCommits.map((commit) => (
+              <span key={commit}>{commit}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </Panel>
   );
 }
 

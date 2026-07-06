@@ -2,9 +2,11 @@ require("dotenv").config();
 
 const crypto = require("crypto");
 const path = require("path");
+const { execFileSync } = require("child_process");
 const cookieParser = require("cookie-parser");
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const packageJson = require("../package.json");
 const { PrismaClient, Role, AttemptSource, ReviewState } = require("@prisma/client");
 const {
   acceptedAnswersForExercise,
@@ -17,6 +19,8 @@ const {
 const prisma = new PrismaClient();
 const app = express();
 
+const REPO_ROOT = path.resolve(__dirname, "..");
+const PROCESS_STARTED_AT = new Date();
 const PORT = Number(process.env.PORT || 5180);
 const TRUST_PROXY = process.env.TRUST_PROXY || "";
 const SESSION_COOKIE = "espanolo_sid";
@@ -27,6 +31,78 @@ const PRONUNCIATION_CACHE_VERSION = 2;
 const PRONUNCIATION_USER_AGENT =
   "Mozilla/5.0 (compatible; EspanoloLearning/0.1; self-hosted pronunciation resolver)";
 const pronunciationCache = new Map();
+
+function runGit(args, fallback = "") {
+  try {
+    return execFileSync("git", args, {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      timeout: 2000
+    }).trim();
+  } catch {
+    return fallback;
+  }
+}
+
+function gitCommitDetails(ref = "HEAD") {
+  const raw = runGit(["show", "-s", "--format=%H%n%h%n%s%n%cI", ref]);
+  if (!raw) return null;
+  const [hash, shortHash, subject, committedAt] = raw.split("\n");
+  return { hash, shortHash, subject, committedAt };
+}
+
+const ACTIVE_COMMIT = gitCommitDetails("HEAD");
+
+function buildSystemStatus() {
+  const checkedOutCommit = gitCommitDetails("HEAD");
+  const branch = runGit(["rev-parse", "--abbrev-ref", "HEAD"], "unknown");
+  const upstream = runGit(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"]);
+  const upstreamCommit = upstream ? gitCommitDetails("@{u}") : null;
+  const aheadBehind = upstream ? runGit(["rev-list", "--left-right", "--count", "HEAD...@{u}"]) : "";
+  const [aheadText = "0", behindText = "0"] = aheadBehind.split(/\s+/);
+  const changes = runGit(["status", "--short"])
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const recentCommits = runGit(["log", "--oneline", "-n", "6"])
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const activeMatchesCheckout = Boolean(
+    ACTIVE_COMMIT?.hash && checkedOutCommit?.hash && ACTIVE_COMMIT.hash === checkedOutCommit.hash
+  );
+  const ahead = Number(aheadText) || 0;
+  const behind = Number(behindText) || 0;
+
+  return {
+    appVersion: packageJson.version,
+    nodeEnv: process.env.NODE_ENV || "development",
+    port: PORT,
+    processStartedAt: PROCESS_STARTED_AT.toISOString(),
+    activeCommit: ACTIVE_COMMIT,
+    checkedOutCommit,
+    branch,
+    upstream: upstream || null,
+    upstreamCommit,
+    ahead,
+    behind,
+    syncedWithUpstream: upstream ? ahead === 0 && behind === 0 : null,
+    activeMatchesCheckout,
+    restartRequired: !activeMatchesCheckout,
+    dirty: changes.length > 0,
+    changes,
+    recentCommits,
+    status:
+      !activeMatchesCheckout
+        ? "Restart required"
+        : changes.length
+          ? "Uncommitted local changes"
+          : upstream && behind > 0
+            ? "Behind upstream"
+            : "Active"
+  };
+}
 
 if (TRUST_PROXY) {
   app.set("trust proxy", TRUST_PROXY);
@@ -2084,7 +2160,15 @@ app.get(
       prisma.user.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, email: true, role: true, xp: true, level: true } })
     ]);
 
-    res.json({ topics, lessons, vocabularyGroups, exercises: exercises.map(publicExercise), assets, users });
+    res.json({
+      topics,
+      lessons,
+      vocabularyGroups,
+      exercises: exercises.map(publicExercise),
+      assets,
+      users,
+      system: buildSystemStatus()
+    });
   })
 );
 
