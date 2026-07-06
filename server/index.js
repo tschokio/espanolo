@@ -15,6 +15,7 @@ const {
   scheduleExerciseReview,
   scheduleWordReview
 } = require("./learning-core");
+const { buildLessonProgressState, lessonProgressNeedsSync } = require("./progress-core");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -567,7 +568,12 @@ const publicExercise = (exercise) => ({
 });
 
 const isLessonReviewDue = (progress, now = new Date()) =>
-  Boolean(progress?.completedAt && progress?.reviewDueAt && new Date(progress.reviewDueAt).getTime() <= now.getTime());
+  Boolean(
+    (progress?.mastery || 0) >= 100 &&
+      progress?.completedAt &&
+      progress?.reviewDueAt &&
+      new Date(progress.reviewDueAt).getTime() <= now.getTime()
+  );
 
 const curriculumUnits = [
   {
@@ -722,11 +728,12 @@ const publicLessonSummary = (lesson) => {
   const progress = lesson.progress?.[0] || null;
   const reviewDue = isLessonReviewDue(progress);
   const mastery = progress?.mastery || 0;
+  const completedAt = mastery >= 100 ? progress?.completedAt || null : null;
   const unit = lessonUnitForOrder(lesson.order);
   const isCheckpoint = /checkpoint/i.test(`${lesson.theme} ${lesson.title}`);
   const status = reviewDue
     ? "review_due"
-    : progress?.completedAt
+    : mastery >= 100
       ? "completed"
       : mastery > 0
         ? "practicing"
@@ -752,8 +759,10 @@ const publicLessonSummary = (lesson) => {
     },
     isCheckpoint,
     progress: mastery,
-    completedAt: progress?.completedAt || null,
-    reviewDueAt: progress?.reviewDueAt || null,
+    completedExercises: progress?.completedExercises || 0,
+    totalExercises: progress?.totalExercises || lesson.exercises?.length || 0,
+    completedAt,
+    reviewDueAt: mastery >= 100 ? progress?.reviewDueAt || null : null,
     lastReviewedAt: progress?.lastReviewedAt || null,
     reviewIntervalDays: progress?.reviewIntervalDays || 3,
     lessonReviewCount: progress?.lessonReviewCount || 0,
@@ -840,6 +849,73 @@ const requireAdmin = (req, res, next) => {
 
 app.use(sessionMiddleware);
 
+async function syncLessonProgressForLessons(userId, lessons) {
+  const lessonList = lessons.filter(Boolean);
+  if (!lessonList.length) return lessonList;
+
+  const lessonIds = lessonList.map((lesson) => lesson.id).filter(Boolean);
+  if (!lessonIds.length) return lessonList;
+
+  const correctAttempts = await prisma.attempt.findMany({
+    where: {
+      userId,
+      isCorrect: true,
+      exercise: { lessonId: { in: lessonIds } }
+    },
+    select: {
+      exerciseId: true,
+      exercise: { select: { lessonId: true } }
+    }
+  });
+
+  const correctIdsByLesson = new Map();
+  for (const attempt of correctAttempts) {
+    const lessonId = attempt.exercise?.lessonId;
+    if (!lessonId) continue;
+    if (!correctIdsByLesson.has(lessonId)) correctIdsByLesson.set(lessonId, []);
+    correctIdsByLesson.get(lessonId).push(attempt.exerciseId);
+  }
+
+  const now = new Date();
+  const writes = [];
+  for (const lesson of lessonList) {
+    const existingProgress = lesson.progress?.[0] || null;
+    const state = buildLessonProgressState(
+      existingProgress,
+      Array.isArray(lesson.exercises) ? lesson.exercises.length : existingProgress?.totalExercises || 0,
+      correctIdsByLesson.get(lesson.id) || [],
+      now
+    );
+    const shouldHaveProgress = Boolean(existingProgress || state.completedExercises > 0);
+    lesson.progress = shouldHaveProgress
+      ? [
+          {
+            ...(existingProgress || {}),
+            userId,
+            lessonId: lesson.id,
+            ...state
+          }
+        ]
+      : [];
+
+    if (!shouldHaveProgress || !lessonProgressNeedsSync(existingProgress, state)) continue;
+    writes.push(
+      prisma.userLessonProgress.upsert({
+        where: { userId_lessonId: { userId, lessonId: lesson.id } },
+        update: state,
+        create: {
+          userId,
+          lessonId: lesson.id,
+          ...state
+        }
+      })
+    );
+  }
+
+  await Promise.all(writes);
+  return lessonList;
+}
+
 async function refreshLessonProgress(userId, lessonId) {
   const [totalExercises, correctAttempts, existingProgress] = await Promise.all([
     prisma.exercise.count({ where: { lessonId } }),
@@ -854,36 +930,25 @@ async function refreshLessonProgress(userId, lessonId) {
     prisma.userLessonProgress.findUnique({ where: { userId_lessonId: { userId, lessonId } } })
   ]);
 
-  const completedExercises = new Set(correctAttempts.map((attempt) => attempt.exerciseId)).size;
-  const mastery = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
   const now = new Date();
-  const firstCompletedAt = mastery >= 100 ? existingProgress?.completedAt || now : existingProgress?.completedAt || null;
-  const firstReviewDueAt =
-    mastery >= 100 && !existingProgress?.completedAt && !existingProgress?.reviewDueAt
-      ? addDays(now, 1)
-      : existingProgress?.reviewDueAt || null;
+  const state = buildLessonProgressState(
+    existingProgress,
+    totalExercises,
+    correctAttempts.map((attempt) => attempt.exerciseId),
+    now
+  );
 
   const progress = await prisma.userLessonProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
-    update: {
-      completedExercises,
-      totalExercises,
-      mastery,
-      completedAt: firstCompletedAt,
-      reviewDueAt: firstReviewDueAt
-    },
+    update: state,
     create: {
       userId,
       lessonId,
-      completedExercises,
-      totalExercises,
-      mastery,
-      completedAt: firstCompletedAt,
-      reviewDueAt: firstReviewDueAt
+      ...state
     }
   });
 
-  if (mastery >= 100) {
+  if (progress.mastery >= 100) {
     await enrollLessonWordsForReview(userId, lessonId);
   }
 
@@ -893,18 +958,23 @@ async function refreshLessonProgress(userId, lessonId) {
 async function completeLessonReinforcement(userId, lessonId, score = 100) {
   const progress = await refreshLessonProgress(userId, lessonId);
   const now = new Date();
-  const strongReview = Number(score) >= 80 && progress.mastery >= 80;
+  const mastered = progress.mastery >= 100;
+  const strongReview = Number(score) >= 80 && mastered;
   const currentInterval = progress.reviewIntervalDays || 3;
-  const nextInterval = strongReview ? Math.min(30, progress.lessonReviewCount ? Math.ceil(currentInterval * 1.7) : 3) : 1;
+  const nextInterval = mastered
+    ? strongReview
+      ? Math.min(30, progress.lessonReviewCount ? Math.ceil(currentInterval * 1.7) : 3)
+      : 1
+    : 1;
 
   return prisma.userLessonProgress.update({
     where: { userId_lessonId: { userId, lessonId } },
     data: {
-      completedAt: progress.completedAt || now,
+      completedAt: mastered ? progress.completedAt || now : null,
       lastReviewedAt: now,
-      lessonReviewCount: { increment: 1 },
+      lessonReviewCount: mastered ? { increment: 1 } : progress.lessonReviewCount,
       reviewIntervalDays: nextInterval,
-      reviewDueAt: addDays(now, nextInterval)
+      reviewDueAt: mastered ? addDays(now, nextInterval) : null
     }
   });
 }
@@ -1529,6 +1599,7 @@ async function buildDashboard(userId) {
       exercises: { orderBy: { order: "asc" }, include: { options: true } }
     }
   });
+  await syncLessonProgressForLessons(userId, lessons);
   const review = await buildDueReview(userId, 12);
 
   const dueReview = await prisma.reviewItem.findFirst({
@@ -1858,6 +1929,7 @@ app.get(
         exercises: { select: { id: true } }
       }
     });
+    await syncLessonProgressForLessons(req.user.id, lessons);
     res.json({
       lessons: lessons.map(publicLessonSummary)
     });
@@ -1880,12 +1952,15 @@ app.get(
     });
 
     if (!lesson) return res.status(404).json({ error: "Lesson not found" });
+    await syncLessonProgressForLessons(req.user.id, [lesson]);
     const summary = publicLessonSummary(lesson);
 
     res.json({
       lesson: {
         ...lesson,
-        progress: lesson.progress[0]?.mastery || 0,
+        progress: summary.progress,
+        completedExercises: summary.completedExercises,
+        totalExercises: summary.totalExercises,
         unit: summary.unit,
         isCheckpoint: summary.isCheckpoint,
         outcomes: Array.isArray(lesson.outcomesJson) ? lesson.outcomesJson : [],

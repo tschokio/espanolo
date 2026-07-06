@@ -238,14 +238,176 @@ function shuffleAwayFromOriginalOrder(items) {
   return [list[list.length - 1], ...list.slice(1, -1), list[0]];
 }
 
+const topicTeachingCards = {
+  "absolute-basics": [
+    {
+      title: "Start with small sentence pieces",
+      body: "Spanish lets you build useful sentences from tiny parts: a person word, one verb form, and one phrase.",
+      example: "Yo soy Ana. Estoy en casa."
+    },
+    {
+      title: "Subject words are often optional",
+      body: "Yo, tú, él, and ella are useful for learning, but the verb ending often already shows the person.",
+      example: "Soy Ana can mean I am Ana."
+    }
+  ],
+  "ser-estar": [
+    {
+      title: "Ser identifies",
+      body: "Use ser for identity, roles, origin, and stable descriptions.",
+      example: "Soy estudiante. Ella es profesora."
+    },
+    {
+      title: "Estar locates or describes a current state",
+      body: "Use estar for where someone or something is, and for states that can change.",
+      example: "Estoy en casa. Ella está cansada."
+    }
+  ],
+  "articles-gender": [
+    {
+      title: "Learn nouns with their article",
+      body: "Spanish nouns have grammatical gender. Treat the article as part of the word while learning.",
+      example: "el libro, la silla, un café, una manzana"
+    },
+    {
+      title: "Articles agree with the noun",
+      body: "El and un go with many masculine singular nouns. La and una go with many feminine singular nouns.",
+      example: "el pan, la sopa"
+    }
+  ],
+  "present-tense-ar": [
+    {
+      title: "Regular -ar verbs follow a pattern",
+      body: "Remove -ar, then add the ending that matches the person.",
+      example: "hablar: yo hablo, tú hablas, nosotros hablamos"
+    },
+    {
+      title: "The ending carries meaning",
+      body: "Spanish verb endings often tell you who is doing the action, so endings are meaning, not decoration.",
+      example: "hablo = I speak, hablas = you speak"
+    }
+  ],
+  "estar-emotions": [
+    {
+      title: "Feelings use estar",
+      body: "Use estar for how someone feels right now or for temporary conditions.",
+      example: "Estoy feliz. Ana está nerviosa."
+    },
+    {
+      title: "Adjectives can agree",
+      body: "Many adjectives change form to match the person or thing they describe.",
+      example: "cansado, cansada, nervioso, nerviosa"
+    }
+  ],
+  "ordering-food": [
+    {
+      title: "Quiero is a direct request",
+      body: "Quiero plus a noun is simple and useful. Add por favor to make it polite.",
+      example: "Quiero un café, por favor."
+    },
+    {
+      title: "Countable items often need un or una",
+      body: "Use un or una when asking for one countable item.",
+      example: "un café, una manzana"
+    }
+  ],
+  "travel-questions": [
+    {
+      title: "Dónde asks for location",
+      body: "Use dónde with está when asking where a place or object is.",
+      example: "¿Dónde está el hotel?"
+    },
+    {
+      title: "Survival phrases should stay short",
+      body: "In travel situations, short correct phrases are more useful than long sentences.",
+      example: "Necesito ayuda. Tengo un mapa."
+    }
+  ],
+  "location-prepositions": [
+    {
+      title: "Location uses estar",
+      body: "Use estar to place people and objects in a location.",
+      example: "El libro está en la mesa."
+    },
+    {
+      title: "En covers many location meanings",
+      body: "En can mean in, on, or at depending on context.",
+      example: "en casa, en la mesa, en la biblioteca"
+    }
+  ],
+  "plural-agreement": [
+    {
+      title: "Plural changes more than one word",
+      body: "Articles, nouns, adjectives, and verbs can all show plural meaning.",
+      example: "Las manzanas son rojas."
+    },
+    {
+      title: "Los can be mixed plural",
+      body: "Los is used for masculine plural groups and for mixed groups.",
+      example: "Los estudiantes hablan."
+    }
+  ],
+  "negation-basics": [
+    {
+      title: "No goes before the verb",
+      body: "The basic negative pattern is simple: put no directly before the conjugated verb.",
+      example: "No entiendo. Ella no trabaja hoy."
+    }
+  ],
+  "tener-necesitar": [
+    {
+      title: "Tener does more than have",
+      body: "Tener means to have, but Spanish also uses it for some body states.",
+      example: "Tengo un mapa. Tengo hambre."
+    },
+    {
+      title: "Necesito is practical",
+      body: "Necesito plus a noun gives you a direct way to ask for help or objects.",
+      example: "Necesito ayuda. Necesito el pasaporte."
+    }
+  ],
+  "question-words": [
+    {
+      title: "Question words carry accents",
+      body: "Qué, quién, dónde, cuándo, cómo, and cuánto use accents in direct questions.",
+      example: "¿Qué quieres? ¿Cuánto cuesta?"
+    },
+    {
+      title: "Question frames are reusable",
+      body: "Keep the frame and swap the noun or place to make new questions.",
+      example: "¿Dónde está el hotel? ¿Dónde está la estación?"
+    }
+  ]
+};
+
+function lessonGuideCards(lesson) {
+  const topicSlug = lesson?.topic?.slug || lesson?.topicSlug || "";
+  const cards = [...(topicTeachingCards[topicSlug] || [])];
+  const sentenceCards = (lesson?.sentences || [])
+    .filter((sentence) => sentence?.note && sentence?.spanish)
+    .slice(0, 3)
+    .map((sentence) => ({
+      title: sentence.spanish,
+      body: sentence.note,
+      example: sentence.english
+    }));
+
+  return [...cards, ...sentenceCards]
+    .filter((card) => card.title && card.body)
+    .filter((card, index, list) => list.findIndex((item) => normalizeText(`${item.title} ${item.body}`) === normalizeText(`${card.title} ${card.body}`)) === index)
+    .slice(0, 5);
+}
+
 function lessonGuideSteps(lesson) {
   const outcomes = Array.isArray(lesson?.outcomes) ? lesson.outcomes : [];
   const conceptKeys = Array.isArray(lesson?.conceptKeys) ? lesson.conceptKeys : [];
+  const guideCards = lessonGuideCards(lesson).map((card) => `${card.title}: ${card.body}`);
   const exampleNotes = (lesson?.sentences || [])
     .map((sentence) => sentence.note)
     .filter(Boolean);
   const steps = [
     ...outcomes,
+    ...guideCards,
     ...conceptKeys.map((key) => `Focus: ${String(key).replace(/-/g, " ")}.`),
     ...exampleNotes
   ]
@@ -977,6 +1139,7 @@ function LearningPathView({ dashboard, refreshDashboard, setActive, launchLesson
             <div className="rounded-lg bg-white/10 p-4">
               <p className="text-xs font-black uppercase tracking-wide text-slate-300">Mastery</p>
               <p className="mt-2 text-2xl font-black">{averageProgress}%</p>
+              <p className="mt-1 text-xs font-bold text-slate-300">current checks</p>
               <ProgressBar value={averageProgress} className="mt-3" color="bg-honey-500" />
             </div>
             <div className="rounded-lg bg-white/10 p-4">
@@ -1219,7 +1382,7 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="font-bold text-slate-500">
-            {lessonItem.estimatedMinutes} min · {lessonItem.exerciseCount} checks
+            {lessonItem.completedExercises || 0}/{lessonItem.exerciseCount || lessonItem.totalExercises || 0} checks · {lessonItem.estimatedMinutes} min
           </span>
           <span className="font-black text-lagoon-700 group-hover:text-lagoon-900">{actionLabel}</span>
         </div>
@@ -1244,10 +1407,12 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
   }, [lesson.id]);
 
   const overviewStep = { type: "overview" };
+  const guideCards = useMemo(() => lessonGuideCards(lesson), [lesson.id]);
+  const guideStep = guideCards.length ? { type: "guide" } : null;
   const learnSteps = lesson.sentences.map((sentence, index) => ({ type: "learn", sentence, index }));
   const randomizedExercises = useMemo(() => shuffleItems(lesson.exercises || []), [lesson.id, sessionRun]);
   const practiceSteps = randomizedExercises.map((exercise, index) => ({ type: "practice", exercise, index }));
-  const steps = [overviewStep, ...learnSteps, ...practiceSteps];
+  const steps = [overviewStep, ...(guideStep ? [guideStep] : []), ...learnSteps, ...practiceSteps];
   const current = steps[step];
   const finished = step >= steps.length;
   const correct = results.filter(Boolean).length;
@@ -1358,7 +1523,29 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
             onClick={() => setStep((value) => value + 1)}
             className="mt-6 w-full rounded-md bg-lagoon-500 px-5 py-4 font-black text-white hover:bg-lagoon-600"
           >
-            Start lesson
+            Continue
+          </button>
+        </div>
+      ) : current.type === "guide" ? (
+        <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-soft sm:p-8">
+          <p className="text-sm font-black uppercase tracking-wide text-lagoon-700">Understand the pattern</p>
+          <h1 className="mt-3 text-3xl font-black text-slate-950">{lesson.title}</h1>
+          <div className="mt-5 grid gap-3">
+            {guideCards.map((card) => (
+              <div key={`${card.title}-${card.body}`} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                <p className="text-base font-black text-slate-950">{card.title}</p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">{card.body}</p>
+                {card.example && (
+                  <p className="mt-3 rounded-md bg-white px-3 py-2 text-sm font-black text-lagoon-800">{card.example}</p>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setStep((value) => value + 1)}
+            className="mt-6 w-full rounded-md bg-lagoon-500 px-5 py-4 font-black text-white hover:bg-lagoon-600"
+          >
+            Start examples
           </button>
         </div>
       ) : current.type === "learn" ? (
