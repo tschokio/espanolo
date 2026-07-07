@@ -612,8 +612,8 @@ const lessons = [
   },
   {
     slug: "zero-pronouns",
-    title: "Zero: Yo, Tú, Él, Ella",
-    summary: "Learn the tiny person words before building sentences.",
+    title: "Zero: Core Subject Pronouns",
+    summary: "Learn yo, tú, él, and ella as the four person words used in the first beginner sentences.",
     cefrLevel: "A1",
     theme: "Absolute Basics",
     situation: "starting from zero",
@@ -621,12 +621,23 @@ const lessons = [
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns"],
     order: 20,
-    estimatedMinutes: 4,
+    estimatedMinutes: 7,
+    outcomes: [
+      "You can identify who a sentence is about: I, you, he, or she.",
+      "You can separate the pronoun él from the article el.",
+      "You can use the four pronouns that appear in the next beginner lessons."
+    ],
+    conceptKeys: ["pronouns", "subject-pronouns", "yo-tu-el-ella", "accent-awareness"],
+    reviewSummary: "You practiced the first four subject pronouns: yo, tú, él, and ella.",
     sentences: [
-      ["yo", "I", "Use yo when you talk about yourself."],
-      ["tú", "you", "Use tú when speaking to one person informally."],
-      ["él", "he", "Él can mean he. Later you also see el as the masculine article."],
-      ["ella", "she", "Ella means she."]
+      ["yo", "I", "Use yo when the speaker is talking about themself."],
+      ["Yo soy Ana.", "I am Ana.", "Yo points to the speaker; later lessons focus on soy."],
+      ["tú", "you", "Use tú for one familiar person you are speaking to."],
+      ["Tú estudias.", "You study.", "Tú points to the listener; the accent keeps it separate from tu, meaning your."],
+      ["él", "he", "Él with an accent means he."],
+      ["Él habla.", "He speaks.", "The accent matters: él is a person, while el without accent is an article you learn later."],
+      ["ella", "she", "Ella means she."],
+      ["Ella está feliz.", "She is happy.", "Ella points to one female person; later lessons focus on está."]
     ]
   },
   {
@@ -2434,7 +2445,7 @@ const exercises = [
     prompt: "Tiny word meaning.",
     instruction: "Choose the meaning.",
     questionText: "yo",
-    answerJson: { correct: "I", accepted: ["I", "i"] },
+    answerJson: { correct: "I", accepted: ["I", "i"], goal: "pronoun_recognition" },
     explanation: "Yo means I. It points to the person speaking.",
     difficulty: 1,
     order: 1,
@@ -2454,7 +2465,7 @@ const exercises = [
     prompt: "Tiny word meaning.",
     instruction: "Choose the meaning.",
     questionText: "tú",
-    answerJson: { correct: "you", accepted: ["you"] },
+    answerJson: { correct: "you", accepted: ["you"], goal: "pronoun_recognition" },
     explanation: "Tú means you, when speaking to one person informally.",
     difficulty: 1,
     order: 2,
@@ -2463,7 +2474,27 @@ const exercises = [
     options: [
       ["you", "you", true],
       ["I", "I", false],
-      ["they", "they", false]
+      ["he", "he", false]
+    ]
+  },
+  {
+    slug: "zero-el-means-he",
+    lessonSlug: "zero-pronouns",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Tiny word meaning.",
+    instruction: "Choose the meaning.",
+    questionText: "él",
+    answerJson: { correct: "he", accepted: ["he"], goal: "pronoun_recognition" },
+    explanation: "Él means he. The accent separates the pronoun from el, an article you learn later.",
+    difficulty: 1,
+    order: 3,
+    xpReward: 8,
+    imageKey: "people-and-family:10",
+    options: [
+      ["he", "he", true],
+      ["she", "she", false],
+      ["you", "you", false]
     ]
   },
   {
@@ -2474,16 +2505,76 @@ const exercises = [
     prompt: "Tiny word meaning.",
     instruction: "Choose the meaning.",
     questionText: "ella",
-    answerJson: { correct: "she", accepted: ["she"] },
+    answerJson: { correct: "she", accepted: ["she"], goal: "pronoun_recognition" },
     explanation: "Ella means she.",
     difficulty: 1,
-    order: 3,
+    order: 4,
     xpReward: 8,
     imageKey: "identity-and-introductions:1",
     options: [
       ["she", "she", true],
       ["he", "he", false],
       ["I", "I", false]
+    ]
+  },
+  {
+    slug: "zero-speaker-pronoun",
+    lessonSlug: "zero-pronouns",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Who is speaking?",
+    instruction: "Choose the Spanish pronoun for the speaker.",
+    questionText: "The person says: I",
+    answerJson: { correct: "yo", accepted: ["yo"], goal: "pronoun_selection" },
+    explanation: "Use yo when the speaker means I.",
+    difficulty: 1,
+    order: 5,
+    xpReward: 10,
+    imageKey: "identity-and-introductions:5",
+    options: [
+      ["yo", "yo", true],
+      ["tú", "tú", false],
+      ["ella", "ella", false]
+    ]
+  },
+  {
+    slug: "zero-listener-pronoun",
+    lessonSlug: "zero-pronouns",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Who are you talking to?",
+    instruction: "Choose the pronoun for one familiar listener.",
+    questionText: "You are talking to one familiar person.",
+    answerJson: { correct: "tú", accepted: ["tu", "tú"], goal: "pronoun_selection" },
+    explanation: "Use tú when you are speaking to one familiar person.",
+    difficulty: 1,
+    order: 6,
+    xpReward: 10,
+    imageKey: "identity-and-introductions:6",
+    options: [
+      ["tú", "tú", true],
+      ["yo", "yo", false],
+      ["él", "él", false]
+    ]
+  },
+  {
+    slug: "zero-accented-el-pronoun",
+    lessonSlug: "zero-pronouns",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Accent awareness.",
+    instruction: "Choose the pronoun that means he.",
+    questionText: "he",
+    answerJson: { correct: "él", accepted: ["el", "él"], goal: "accent_awareness" },
+    explanation: "The pronoun he is él with an accent.",
+    difficulty: 1,
+    order: 7,
+    xpReward: 10,
+    imageKey: "people-and-family:10",
+    options: [
+      ["él", "él", true],
+      ["ella", "ella", false],
+      ["yo", "yo", false]
     ]
   },
   {

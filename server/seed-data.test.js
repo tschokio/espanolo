@@ -56,11 +56,15 @@ function arrayValues(block, fieldName) {
   return [...match[1].matchAll(/["']([^"']+)["']/g)].map((item) => item[1]);
 }
 
+const lessonBlocks = collectObjectBlocks(extractArraySection(seedSource, "lessons"));
+const exerciseBlocks = collectObjectBlocks(extractArraySection(seedSource, "exercises"));
+
 const topics = new Set(collectObjectBlocks(extractArraySection(seedSource, "topics")).map((block) => fieldValue(block, "slug")));
 const vocabularyGroups = new Set(
   collectObjectBlocks(extractArraySection(seedSource, "vocabularyGroups")).map((block) => fieldValue(block, "slug"))
 );
-const lessons = collectObjectBlocks(extractArraySection(seedSource, "lessons")).map((block) => ({
+const lessons = lessonBlocks.map((block) => ({
+  block,
   slug: fieldValue(block, "slug"),
   title: fieldValue(block, "title"),
   theme: fieldValue(block, "theme"),
@@ -69,7 +73,8 @@ const lessons = collectObjectBlocks(extractArraySection(seedSource, "lessons")).
   order: numberField(block, "order"),
   isCheckpoint: /checkpoint/i.test(`${fieldValue(block, "theme")} ${fieldValue(block, "title")}`)
 }));
-const exercises = collectObjectBlocks(extractArraySection(seedSource, "exercises")).map((block) => ({
+const exercises = exerciseBlocks.map((block) => ({
+  block,
   slug: fieldValue(block, "slug"),
   lessonSlug: fieldValue(block, "lessonSlug"),
   topicSlug: fieldValue(block, "topicSlug"),
@@ -125,4 +130,19 @@ test("checkpoint lessons have enough mixed checks", () => {
     .filter((lesson) => (countByLesson.get(lesson.slug) || 0) < 4)
     .map((lesson) => lesson.slug);
   assert.deepEqual(underbuilt, []);
+});
+
+test("zero pronoun lesson and checks stay scoped to taught pronouns", () => {
+  const lesson = lessons.find((item) => item.slug === "zero-pronouns");
+  assert.ok(lesson, "zero-pronouns lesson should exist");
+  for (const pronoun of ["yo", "tú", "él", "ella"]) {
+    assert.match(lesson.block, new RegExp(`["']${pronoun}`, "i"), `zero-pronouns should teach ${pronoun}`);
+  }
+  assert.doesNotMatch(lesson.block, /nosotros/i, "zero-pronouns should not teach nosotros");
+
+  const lessonExercises = exercises.filter((exercise) => exercise.lessonSlug === "zero-pronouns");
+  assert.ok(lessonExercises.length >= 6, "zero-pronouns should have enough focused checks");
+  for (const exercise of lessonExercises) {
+    assert.doesNotMatch(exercise.block, /nosotros/i, `${exercise.slug} should not quiz nosotros`);
+  }
 });

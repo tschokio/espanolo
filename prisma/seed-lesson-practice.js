@@ -25,6 +25,75 @@ const acceptedSentence = (sentence) => {
   return [...new Set([plain, `${plain}.`, `${plain}?`, `${plain}!`])];
 };
 
+const lowerRaw = (value) => String(value || "").toLocaleLowerCase("es");
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasRawSpanishToken(rawText, token) {
+  if (!token) return false;
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegExp(lowerRaw(token))}([^\\p{L}\\p{N}]|$)`, "u").test(rawText);
+}
+
+function hasNormalizedTerm(normalizedText, term) {
+  if (!term || term.length < 3) return false;
+  return new RegExp(`(^|\\s)${escapeRegExp(term)}(\\s|$)`).test(normalizedText);
+}
+
+function answerTeachingPieces(answerJson = {}) {
+  const pieces = [];
+  if (answerJson.correct) pieces.push(answerJson.correct);
+  if (Array.isArray(answerJson.correctWords)) pieces.push(answerJson.correctWords.join(" "));
+  if (Array.isArray(answerJson.accepted)) pieces.push(...answerJson.accepted);
+  if (Array.isArray(answerJson.alternatives)) {
+    pieces.push(...answerJson.alternatives.map((alternative) => alternative.answer || alternative.note || ""));
+  }
+  if (answerJson.audioText) pieces.push(answerJson.audioText);
+  if (answerJson.rubric) pieces.push(answerJson.rubric);
+  return pieces.filter(Boolean);
+}
+
+function lessonTeachingCorpus(lesson) {
+  const pieces = [
+    lesson.title,
+    lesson.summary,
+    lesson.situation,
+    lesson.reviewSummary,
+    ...(lesson.sentences || []).flatMap((sentence) => [sentence.spanish, sentence.english, sentence.note]),
+    ...(lesson.exercises || []).flatMap((exercise) => [
+      exercise.prompt,
+      exercise.instruction,
+      exercise.questionText,
+      exercise.explanation,
+      ...answerTeachingPieces(exercise.answerJson)
+    ])
+  ].filter(Boolean);
+  const raw = lowerRaw(pieces.join(" "));
+  return {
+    raw,
+    normalized: normalize(raw)
+  };
+}
+
+function vocabularySearchTerms(word) {
+  const spanish = normalize(word.spanish);
+  const english = normalize(word.english);
+  const terms = new Set([spanish, english].filter((term) => term.length >= 3));
+  const spanishWithoutArticle = spanish.replace(/^(el|la|los|las|un|una|unos|unas)\s+/, "");
+  const englishWithoutTo = english.replace(/^to\s+/, "");
+  if (spanishWithoutArticle.length >= 3) terms.add(spanishWithoutArticle);
+  if (englishWithoutTo.length >= 3) terms.add(englishWithoutTo);
+  return [...terms];
+}
+
+function vocabularyWordIsTaught(word, corpus) {
+  if (word.partOfSpeech === "pronoun") {
+    return hasRawSpanishToken(corpus.raw, word.spanish);
+  }
+  return vocabularySearchTerms(word).some((term) => hasNormalizedTerm(corpus.normalized, term));
+}
+
 function semanticImageKey(text, fallback) {
   const normalized = normalize(text);
   if (/\b(me llamo|my name is)\b/.test(normalized)) return "identity-and-introductions:2";
@@ -151,7 +220,10 @@ function sentenceExercises(lesson) {
 }
 
 function vocabularyExercises(lesson, allWords) {
-  const lessonWords = lesson.vocabularyGroups.flatMap((group) => group.words || []);
+  const corpus = lessonTeachingCorpus(lesson);
+  const lessonWords = lesson.vocabularyGroups
+    .flatMap((group) => group.words || [])
+    .filter((word) => vocabularyWordIsTaught(word, corpus));
   const exercises = [];
   for (const [index, word] of lessonWords.entries()) {
     const distractors = allWords
@@ -244,19 +316,31 @@ async function main() {
   ]);
 
   let createdOrUpdated = 0;
+  let removedStale = 0;
   for (const lesson of lessons) {
-    const existingCount = lesson.exercises.length;
+    const supplementPrefix = `supplement-${lesson.slug}-`;
+    const candidates = [...sentenceExercises(lesson), ...vocabularyExercises(lesson, allWords)]
+      .filter((exercise) => exercise.options.length === 0 || exercise.options.length >= 2)
+      .filter((exercise, index, list) => list.findIndex((candidate) => candidate.key === exercise.key) === index);
+    const validSupplementSlugs = new Set(candidates.map((exercise) => `${supplementPrefix}${exercise.key}`));
+    const staleSupplements = lesson.exercises.filter(
+      (exercise) => exercise.slug.startsWith(supplementPrefix) && !validSupplementSlugs.has(exercise.slug)
+    );
+    if (staleSupplements.length) {
+      await prisma.exercise.deleteMany({ where: { id: { in: staleSupplements.map((exercise) => exercise.id) } } });
+      removedStale += staleSupplements.length;
+    }
+
+    const retainedExercises = lesson.exercises.filter((exercise) => !staleSupplements.some((stale) => stale.id === exercise.id));
+    const existingCount = retainedExercises.length;
     const needed = Math.max(0, TARGET_EXERCISE_COUNT - existingCount);
     if (!needed) continue;
 
-    const existingSlugs = new Set(lesson.exercises.map((exercise) => exercise.slug));
-    const candidates = [...sentenceExercises(lesson), ...vocabularyExercises(lesson, allWords)]
-      .filter((exercise) => exercise.options.length === 0 || exercise.options.length >= 2)
-      .filter((exercise) => !existingSlugs.has(`supplement-${lesson.slug}-${exercise.key}`))
-      .filter((exercise, index, list) => list.findIndex((candidate) => candidate.key === exercise.key) === index);
+    const existingSlugs = new Set(retainedExercises.map((exercise) => exercise.slug));
+    const candidatesToCreate = candidates.filter((exercise) => !existingSlugs.has(`${supplementPrefix}${exercise.key}`));
 
-    const selected = candidates.slice(0, needed);
-    let order = Math.max(0, ...lesson.exercises.map((exercise) => exercise.order || 0)) + 1;
+    const selected = candidatesToCreate.slice(0, needed);
+    let order = Math.max(0, ...retainedExercises.map((exercise) => exercise.order || 0)) + 1;
     for (const exercise of selected) {
       await upsertExercise(lesson, lesson.topicId, exercise, order);
       order += 1;
@@ -266,13 +350,22 @@ async function main() {
   }
 
   console.log(`Supplemental lesson practice upserted: ${createdOrUpdated} exercises`);
+  console.log(`Stale supplemental lesson practice removed: ${removedStale} exercises`);
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  main()
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
+
+module.exports = {
+  lessonTeachingCorpus,
+  vocabularyExercises,
+  vocabularyWordIsTaught
+};

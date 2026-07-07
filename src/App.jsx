@@ -2097,6 +2097,7 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
           title={`Recall ${current.index + 1}/${practiceSteps.length}`}
           exercise={current.exercise}
           source="LESSON"
+          shuffleKey={`${lesson.id}:${sessionRun}:${current.index}`}
           autoAdvance
           autoAdvanceOnWrong
           autoAdvanceDelay={850}
@@ -3735,7 +3736,8 @@ function PracticePanel({
   autoAdvanceDelay = 900,
   autoAdvanceOnWrong = true,
   showInlineFeedback = true,
-  autoSubmitChoices = true
+  autoSubmitChoices = true,
+  shuffleKey = ""
 }) {
   const [answer, setAnswer] = useState("");
   const [words, setWords] = useState([]);
@@ -3749,14 +3751,14 @@ function PracticePanel({
     setWords([]);
     setFeedback(null);
     setHintOpen(false);
-  }, [exercise?.id]);
+  }, [exercise?.id, shuffleKey]);
 
   const randomizedOptions = useMemo(() => {
     if (!exercise?.options?.length) return [];
     return exercise.type === "SENTENCE_BUILDER"
       ? shuffleAwayFromOriginalOrder(exercise.options)
       : shuffleItems(exercise.options);
-  }, [exercise?.id]);
+  }, [exercise?.id, shuffleKey]);
   const exerciseForDisplay = exercise ? { ...exercise, options: randomizedOptions } : null;
 
   if (!exercise) {
@@ -4180,6 +4182,7 @@ function ExerciseQueue({
         title={`${title} ${index + 1}/${usableExercises.length}`}
         exercise={current}
         source={source}
+        shuffleKey={`${source}:${index}:${current.id}`}
         autoAdvance
         autoAdvanceOnWrong
         autoAdvanceDelay={1000}
@@ -4864,6 +4867,7 @@ function ScenarioPracticeView({ dashboard, refreshDashboard }) {
           title={`${lesson.title} ${index + 1}/${exercises.length}`}
           exercise={current}
           source="LESSON"
+          shuffleKey={`${lesson.id}:${index}:${current.id}`}
           autoAdvance
           autoAdvanceOnWrong
           autoAdvanceDelay={1000}
@@ -5519,6 +5523,7 @@ function PracticeMiniGameRound({ game, exercises, loading, refreshDashboard }) {
         title={`${game.title} Round`}
         exercise={current}
         source="GAME"
+        shuffleKey={`${game.key}:${index}:${current.id}`}
         autoAdvance
         autoAdvanceOnWrong
         autoAdvanceDelay={850}
@@ -5756,6 +5761,7 @@ function ChallengesView({ challenge, refreshDashboard }) {
           title={`Challenge Round ${localProgress + 1}/${targetCount}`}
           exercise={current}
           source="CHALLENGE"
+          shuffleKey={`${challenge.id}:${localProgress}:${current.id}`}
           autoAdvance
           autoAdvanceOnWrong
           autoAdvanceDelay={1000}
@@ -5963,6 +5969,7 @@ function ReviewQueueView({ refreshDashboard }) {
           title={currentItem.type === "mistake" ? "Fix the mistake" : "Grammar review"}
           exercise={currentItem.exercise}
           source="REVIEW"
+          shuffleKey={`review:${index}:${currentItem.key}`}
           autoAdvance
           autoAdvanceOnWrong
           autoSubmitChoices
