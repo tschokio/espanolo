@@ -60,7 +60,7 @@ test("detects stale stored progress totals", () => {
   assert.equal(lessonProgressNeedsSync(existing, state), true);
 });
 
-test("locks checkpoint display progress until earlier unit lessons are complete", () => {
+test("keeps locked checkpoint progress visible until earlier unit lessons are complete", () => {
   const unit = { slug: "a1-final", label: "A1", title: "A1 Foundations" };
   const lessons = applyCheckpointLocksToSummaries([
     { id: "lesson-1", title: "Core 1", order: 10, unit, progress: 40, isCheckpoint: false, reviewDue: false, status: "practicing" },
@@ -81,7 +81,7 @@ test("locks checkpoint display progress until earlier unit lessons are complete"
 
   assert.equal(checkpoint.isLocked, true);
   assert.equal(checkpoint.progress, 0);
-  assert.equal(checkpoint.displayProgress, 0);
+  assert.equal(checkpoint.displayProgress, 92);
   assert.equal(checkpoint.actualProgress, 92);
   assert.equal(checkpoint.completedExercises, 0);
   assert.equal(checkpoint.actualCompletedExercises, 11);

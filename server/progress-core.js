@@ -103,7 +103,7 @@ function applyCheckpointLocksToSummaries(lessonSummaries = []) {
       actualProgress,
       actualCompletedExercises,
       actualStatus,
-      displayProgress: 0,
+      displayProgress: actualProgress,
       progress: 0,
       completedExercises: 0,
       completedAt: null,

@@ -216,7 +216,7 @@ const vocabularyGroups = [
       ["el café", "café", "noun", "masculine", "Estoy en el café.", "places-around-town:1"],
       ["la tienda", "store", "noun", "feminine", "La tienda está cerca.", "places-around-town:2"],
       ["el parque", "park", "noun", "masculine", "Los niños están en el parque.", "places-around-town:3"],
-      ["la estación", "station", "noun", "feminine", "La estación está lejos.", "places-around-town:4"],
+      ["la estación", "station", "noun", "feminine", "La estación está lejos.", "city-transport:7"],
       ["la casa", "home", "noun", "feminine", "Estoy en casa.", "places-around-town:7"],
       ["el restaurante", "restaurant", "noun", "masculine", "El restaurante está abierto.", "places-around-town:10"]
     ]
@@ -258,7 +258,7 @@ const vocabularyGroups = [
     situation: "travel",
     imageKey: "travel-and-survival:1",
     words: [
-      ["el hotel", "hotel", "noun", "masculine", "El hotel está cerca.", "travel-and-survival:2"],
+      ["el hotel", "hotel", "noun", "masculine", "El hotel está cerca.", "city-transport:13"],
       ["el tren", "train", "noun", "masculine", "Necesito un boleto de tren.", "city-transport:2"],
       ["el mapa", "map", "noun", "masculine", "Tengo un mapa.", "travel-and-survival:5"],
       ["el taxi", "taxi", "noun", "masculine", "Busco un taxi.", "city-transport:3"],
@@ -294,11 +294,11 @@ const vocabularyGroups = [
     situation: "conversation",
     imageKey: "daily-actions:15",
     words: [
-      ["hola", "hello", "phrase", null, "Hola, soy Ana.", null],
-      ["me llamo", "my name is", "phrase", null, "Hola, me llamo Ana.", "people-and-family:1"],
-      ["soy de", "I am from", "phrase", null, "Soy de Austria.", "travel-and-survival:5"],
-      ["por favor", "please", "phrase", null, "Un café, por favor.", null],
-      ["gracias", "thank you", "phrase", null, "Gracias por la ayuda.", null],
+      ["hola", "hello", "phrase", null, "Hola, soy Ana.", "identity-and-introductions:13"],
+      ["me llamo", "my name is", "phrase", null, "Hola, me llamo Ana.", "identity-and-introductions:2"],
+      ["soy de", "I am from", "phrase", null, "Soy de Austria.", "identity-and-introductions:12"],
+      ["por favor", "please", "phrase", null, "Un café, por favor.", "food-and-ordering:17"],
+      ["gracias", "thank you", "phrase", null, "Gracias por la ayuda.", "identity-and-introductions:16"],
       ["perdón", "sorry / excuse me", "phrase", null, "Perdón, ¿dónde está el hotel?", "travel-and-survival:1"],
       ["necesito ayuda", "I need help", "phrase", null, "Necesito ayuda, por favor.", "travel-and-survival:12"],
       ["no entiendo", "I do not understand", "phrase", null, "No entiendo la pregunta.", "grammar-scenes:12"],
@@ -333,12 +333,12 @@ const vocabularyGroups = [
     title: "People and Pronouns",
     description: "People words that help you build sentences with verb agreement.",
     situation: "introductions",
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:14",
     words: [
-      ["yo", "I", "pronoun", null, "Yo soy estudiante.", "people-and-family:1"],
-      ["tú", "you", "pronoun", null, "Tú estudias mucho.", "people-and-family:2"],
+      ["yo", "I", "pronoun", null, "Yo soy estudiante.", "identity-and-introductions:5"],
+      ["tú", "you", "pronoun", null, "Tú estudias mucho.", "identity-and-introductions:6"],
       ["él", "he", "pronoun", null, "Él trabaja hoy.", "people-and-family:10"],
-      ["ella", "she", "pronoun", null, "Ella está feliz.", "people-and-family:1"],
+      ["ella", "she", "pronoun", null, "Ella está feliz.", "identity-and-introductions:1"],
       ["nosotros", "we", "pronoun", null, "Nosotros caminamos.", "people-and-family:16"],
       ["ellos", "they", "pronoun", null, "Ellos están en el parque.", "people-and-family:16"],
       ["la persona", "person", "noun", "feminine", "La persona habla español.", "people-and-family:1"],
@@ -383,7 +383,7 @@ const vocabularyGroups = [
       ["la plataforma", "platform", "noun", "feminine", "La plataforma está allí.", "city-transport:7"],
       ["la maleta", "suitcase", "noun", "feminine", "Tengo una maleta.", "city-transport:10"],
       ["el pasaporte", "passport", "noun", "masculine", "Necesito el pasaporte.", "city-transport:11"],
-      ["el mapa", "map", "noun", "masculine", "Tengo un mapa.", "city-transport:12"]
+      ["el mapa", "map", "noun", "masculine", "Tengo un mapa.", "travel-and-survival:5"]
     ]
   },
   {
@@ -591,7 +591,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Self-introduction",
     situation: "meeting someone",
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:2",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns", "useful-phrases"],
     order: 10,
@@ -617,7 +617,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Absolute Basics",
     situation: "starting from zero",
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:14",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns"],
     order: 20,
@@ -636,7 +636,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Absolute Basics",
     situation: "identity",
-    imageKey: "grammar-scenes:1",
+    imageKey: "identity-and-introductions:4",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns", "classroom-basics"],
     order: 30,
@@ -691,7 +691,7 @@ const lessons = [
     cefrLevel: "A1",
     theme: "Checkpoint",
     situation: "first conversation",
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:16",
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns", "useful-phrases", "places-around-town"],
     order: 55,
@@ -2279,7 +2279,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 8,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:13",
     options: [
       ["hello", "hello", true],
       ["thank you", "thank you", false],
@@ -2306,7 +2306,7 @@ const exercises = [
     difficulty: 1,
     order: 2,
     xpReward: 10,
-    imageKey: "grammar-scenes:1",
+    imageKey: "identity-and-introductions:1",
     options: [
       ["soy", "soy", true],
       ["estoy", "estoy", false],
@@ -2331,7 +2331,7 @@ const exercises = [
     difficulty: 2,
     order: 3,
     xpReward: 14,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:2",
     options: []
   },
   {
@@ -2350,7 +2350,7 @@ const exercises = [
     difficulty: 1,
     order: 4,
     xpReward: 14,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:1",
     options: [
       ["Hola", "Hola", false],
       [",", ",", false],
@@ -2379,7 +2379,7 @@ const exercises = [
     difficulty: 2,
     order: 5,
     xpReward: 16,
-    imageKey: "travel-and-survival:5",
+    imageKey: "identity-and-introductions:12",
     options: []
   },
   {
@@ -2402,7 +2402,7 @@ const exercises = [
     difficulty: 2,
     order: 6,
     xpReward: 16,
-    imageKey: "grammar-scenes:1",
+    imageKey: "identity-and-introductions:12",
     options: []
   },
   {
@@ -2423,7 +2423,7 @@ const exercises = [
     difficulty: 2,
     order: 7,
     xpReward: 18,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:2",
     options: []
   },
   {
@@ -2439,7 +2439,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 8,
-    imageKey: "classroom-basics:1",
+    imageKey: "identity-and-introductions:5",
     options: [
       ["I", "I", true],
       ["you", "you", false],
@@ -2459,7 +2459,7 @@ const exercises = [
     difficulty: 1,
     order: 2,
     xpReward: 8,
-    imageKey: "daily-actions:16",
+    imageKey: "identity-and-introductions:6",
     options: [
       ["you", "you", true],
       ["I", "I", false],
@@ -2479,7 +2479,7 @@ const exercises = [
     difficulty: 1,
     order: 3,
     xpReward: 8,
-    imageKey: "emotions-and-states:1",
+    imageKey: "identity-and-introductions:1",
     options: [
       ["she", "she", true],
       ["he", "he", false],
@@ -2499,7 +2499,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 10,
-    imageKey: "grammar-scenes:1",
+    imageKey: "identity-and-introductions:4",
     options: [
       ["I am", "I am", true],
       ["you are", "you are", false],
@@ -2519,7 +2519,7 @@ const exercises = [
     difficulty: 1,
     order: 2,
     xpReward: 10,
-    imageKey: "classroom-basics:1",
+    imageKey: "identity-and-introductions:8",
     options: [
       ["soy", "soy", true],
       ["estoy", "estoy", false],
@@ -2559,7 +2559,7 @@ const exercises = [
     difficulty: 1,
     order: 2,
     xpReward: 10,
-    imageKey: "places-around-town:7",
+    imageKey: "identity-and-introductions:7",
     options: [
       ["estoy", "estoy", true],
       ["soy", "soy", false],
@@ -2579,7 +2579,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 10,
-    imageKey: "grammar-scenes:2",
+    imageKey: "people-and-family:4",
     options: [
       ["is", "is", true],
       ["I am", "I am", false],
@@ -2599,7 +2599,7 @@ const exercises = [
     difficulty: 1,
     order: 2,
     xpReward: 10,
-    imageKey: "places-around-town:7",
+    imageKey: "identity-and-introductions:7",
     options: [
       ["está", "está", true],
       ["es", "es", false],
@@ -2619,7 +2619,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 12,
-    imageKey: "classroom-basics:1",
+    imageKey: "identity-and-introductions:8",
     options: [
       ["soy", "soy", true],
       ["estoy", "estoy", false],
@@ -2659,7 +2659,7 @@ const exercises = [
     difficulty: 2,
     order: 3,
     xpReward: 14,
-    imageKey: "emotions-and-states:3",
+    imageKey: "identity-and-introductions:9",
     options: [
       ["está", "está", true],
       ["es", "es", false],
@@ -2679,7 +2679,7 @@ const exercises = [
     difficulty: 1,
     order: 4,
     xpReward: 16,
-    imageKey: "grammar-scenes:10",
+    imageKey: "identity-and-introductions:8",
     options: [
       ["Yo", "Yo", false],
       ["soy", "soy", false],
@@ -2938,7 +2938,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 12,
-    imageKey: "travel-and-survival:2",
+    imageKey: "city-transport:13",
     options: [
       ["Dónde", "Dónde", true],
       ["Cuándo", "Cuándo", false],
@@ -3165,7 +3165,7 @@ const exercises = [
     difficulty: 2,
     order: 3,
     xpReward: 16,
-    imageKey: "travel-and-survival:22",
+    imageKey: "city-transport:7",
     options: [
       ["Dónde", "Dónde", false],
       ["está", "está", false],
@@ -3303,7 +3303,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 12,
-    imageKey: "daily-actions:4",
+    imageKey: "food-and-ordering:3",
     options: [
       ["compro", "compro", true],
       ["compras", "compras", false],
@@ -3487,7 +3487,7 @@ const exercises = [
     difficulty: 2,
     order: 1,
     xpReward: 18,
-    imageKey: "grammar-scenes:1",
+    imageKey: "identity-and-introductions:8",
     options: [
       ["soy / estoy", "soy / estoy", true],
       ["estoy / soy", "estoy / soy", false],
@@ -3574,7 +3574,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 14,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:1",
     options: []
   },
   {
@@ -3590,7 +3590,7 @@ const exercises = [
     difficulty: 1,
     order: 2,
     xpReward: 12,
-    imageKey: "places-around-town:7",
+    imageKey: "identity-and-introductions:7",
     options: [
       ["está", "está", true],
       ["es", "es", false],
@@ -3610,7 +3610,7 @@ const exercises = [
     difficulty: 1,
     order: 3,
     xpReward: 16,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:2",
     options: [
       ["Hola", "Hola", false],
       [",", ",", false],
@@ -3636,7 +3636,7 @@ const exercises = [
     difficulty: 2,
     order: 4,
     xpReward: 18,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:15",
     options: []
   },
   {
@@ -3745,7 +3745,7 @@ const exercises = [
     difficulty: 2,
     order: 2,
     xpReward: 18,
-    imageKey: "travel-and-survival:2",
+    imageKey: "city-transport:13",
     options: []
   },
   {
@@ -3796,7 +3796,7 @@ const exercises = [
     difficulty: 2,
     order: 1,
     xpReward: 16,
-    imageKey: "daily-actions:4",
+    imageKey: "food-and-ordering:3",
     options: []
   },
   {
@@ -4138,7 +4138,7 @@ const exercises = [
     difficulty: 2,
     order: 7,
     xpReward: 20,
-    imageKey: "fruit-and-produce:1",
+    imageKey: "numbers-and-colors:7",
     options: [
       ["La", "La", false],
       ["manzana", "manzana", false],
@@ -4160,7 +4160,7 @@ const exercises = [
     difficulty: 2,
     order: 8,
     xpReward: 20,
-    imageKey: "fruit-and-produce:1",
+    imageKey: "numbers-and-colors:2",
     options: []
   },
   {
@@ -5774,6 +5774,15 @@ const assetPrompts = [
     canvasSize: 1254,
     imagePath: "/images/people-and-family.webp",
     promptMarkdown: "4x4 people and family sheet. Cells include person, friend greeting, student, teacher, mother, father, siblings, grandparent, family group, worker, doctor, waiter, traveler, customer, neighbor, group conversation."
+  },
+  {
+    slug: "identity-and-introductions",
+    title: "Identity and Introductions",
+    category: "Situations",
+    gridSize: 4,
+    canvasSize: 1254,
+    imagePath: "/images/identity-and-introductions.webp",
+    promptMarkdown: "4x4 self-introduction and identity sheet centered on Ana. Cells include Ana portrait, Ana introducing herself, cafe introduction, blank ID card, first-person gesture, one-on-one conversation, woman at home, student identity, tired Ana, morning work, choosing tea at cafe, travel origin, hello greeting, group conversation, counter introduction, and successful introduction."
   },
   {
     slug: "emotions-and-states",

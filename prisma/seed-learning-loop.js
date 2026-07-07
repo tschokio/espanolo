@@ -3,9 +3,9 @@ const { PrismaClient, ExerciseType } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const usefulWords = [
-  ["hola", "hello", "phrase", null, "Hola, soy Ana.", null],
-  ["me llamo", "my name is", "phrase", null, "Hola, me llamo Ana.", "people-and-family:1"],
-  ["soy de", "I am from", "phrase", null, "Soy de Austria.", "travel-and-survival:5"]
+  ["hola", "hello", "phrase", null, "Hola, soy Ana.", "identity-and-introductions:13"],
+  ["me llamo", "my name is", "phrase", null, "Hola, me llamo Ana.", "identity-and-introductions:2"],
+  ["soy de", "I am from", "phrase", null, "Soy de Austria.", "identity-and-introductions:12"]
 ];
 
 const lesson = {
@@ -15,7 +15,7 @@ const lesson = {
   cefrLevel: "A1",
   theme: "Self-introduction",
   situation: "meeting someone",
-  imageKey: "people-and-family:1",
+  imageKey: "identity-and-introductions:2",
   topicSlug: "absolute-basics",
   vocabularySlugs: ["people-and-pronouns", "useful-phrases"],
   order: 0,
@@ -47,7 +47,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 8,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:13",
     options: [["hello", "hello", true], ["thank you", "thank you", false], ["goodbye", "goodbye", false]]
   },
   {
@@ -66,7 +66,7 @@ const exercises = [
     difficulty: 1,
     order: 2,
     xpReward: 10,
-    imageKey: "grammar-scenes:1",
+    imageKey: "identity-and-introductions:1",
     options: [["soy", "soy", true], ["estoy", "estoy", false], ["es", "es", false]]
   },
   {
@@ -85,7 +85,7 @@ const exercises = [
     difficulty: 2,
     order: 3,
     xpReward: 14,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:2",
     options: []
   },
   {
@@ -99,7 +99,7 @@ const exercises = [
     difficulty: 1,
     order: 4,
     xpReward: 14,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:1",
     options: [["Hola", "Hola", false], [",", ",", false], ["soy", "soy", false], ["Ana", "Ana", false], [".", ".", false]]
   },
   {
@@ -118,7 +118,7 @@ const exercises = [
     difficulty: 2,
     order: 5,
     xpReward: 16,
-    imageKey: "travel-and-survival:5",
+    imageKey: "identity-and-introductions:12",
     options: []
   },
   {
@@ -137,7 +137,7 @@ const exercises = [
     difficulty: 2,
     order: 6,
     xpReward: 16,
-    imageKey: "grammar-scenes:1",
+    imageKey: "identity-and-introductions:12",
     options: []
   },
   {
@@ -156,7 +156,7 @@ const exercises = [
     difficulty: 2,
     order: 7,
     xpReward: 18,
-    imageKey: "people-and-family:1",
+    imageKey: "identity-and-introductions:2",
     options: []
   }
 ];

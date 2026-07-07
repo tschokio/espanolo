@@ -161,3 +161,24 @@ Cells:
 15. Neighbor waving.
 16. Group conversation.
 
+## Identity And Introductions, 4x4
+
+Create a `1200x1200` square image divided into a precise `4x4` grid. Each cell is `300x300` pixels. Show beginner identity, pronoun, and self-introduction scenes centered on an adult woman representing Ana. Use bright photorealistic educational app imagery with neutral backgrounds, clean gutters, centered subjects, and no readable text, labels, letters, numbers, logos, watermarks, or UI elements.
+
+Cells:
+1. Ana smiling portrait.
+2. Ana introducing herself to one other adult, one hand lightly on her chest.
+3. Ana at a small cafe table meeting someone.
+4. Person holding a completely blank ID card.
+5. Single person pointing gently to themself.
+6. Two people in a friendly one-on-one conversation.
+7. Adult woman at home near a sofa or doorway.
+8. Young adult student studying at a desk with blank notebook.
+9. Ana looking tired but fine.
+10. Ana working on a laptop in morning light.
+11. Ana in a cafe with coffee and tea, choosing the tea.
+12. Ana with suitcase and blank travel map.
+13. Two people waving hello.
+14. Small mixed group of adults chatting.
+15. Customer introducing herself at a counter to a staff member.
+16. Ana smiling confidently after a successful introduction.

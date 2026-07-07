@@ -5,11 +5,19 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const appPath = path.join(root, "src", "App.jsx");
-const seedPath = path.join(root, "prisma", "seed.js");
 const imageDir = path.join(root, "images");
+const seedFiles = ["seed.js", "seed-learning-loop.js", "seed-lesson-practice.js"]
+  .map((file) => ({
+    label: `prisma/${file}`,
+    path: path.join(root, "prisma", file)
+  }))
+  .filter((file) => fs.existsSync(file.path))
+  .map((file) => ({
+    ...file,
+    source: fs.readFileSync(file.path, "utf8")
+  }));
 
 const appSource = fs.readFileSync(appPath, "utf8");
-const seedSource = fs.readFileSync(seedPath, "utf8");
 
 function parseImageSheets(source) {
   const sheets = new Map();
@@ -77,6 +85,18 @@ function fieldValue(block, fieldName) {
   return match?.[1] || "";
 }
 
+function hasAnaIntroductionText(block) {
+  return /\b(Ana|me llamo Ana|Soy Ana|My name is Ana|I am Ana|Hello, my name is Ana|Yo ____ Ana)\b/i.test(block);
+}
+
+function checkSemanticImageFit(block, kind, fileLabel) {
+  const slug = fieldValue(block, "slug");
+  const imageKey = fieldValue(block, "imageKey");
+  if (imageKey === "people-and-family:1" && hasAnaIntroductionText(block)) {
+    issues.push(`${fileLabel}: ${kind} "${slug}" uses people-and-family:1 for Ana/self-introduction content; use identity-and-introductions artwork instead`);
+  }
+}
+
 function validateImageKey(key, sheets) {
   const [sheetId, cellText] = key.split(":");
   const cell = Number(cellText);
@@ -91,7 +111,7 @@ function validateImageKey(key, sheets) {
 const sheets = parseImageSheets(appSource);
 const referencedKeys = [
   ...collectImageKeys(appSource, "src/App.jsx"),
-  ...collectImageKeys(seedSource, "prisma/seed.js")
+  ...seedFiles.flatMap((file) => collectImageKeys(file.source, file.label))
 ];
 const issues = [];
 const warnings = [];
@@ -108,29 +128,35 @@ for (const item of referencedKeys) {
   if (issue) issues.push(`${item.file}: ${item.key} - ${issue}`);
 }
 
-const exerciseBlocks = collectObjectBlocks(extractArraySection(seedSource, "exercises"));
-for (const block of exerciseBlocks) {
-  const slug = fieldValue(block, "slug");
-  const imageKey = fieldValue(block, "imageKey");
-  if (/^(rewards-and-progress|minigame-ui-rewards):/.test(imageKey)) {
-    warnings.push(`Exercise "${slug}" uses non-content artwork: ${imageKey}`);
+const exerciseBlocks = [];
+for (const file of seedFiles) {
+  for (const block of collectObjectBlocks(extractArraySection(file.source, "exercises"))) {
+    exerciseBlocks.push({ block, fileLabel: file.label });
+    const slug = fieldValue(block, "slug");
+    const imageKey = fieldValue(block, "imageKey");
+    checkSemanticImageFit(block, "Exercise", file.label);
+    if (/^(rewards-and-progress|minigame-ui-rewards):/.test(imageKey)) {
+      warnings.push(`${file.label}: Exercise "${slug}" uses non-content artwork: ${imageKey}`);
+    }
   }
 }
 
-const lessonBlocks = collectObjectBlocks(extractArraySection(seedSource, "lessons"));
-for (const block of lessonBlocks) {
-  const slug = fieldValue(block, "slug");
-  const title = fieldValue(block, "title");
-  const theme = fieldValue(block, "theme");
-  const imageKey = fieldValue(block, "imageKey");
-  const isCheckpoint = /checkpoint/i.test(`${title} ${theme}`);
-  if (!isCheckpoint && /^(rewards-and-progress|minigame-ui-rewards):/.test(imageKey)) {
-    warnings.push(`Lesson "${slug}" uses non-content artwork outside a checkpoint: ${imageKey}`);
+for (const file of seedFiles) {
+  for (const block of collectObjectBlocks(extractArraySection(file.source, "lessons"))) {
+    const slug = fieldValue(block, "slug");
+    const title = fieldValue(block, "title");
+    const theme = fieldValue(block, "theme");
+    const imageKey = fieldValue(block, "imageKey");
+    const isCheckpoint = /checkpoint/i.test(`${title} ${theme}`);
+    checkSemanticImageFit(block, "Lesson", file.label);
+    if (!isCheckpoint && /^(rewards-and-progress|minigame-ui-rewards):/.test(imageKey)) {
+      warnings.push(`${file.label}: Lesson "${slug}" uses non-content artwork outside a checkpoint: ${imageKey}`);
+    }
   }
 }
 
 const reuse = new Map();
-for (const block of exerciseBlocks) {
+for (const { block } of exerciseBlocks) {
   const imageKey = fieldValue(block, "imageKey");
   const slug = fieldValue(block, "slug");
   if (!imageKey) continue;

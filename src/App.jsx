@@ -67,6 +67,7 @@ const imageSheets = {
   "fruit-and-produce": { src: "/images/fruit-and-produce.webp", grid: 5 },
   "grammar-scenes": { src: "/images/grammar-scenes.webp", grid: 4 },
   "home-objects": { src: "/images/home-objects.webp", grid: 5 },
+  "identity-and-introductions": { src: "/images/identity-and-introductions.webp", grid: 4 },
   "irregular-verbs": { src: "/images/irregular-verbs.webp", grid: 4 },
   "minigame-ui-rewards": { src: "/images/minigame-ui-rewards.webp", grid: 4 },
   "nature-and-animals": { src: "/images/nature-and-animals.webp", grid: 4 },
@@ -1631,7 +1632,7 @@ function CourseUnitCard({ unit, isCurrent, isExpanded, nextLessonId, orderedLess
   const checkpointStatus = !checkpoint
     ? "No checkpoint"
     : checkpoint.isLocked
-      ? "Locked"
+      ? `${lessonDisplayProgress(checkpoint)}% checkpoint`
       : checkpoint.reviewDue
       ? "Due again"
       : checkpoint.progress >= 100
@@ -1782,7 +1783,7 @@ function CourseLessonRow({ lessonItem, index, isNext, onSelect }) {
       </div>
       <div className="hidden w-28 shrink-0 sm:block">
         <ProgressBar value={displayProgress} color={locked ? "bg-slate-400" : done ? "bg-emerald-500" : lessonItem.reviewDue ? "bg-honey-500" : "bg-lagoon-500"} />
-        <p className="mt-1 text-right text-xs font-black text-slate-500">{locked ? "Locked" : `${displayProgress}%`}</p>
+        <p className="mt-1 text-right text-xs font-black text-slate-500">{displayProgress}%</p>
       </div>
       <span className="shrink-0 text-sm font-black text-lagoon-700">{actionLabel}</span>
     </button>
@@ -1851,7 +1852,7 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
             className="flex-1"
             color={locked ? "bg-slate-400" : due ? "bg-honey-500" : done ? "bg-emerald-500" : current ? "bg-honey-500" : "bg-lagoon-500"}
           />
-          <span className="text-sm font-black text-slate-700">{locked ? "Locked" : `${displayProgress}%`}</span>
+          <span className="text-sm font-black text-slate-700">{displayProgress}%</span>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="font-bold text-slate-500">
