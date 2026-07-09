@@ -15,7 +15,12 @@ const {
   scheduleExerciseReview,
   scheduleWordReview
 } = require("./learning-core");
-const { applyCheckpointLocksToSummaries, buildLessonProgressState, lessonProgressNeedsSync } = require("./progress-core");
+const {
+  applyCheckpointLocksToSummaries,
+  buildLessonProgressState,
+  checkpointUnlockState,
+  lessonProgressNeedsSync
+} = require("./progress-core");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -970,6 +975,54 @@ const requireAdmin = (req, res, next) => {
 
 app.use(sessionMiddleware);
 
+const isCheckpointLesson = (lesson) => /checkpoint/i.test(`${lesson?.theme || ""} ${lesson?.title || ""}`);
+
+function lessonProgressSnapshot(lesson, state = null) {
+  const progress = state || lesson.progress?.[0] || null;
+  return {
+    id: lesson.id,
+    order: lesson.order,
+    unit: lessonUnitForOrder(lesson.order),
+    isCheckpoint: isCheckpointLesson(lesson),
+    progress: progress?.mastery || 0,
+    completedExercises: progress?.completedExercises || 0,
+    completedAt: progress?.completedAt || null
+  };
+}
+
+function validCheckpointAttemptIds(correctAttempts = [], unlockState = null) {
+  if (!unlockState) return correctAttempts.map((attempt) => attempt.exerciseId);
+  if (!unlockState.unlocked) return [];
+
+  const unlockAt = unlockState.unlockAt ? new Date(unlockState.unlockAt).getTime() : 0;
+  return correctAttempts
+    .filter((attempt) => !unlockAt || new Date(attempt.createdAt).getTime() >= unlockAt)
+    .map((attempt) => attempt.exerciseId);
+}
+
+async function checkpointUnlockStateForUser(userId, lesson) {
+  if (!isCheckpointLesson(lesson)) return null;
+  const lessons = await prisma.lesson.findMany({
+    where: { isPublished: true },
+    include: { progress: { where: { userId } } }
+  });
+  const summaries = lessons.map((item) => lessonProgressSnapshot(item));
+  const checkpoint = summaries.find((item) => item.id === lesson.id) || lessonProgressSnapshot(lesson);
+  return checkpointUnlockState(checkpoint, summaries);
+}
+
+async function syncAllPublishedLessonProgress(userId) {
+  const lessons = await prisma.lesson.findMany({
+    where: { isPublished: true },
+    orderBy: [{ order: "asc" }, { title: "asc" }],
+    include: {
+      progress: { where: { userId } },
+      exercises: { select: { id: true } }
+    }
+  });
+  return syncLessonProgressForLessons(userId, lessons);
+}
+
 async function syncLessonProgressForLessons(userId, lessons) {
   const lessonList = lessons.filter(Boolean);
   if (!lessonList.length) return lessonList;
@@ -985,28 +1038,55 @@ async function syncLessonProgressForLessons(userId, lessons) {
     },
     select: {
       exerciseId: true,
+      createdAt: true,
       exercise: { select: { lessonId: true } }
     }
   });
 
-  const correctIdsByLesson = new Map();
+  const correctAttemptsByLesson = new Map();
   for (const attempt of correctAttempts) {
     const lessonId = attempt.exercise?.lessonId;
     if (!lessonId) continue;
-    if (!correctIdsByLesson.has(lessonId)) correctIdsByLesson.set(lessonId, []);
-    correctIdsByLesson.get(lessonId).push(attempt.exerciseId);
+    if (!correctAttemptsByLesson.has(lessonId)) correctAttemptsByLesson.set(lessonId, []);
+    correctAttemptsByLesson.get(lessonId).push(attempt);
   }
 
   const now = new Date();
+  const stateByLessonId = new Map();
+  for (const lesson of lessonList) {
+    if (isCheckpointLesson(lesson)) continue;
+    const existingProgress = lesson.progress?.[0] || null;
+    stateByLessonId.set(
+      lesson.id,
+      buildLessonProgressState(
+        existingProgress,
+        Array.isArray(lesson.exercises) ? lesson.exercises.length : existingProgress?.totalExercises || 0,
+        (correctAttemptsByLesson.get(lesson.id) || []).map((attempt) => attempt.exerciseId),
+        now
+      )
+    );
+  }
+
+  const progressSnapshots = lessonList.map((lesson) => lessonProgressSnapshot(lesson, stateByLessonId.get(lesson.id)));
+  for (const lesson of lessonList) {
+    if (!isCheckpointLesson(lesson)) continue;
+    const existingProgress = lesson.progress?.[0] || null;
+    const unlockState = checkpointUnlockState(lessonProgressSnapshot(lesson, existingProgress), progressSnapshots);
+    stateByLessonId.set(
+      lesson.id,
+      buildLessonProgressState(
+        existingProgress,
+        Array.isArray(lesson.exercises) ? lesson.exercises.length : existingProgress?.totalExercises || 0,
+        validCheckpointAttemptIds(correctAttemptsByLesson.get(lesson.id) || [], unlockState),
+        now
+      )
+    );
+  }
+
   const writes = [];
   for (const lesson of lessonList) {
     const existingProgress = lesson.progress?.[0] || null;
-    const state = buildLessonProgressState(
-      existingProgress,
-      Array.isArray(lesson.exercises) ? lesson.exercises.length : existingProgress?.totalExercises || 0,
-      correctIdsByLesson.get(lesson.id) || [],
-      now
-    );
+    const state = stateByLessonId.get(lesson.id);
     const shouldHaveProgress = Boolean(existingProgress || state.completedExercises > 0);
     lesson.progress = shouldHaveProgress
       ? [
@@ -1038,7 +1118,8 @@ async function syncLessonProgressForLessons(userId, lessons) {
 }
 
 async function refreshLessonProgress(userId, lessonId) {
-  const [totalExercises, correctAttempts, existingProgress] = await Promise.all([
+  const [lesson, totalExercises, correctAttempts, existingProgress] = await Promise.all([
+    prisma.lesson.findUnique({ where: { id: lessonId } }),
     prisma.exercise.count({ where: { lessonId } }),
     prisma.attempt.findMany({
       where: {
@@ -1046,16 +1127,17 @@ async function refreshLessonProgress(userId, lessonId) {
         isCorrect: true,
         exercise: { lessonId }
       },
-      select: { exerciseId: true }
+      select: { exerciseId: true, createdAt: true }
     }),
     prisma.userLessonProgress.findUnique({ where: { userId_lessonId: { userId, lessonId } } })
   ]);
 
+  const unlockState = lesson ? await checkpointUnlockStateForUser(userId, lesson) : null;
   const now = new Date();
   const state = buildLessonProgressState(
     existingProgress,
     totalExercises,
-    correctAttempts.map((attempt) => attempt.exerciseId),
+    validCheckpointAttemptIds(correctAttempts, unlockState),
     now
   );
 
@@ -2112,7 +2194,21 @@ app.get(
     });
 
     if (!lesson) return res.status(404).json({ error: "Lesson not found" });
-    await syncLessonProgressForLessons(req.user.id, [lesson]);
+    if (isCheckpointLesson(lesson)) {
+      const syncedLessons = await syncAllPublishedLessonProgress(req.user.id);
+      const lessonSummaries = applyCheckpointLocksToSummaries(syncedLessons.map(publicLessonSummary));
+      const checkpointSummary = lessonSummaries.find((item) => item.id === lesson.id);
+      if (checkpointSummary?.isLocked) {
+        return res.status(423).json({
+          error: checkpointSummary.lockedReason || "Complete the earlier lessons before this checkpoint.",
+          lesson: checkpointSummary
+        });
+      }
+      const syncedLesson = syncedLessons.find((item) => item.id === lesson.id);
+      if (syncedLesson) lesson.progress = syncedLesson.progress;
+    } else {
+      await syncLessonProgressForLessons(req.user.id, [lesson]);
+    }
     const summary = publicLessonSummary(lesson);
     const attempts = await prisma.attempt.findMany({
       where: {
@@ -2193,6 +2289,16 @@ app.post(
     });
 
     if (!exercise) return res.status(404).json({ error: "Exercise not found" });
+    if (isCheckpointLesson(exercise.lesson)) {
+      const unlockState = await checkpointUnlockStateForUser(req.user.id, exercise.lesson);
+      if (unlockState && !unlockState.unlocked) {
+        const unitLabel = lessonUnitForOrder(exercise.lesson.order).label || "this unit";
+        const count = unlockState.incompleteCount;
+        return res.status(423).json({
+          error: `Complete ${count} earlier ${count === 1 ? "lesson" : "lessons"} in ${unitLabel} before this checkpoint.`
+        });
+      }
+    }
 
     const evaluation = evaluateExerciseAnswer(exercise, req.body);
     const wasCorrect = evaluation.correct;

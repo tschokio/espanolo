@@ -33,6 +33,7 @@ import {
   Wand2,
   XCircle
 } from "lucide-react";
+import { advanceLessonPracticeQueue, buildLessonPracticeQueue } from "./lesson-session-core.mjs";
 
 const navItems = [
   { key: "learn", label: "Learn", icon: BookOpen },
@@ -273,6 +274,18 @@ const topicTeachingCards = {
       body: "Use estar for where something is and how someone is right now.",
       example: "Estoy en casa. Ella está cansada.",
       pitfall: "Location usually uses estar even when the place feels permanent."
+    },
+    {
+      title: "English is not enough to choose",
+      body: "Es and está can both translate to is in English. Choose from the meaning: identity or role uses ser; a current state or location uses estar.",
+      example: "Ana es profesora. / Ana está cansada.",
+      pitfall: "Do not translate is by itself. First ask: what is being said about Ana?"
+    },
+    {
+      title: "Choose the verb, then the person form",
+      body: "After choosing ser or estar, match the form to the subject. For yo use soy or estoy; for one named person use es or está.",
+      example: "Yo soy estudiante. Yo estoy en casa. Ana es profesora. Ana está en casa.",
+      pitfall: "A correct verb family still needs the right form: Ana está, not Ana estoy."
     }
   ],
   "articles-gender": [
@@ -681,6 +694,70 @@ function LessonGuidePanel({ lesson }) {
       </div>
       <LessonRememberBlock lesson={lesson} className="mt-4" />
     </Panel>
+  );
+}
+
+function LessonPracticePreview({ lesson, exercises = [], onStart }) {
+  const models = (lesson?.sentences || []).filter((sentence) => sentence?.spanish).slice(0, 8);
+  const targets = (exercises || [])
+    .filter(Boolean)
+    .map((exercise) => ({
+      key: normalizeText(`${exercise.prompt} ${exercise.instruction}`),
+      prompt: exercise.prompt,
+      instruction: exercise.instruction
+    }))
+    .filter((target) => target.key)
+    .filter((target, index, list) => list.findIndex((item) => item.key === target.key) === index)
+    .slice(0, 8);
+
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-soft sm:p-8">
+      <p className="text-sm font-black uppercase tracking-wide text-lagoon-700">Before recall</p>
+      <h1 className="mt-3 text-3xl font-black text-slate-950">Review the lesson’s exact building blocks</h1>
+      <p className="mt-3 text-base font-semibold leading-7 text-slate-600">
+        The next checks use the models and rules from this lesson. Read this compact recap first, then recall the pattern without the answer in front of you.
+      </p>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1.35fr_1fr]">
+        <div className="rounded-lg border border-lagoon-100 bg-lagoon-50 p-4">
+          <p className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-lagoon-800">
+            <NotebookTabs size={16} /> Models you just learned
+          </p>
+          <div className="mt-3 grid gap-2">
+            {models.map((sentence) => (
+              <div key={sentence.id || `${sentence.spanish}-${sentence.english}`} className="rounded-md border border-lagoon-100 bg-white px-3 py-3">
+                <p className="font-black text-slate-950">{sentence.spanish}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-600">{sentence.english}</p>
+                {sentence.note && <p className="mt-2 text-xs font-bold leading-5 text-lagoon-800">{sentence.note}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-lg border border-honey-200 bg-honey-50 p-4">
+          <p className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-honey-800">
+            <ListChecks size={16} /> What you will practice
+          </p>
+          <div className="mt-3 grid gap-2">
+            {targets.map((target) => (
+              <div key={target.key} className="rounded-md border border-honey-100 bg-white px-3 py-3">
+                <p className="text-sm font-black text-slate-950">{target.prompt}</p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-slate-600">{target.instruction}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 rounded-md border border-honey-200 bg-white px-3 py-3 text-sm font-bold leading-6 text-honey-900">
+            A missed check returns after the remaining checks. Anything you already got right stays passed.
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={onStart}
+        className="mt-6 w-full rounded-md bg-lagoon-500 px-5 py-4 font-black text-white hover:bg-lagoon-600"
+      >
+        Start recall
+      </button>
+    </div>
   );
 }
 
@@ -1866,41 +1943,68 @@ function PathLessonCard({ lessonItem, index, state, onSelect }) {
 }
 
 function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
+  const [sessionRun, setSessionRun] = useState(0);
+  const practiceExercises = useMemo(() => {
+    const queue = buildLessonPracticeQueue(lesson.exercises || []);
+    // Lesson authors put normal checks in a deliberate teaching order. Keep
+    // that sequence intact; checkpoints remain a mixed recall challenge.
+    return lesson.isCheckpoint ? shuffleItems(queue) : queue;
+  }, [lesson.exercises, lesson.isCheckpoint, sessionRun]);
   const [step, setStep] = useState(0);
   const [results, setResults] = useState([]);
   const [resultBanner, setResultBanner] = useState(null);
-  const [sessionRun, setSessionRun] = useState(0);
+  const [practiceQueue, setPracticeQueue] = useState(() => practiceExercises);
+  const [practiceTurn, setPracticeTurn] = useState(0);
   const [completionReported, setCompletionReported] = useState(false);
+  const practiceResultRef = useRef(null);
 
   useEffect(() => {
     setStep(0);
     setResults([]);
     setResultBanner(null);
-    setSessionRun(0);
+    setPracticeQueue(practiceExercises);
+    setPracticeTurn(0);
     setCompletionReported(false);
-  }, [lesson.id]);
+    practiceResultRef.current = null;
+  }, [lesson.id, sessionRun]);
 
   const overviewStep = { type: "overview" };
   const guideCards = useMemo(() => lessonGuideCards(lesson), [lesson.id]);
   const guideStep = guideCards.length ? { type: "guide" } : null;
-  const learnSteps = lesson.sentences.map((sentence, index) => ({ type: "learn", sentence, index }));
-  const randomizedExercises = useMemo(() => {
-    const exercises = lesson.exercises || [];
-    if (!lesson.isCheckpoint) return shuffleItems(exercises);
-    const unmastered = exercises.filter((exercise) => !exercise.mastered);
-    const mastered = exercises.filter((exercise) => exercise.mastered);
-    return [...shuffleItems(unmastered), ...shuffleItems(mastered)];
-  }, [lesson.id, sessionRun]);
-  const practiceSteps = randomizedExercises.map((exercise, index) => ({ type: "practice", exercise, index }));
-  const steps = [overviewStep, ...(guideStep ? [guideStep] : []), ...learnSteps, ...practiceSteps];
-  const current = steps[step];
-  const finished = step >= steps.length;
-  const correct = results.filter(Boolean).length;
-  const score = lesson.exercises.length ? Math.round((correct / lesson.exercises.length) * 100) : 100;
-  const progress = steps.length ? Math.round((Math.min(step, steps.length) / steps.length) * 100) : 0;
+  const learnSteps = (lesson.sentences || []).map((sentence, index) => ({ type: "learn", sentence, index }));
+  const practicePreviewStep = practiceExercises.length ? { type: "practice-preview" } : null;
+  const lessonSteps = [overviewStep, ...(guideStep ? [guideStep] : []), ...learnSteps, ...(practicePreviewStep ? [practicePreviewStep] : [])];
+  const inPractice = step >= lessonSteps.length;
+  const current = inPractice
+    ? practiceQueue[0]
+      ? { type: "practice", exercise: practiceQueue[0] }
+      : null
+    : lessonSteps[step];
+  const finished = inPractice && practiceQueue.length === 0;
+  const correct = results.filter((result) => result.correct).length;
+  const score = practiceExercises.length ? Math.round((correct / practiceExercises.length) * 100) : 100;
+  const completedPracticeChecks = Math.max(0, practiceExercises.length - practiceQueue.length);
+  const totalSteps = lessonSteps.length + practiceExercises.length;
+  const progress = totalSteps
+    ? Math.round(((Math.min(step, lessonSteps.length) + completedPracticeChecks) / totalSteps) * 100)
+    : 100;
   const masteredChecks = lesson.completedExercises || 0;
   const totalChecks = lesson.exerciseCount || lesson.totalExercises || lesson.exercises.length || 0;
   const unmasteredChecks = (lesson.exercises || []).filter((exercise) => !exercise.mastered);
+  const retryingMisses = results.length >= practiceExercises.length && practiceQueue.length > 0;
+  const practiceTitle = retryingMisses
+    ? `Fix ${practiceQueue.length} missed ${practiceQueue.length === 1 ? "check" : "checks"}`
+    : `Recall ${Math.min(results.length + 1, practiceExercises.length)}/${practiceExercises.length}`;
+
+  const completePracticeAttempt = () => {
+    const result = practiceResultRef.current;
+    if (!result || result.submissionError) return;
+
+    practiceResultRef.current = null;
+    setPracticeQueue((queue) => advanceLessonPracticeQueue(queue, result.correct));
+    setPracticeTurn((value) => value + 1);
+    refreshDashboard?.({ silent: true }).catch(() => null);
+  };
 
   useEffect(() => {
     if (!finished || completionReported) return;
@@ -1923,6 +2027,7 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
           <AssetImage imageKey="rewards-and-progress:15" alt="Complete" className="mx-auto h-28 w-28" />
           <h1 className="mt-5 text-3xl font-black">Lesson complete</h1>
           <p className="mt-2 text-slate-600">{lesson.reviewSummary || lesson.title}</p>
+          <p className="mt-2 text-sm font-bold text-emerald-700">All required checks are now mastered.</p>
           {!!lesson.outcomes?.length && (
             <div className="mx-auto mt-5 max-w-md rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-left">
               <p className="font-black text-emerald-950">You can now</p>
@@ -1938,7 +2043,7 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
           <LessonRememberBlock lesson={lesson} className="mx-auto mt-5 max-w-md text-left" />
           <div className="mx-auto mt-5 max-w-sm">
             <div className="flex justify-between text-sm font-bold text-slate-500">
-              <span>Recall score</span>
+              <span>First-pass recall score</span>
               <span>{score}%</span>
             </div>
             <ProgressBar value={score} className="mt-2" color={score >= 80 ? "bg-emerald-500" : "bg-honey-500"} />
@@ -2092,29 +2197,37 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
             Continue
           </button>
         </div>
+      ) : current.type === "practice-preview" ? (
+        <LessonPracticePreview lesson={lesson} exercises={practiceExercises} onStart={() => setStep((value) => value + 1)} />
       ) : (
-        <PracticePanel
-          title={`Recall ${current.index + 1}/${practiceSteps.length}`}
-          exercise={current.exercise}
-          source="LESSON"
-          shuffleKey={`${lesson.id}:${sessionRun}:${current.index}`}
-          autoAdvance
-          autoAdvanceOnWrong
-          autoAdvanceDelay={850}
-          autoSubmitChoices
-          onResult={(result) => {
-            setResultBanner(result);
-            setResults((currentResults) => {
-              const next = [...currentResults];
-              next[current.index] = Boolean(result.correct);
-              return next;
-            });
-          }}
-          onComplete={() => {
-            setStep((value) => value + 1);
-            refreshDashboard?.({ silent: true }).catch(() => null);
-          }}
-        />
+        <div className="space-y-4">
+          {retryingMisses && (
+            <div className="rounded-lg border border-honey-200 bg-honey-50 p-4 text-sm font-semibold text-honey-900">
+              Only missed checks remain. The checks you already got right stay passed.
+            </div>
+          )}
+          <PracticePanel
+            key={`${current.exercise.id}:${practiceTurn}`}
+            title={practiceTitle}
+            exercise={current.exercise}
+            source="LESSON"
+            shuffleKey={`${lesson.id}:${sessionRun}:${practiceTurn}:${current.exercise.id}`}
+            autoAdvance
+            autoAdvanceOnWrong
+            autoAdvanceDelay={850}
+            autoSubmitChoices
+            onResult={(result) => {
+              practiceResultRef.current = result;
+              setResultBanner(result);
+              if (result.submissionError) return;
+              setResults((currentResults) => {
+                if (currentResults.some((attempt) => attempt.exerciseId === current.exercise.id)) return currentResults;
+                return [...currentResults, { exerciseId: current.exercise.id, correct: Boolean(result.correct) }];
+              });
+            }}
+            onComplete={completePracticeAttempt}
+          />
+        </div>
       )}
     </section>
   );
@@ -4125,16 +4238,24 @@ function ExerciseQueue({
   completeTitle = "Practice complete",
   completeImageKey = "rewards-and-progress:15"
 }) {
-  const usableExercises = exercises.filter(Boolean);
-  const [index, setIndex] = useState(0);
+  const usableExercises = buildLessonPracticeQueue(exercises);
+  const exerciseKey = (exercises || [])
+    .filter(Boolean)
+    .map((exercise) => `${exercise.id}:${Boolean(exercise.mastered)}`)
+    .join("|");
   const [results, setResults] = useState([]);
   const [lastResult, setLastResult] = useState(null);
+  const [practiceQueue, setPracticeQueue] = useState(() => usableExercises);
+  const [practiceTurn, setPracticeTurn] = useState(0);
+  const practiceResultRef = useRef(null);
 
   useEffect(() => {
-    setIndex(0);
     setResults([]);
     setLastResult(null);
-  }, [usableExercises.map((exercise) => exercise.id).join("|"), source]);
+    setPracticeQueue(usableExercises);
+    setPracticeTurn(0);
+    practiceResultRef.current = null;
+  }, [exerciseKey, source]);
 
   if (!usableExercises.length) {
     return (
@@ -4144,9 +4265,25 @@ function ExerciseQueue({
     );
   }
 
-  const finished = index >= usableExercises.length;
-  const correct = results.filter(Boolean).length;
-  const progress = Math.round((Math.min(index, usableExercises.length) / usableExercises.length) * 100);
+  const finished = practiceQueue.length === 0;
+  const correct = results.filter((result) => result.correct).length;
+  const completedChecks = Math.max(0, usableExercises.length - practiceQueue.length);
+  const progress = Math.round((completedChecks / usableExercises.length) * 100);
+  const retryingMisses = results.length >= usableExercises.length && practiceQueue.length > 0;
+  const current = practiceQueue[0];
+  const currentLabel = retryingMisses
+    ? `Fix ${practiceQueue.length} missed ${practiceQueue.length === 1 ? "check" : "checks"}`
+    : `${Math.min(results.length + 1, usableExercises.length)}/${usableExercises.length}`;
+
+  const completePracticeAttempt = () => {
+    const result = practiceResultRef.current;
+    if (!result || result.submissionError) return;
+
+    practiceResultRef.current = null;
+    setPracticeQueue((queue) => advanceLessonPracticeQueue(queue, result.correct));
+    setPracticeTurn((value) => value + 1);
+    refreshDashboard?.({ silent: true }).catch(() => null);
+  };
 
   if (finished) {
     return (
@@ -4156,7 +4293,7 @@ function ExerciseQueue({
           <div className="grid gap-4 md:grid-cols-[120px_1fr] md:items-center">
             <AssetImage imageKey={completeImageKey} alt={completeTitle} className="h-28 w-28" />
             <div>
-              <h2 className="text-3xl font-black text-slate-950">{correct}/{usableExercises.length} correct</h2>
+              <h2 className="text-3xl font-black text-slate-950">{correct}/{usableExercises.length} first-pass correct</h2>
               <ProgressBar value={usableExercises.length ? (correct / usableExercises.length) * 100 : 0} className="mt-4" />
             </div>
           </div>
@@ -4165,40 +4302,41 @@ function ExerciseQueue({
     );
   }
 
-  const current = usableExercises[index];
-
   return (
     <div className="space-y-4">
       <QuizResultBanner result={lastResult} />
       <div className="rounded-lg border border-lagoon-100 bg-lagoon-50 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-black text-lagoon-900">
           <span>{title}</span>
-          <span>{index + 1}/{usableExercises.length}</span>
+          <span>{currentLabel}</span>
         </div>
         <ProgressBar value={progress} className="mt-3" />
       </div>
+      {retryingMisses && (
+        <div className="rounded-lg border border-honey-200 bg-honey-50 p-4 text-sm font-semibold text-honey-900">
+          Only missed checks remain. The checks you already got right stay passed.
+        </div>
+      )}
       <PracticePanel
-        key={current.id}
-        title={`${title} ${index + 1}/${usableExercises.length}`}
+        key={`${current.id}:${practiceTurn}`}
+        title={retryingMisses ? `${title}: ${currentLabel}` : `${title} ${currentLabel}`}
         exercise={current}
         source={source}
-        shuffleKey={`${source}:${index}:${current.id}`}
+        shuffleKey={`${source}:${practiceTurn}:${current.id}`}
         autoAdvance
         autoAdvanceOnWrong
         autoAdvanceDelay={1000}
         autoSubmitChoices
         onResult={(result) => {
+          practiceResultRef.current = result;
           setLastResult(result);
+          if (result.submissionError) return;
           setResults((currentResults) => {
-            const next = [...currentResults];
-            next[index] = Boolean(result.correct);
-            return next;
+            if (currentResults.some((attempt) => attempt.exerciseId === current.id)) return currentResults;
+            return [...currentResults, { exerciseId: current.id, correct: Boolean(result.correct) }];
           });
         }}
-        onComplete={async () => {
-          setIndex((value) => value + 1);
-          await refreshDashboard?.({ silent: true });
-        }}
+        onComplete={completePracticeAttempt}
       />
     </div>
   );

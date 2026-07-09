@@ -438,13 +438,22 @@ const vocabularyGroups = [
       ["tres", "three", "number", null, "Tengo tres libros.", "numbers-and-colors:3"],
       ["cuatro", "four", "number", null, "Quiero cuatro uvas.", "numbers-and-colors:4"],
       ["cinco", "five", "number", null, "Tengo cinco minutos.", "numbers-and-colors:5"],
+      ["seis", "six", "number", null, "Tengo seis uvas.", null],
+      ["siete", "seven", "number", null, "Tengo siete libros.", null],
+      ["ocho", "eight", "number", null, "Tengo ocho manzanas.", null],
+      ["nueve", "nine", "number", null, "Quiero nueve fresas.", null],
+      ["diez", "ten", "number", null, "Tengo diez minutos.", null],
+      ["el color", "color", "noun", "masculine", "El color es azul.", "numbers-and-colors:16"],
       ["rojo", "red", "adjective", "masculine", "El tomate es rojo.", "numbers-and-colors:6"],
       ["roja", "red", "adjective", "feminine", "La manzana es roja.", "numbers-and-colors:7"],
       ["azul", "blue", "adjective", null, "La camisa es azul.", "numbers-and-colors:8"],
       ["verde", "green", "adjective", null, "La ensalada es verde.", "numbers-and-colors:9"],
       ["amarillo", "yellow", "adjective", "masculine", "El plátano es amarillo.", "numbers-and-colors:10"],
+      ["amarilla", "yellow", "adjective", "feminine", "La camisa es amarilla.", "numbers-and-colors:10"],
       ["blanco", "white", "adjective", "masculine", "El pan es blanco.", "numbers-and-colors:11"],
-      ["negro", "black", "adjective", "masculine", "El café es negro.", "numbers-and-colors:12"]
+      ["blanca", "white", "adjective", "feminine", "La camisa es blanca.", "numbers-and-colors:11"],
+      ["negro", "black", "adjective", "masculine", "El café es negro.", "numbers-and-colors:12"],
+      ["negra", "black", "adjective", "feminine", "La mochila es negra.", "numbers-and-colors:12"]
     ]
   },
   {
@@ -643,7 +652,7 @@ const lessons = [
   {
     slug: "zero-soy",
     title: "Zero: Soy",
-    summary: "Learn soy before comparing it with anything else.",
+    summary: "Use soy for your name, role, and origin before comparing it with other forms of to be.",
     cefrLevel: "A1",
     theme: "Absolute Basics",
     situation: "identity",
@@ -651,17 +660,27 @@ const lessons = [
     topicSlug: "absolute-basics",
     vocabularySlugs: ["people-and-pronouns", "classroom-basics"],
     order: 30,
-    estimatedMinutes: 5,
+    estimatedMinutes: 7,
+    outcomes: [
+      "You can introduce yourself with soy.",
+      "You can use soy for a role or identity.",
+      "You can say where you are from with soy de."
+    ],
+    conceptKeys: ["absolute-basics", "ser", "soy", "identity", "origin"],
+    reviewSummary: "You practiced soy for your name, identity, role, and origin.",
     sentences: [
-      ["soy", "I am", "Soy is the I-form of ser."],
+      ["soy", "I am for identity or origin", "Soy is the I-form of ser."],
       ["Yo soy estudiante.", "I am a student.", "Use soy for identity, role, or what someone is."],
-      ["Soy Ana.", "I am Ana.", "Names and identity use soy when speaking about yourself."]
+      ["Soy Ana.", "I am Ana.", "Soy is the I-form of ser. A name is identity."],
+      ["Soy de Austria.", "I am from Austria.", "Use soy de for origin, not estoy de."],
+      ["Yo soy Ana y soy estudiante.", "I am Ana and I am a student.", "You can use soy twice to give two identity facts."],
+      ["Soy estudiante y soy de Austria.", "I am a student and I am from Austria.", "Role and origin both use soy."]
     ]
   },
   {
     slug: "zero-estoy",
     title: "Zero: Estoy",
-    summary: "Learn estoy as I am right now or I am located.",
+    summary: "Use estoy for how you are right now and where you are.",
     cefrLevel: "A1",
     theme: "Absolute Basics",
     situation: "state and location",
@@ -669,30 +688,50 @@ const lessons = [
     topicSlug: "absolute-basics",
     vocabularySlugs: ["emotions-and-states", "places-around-town"],
     order: 40,
-    estimatedMinutes: 5,
+    estimatedMinutes: 7,
+    outcomes: [
+      "You can say how you feel with estoy.",
+      "You can say where you are with estoy.",
+      "You can recognize that estoy describes a current state or location."
+    ],
+    conceptKeys: ["absolute-basics", "estar", "estoy", "state", "location"],
+    reviewSummary: "You practiced estoy for current feelings, conditions, and locations.",
     sentences: [
-      ["estoy", "I am", "Estoy is the I-form of estar."],
-      ["Estoy feliz.", "I am happy.", "Use estoy for how you are right now."],
-      ["Estoy en casa.", "I am at home.", "Use estoy for where you are."]
+      ["estoy", "I am for a current state or location", "Estoy is the I-form of estar."],
+      ["Estoy feliz.", "I am happy.", "Estoy is the I-form of estar. Use it for how you are right now."],
+      ["Estoy en casa.", "I am at home.", "Use estoy for where you are."],
+      ["Estoy cansado hoy.", "I am tired today.", "A temporary condition such as tired uses estoy."],
+      ["Estoy en el café.", "I am at the café.", "Use estoy before en plus a place."],
+      ["Hoy estoy feliz en casa.", "Today I am happy at home.", "Hoy can come first, but estoy still shows your current state."]
     ]
   },
   {
     slug: "zero-es-esta",
     title: "Zero: Es and Está",
-    summary: "Learn he/she/it is forms before longer sentences.",
+    summary: "Use es for identity or a trait, and está for a current state or location.",
     cefrLevel: "A1",
     theme: "Absolute Basics",
     situation: "he, she, it",
     imageKey: "grammar-scenes:4",
     topicSlug: "absolute-basics",
-    vocabularySlugs: ["people-and-pronouns", "places-around-town", "emotions-and-states"],
+    vocabularySlugs: ["people-and-pronouns", "classroom-basics", "places-around-town", "emotions-and-states"],
     order: 50,
-    estimatedMinutes: 6,
+    estimatedMinutes: 9,
+    outcomes: [
+      "You can use es for who someone is or what something is like.",
+      "You can use está for a current feeling or location.",
+      "You can explain why es and está cannot be chosen from the English word is alone."
+    ],
+    conceptKeys: ["absolute-basics", "ser", "estar", "es", "estar-third-person-singular", "identity", "location", "state"],
+    reviewSummary: "You practiced es for identity and traits, and está for current states and locations.",
     sentences: [
-      ["es", "he/she/it is", "Es comes from ser and is used for identity or traits."],
-      ["está", "he/she/it is", "Está comes from estar and is used for state or location."],
+      ["es", "is for identity or a trait", "Es comes from ser and is used for identity or traits."],
+      ["está", "is for a current state or location", "Está comes from estar and is used for a temporary state or location."],
       ["Ella es profesora.", "She is a teacher.", "Identity uses es."],
-      ["Ella está en casa.", "She is at home.", "Location uses está."]
+      ["Ella está en casa.", "She is at home.", "Location uses está."],
+      ["Ana está feliz hoy.", "Ana is happy today.", "A current feeling uses está."],
+      ["Ana es profesora, pero está cansada hoy.", "Ana is a teacher, but she is tired today.", "The same person can use es for identity and está for a current state."],
+      ["El libro es nuevo.", "The book is new.", "A normal trait of the book uses es."]
     ]
   },
   {
@@ -724,19 +763,32 @@ const lessons = [
   {
     slug: "ser-vs-estar-basics",
     title: "Ser vs Estar",
-    summary: "Learn when to use ser and estar in everyday situations.",
+    summary: "Choose ser for identity and normal traits, and estar for location and current states.",
     cefrLevel: "A1",
     theme: "Grammar Foundations",
     situation: "introductions and places",
     imageKey: "grammar-scenes:1",
     topicSlug: "ser-estar",
-    vocabularySlugs: ["classroom-basics", "places-around-town"],
+    vocabularySlugs: ["people-and-pronouns", "classroom-basics", "places-around-town", "emotions-and-states"],
     order: 60,
-    estimatedMinutes: 8,
+    estimatedMinutes: 12,
+    outcomes: [
+      "You can choose ser for identity, profession, and a normal trait.",
+      "You can choose estar for location and a temporary state.",
+      "You can use soy, es, son, estoy, está, and están in the model sentences.",
+      "You can correct the common mistake of using es for a temporary state."
+    ],
+    conceptKeys: ["ser-estar", "identity", "traits", "location", "temporary-state", "conjugation"],
+    reviewSummary: "You practiced ser for identity and traits, and estar for location and current states across singular and plural forms.",
     sentences: [
       ["Yo soy estudiante.", "I am a student.", "Ser describes identity or profession."],
       ["Estoy en la biblioteca.", "I am in the library.", "Estar describes location."],
-      ["Ella está cansada.", "She is tired.", "Estar describes a temporary state."]
+      ["Ella está cansada.", "She is tired.", "Estar describes a temporary state."],
+      ["Ana es profesora.", "Ana is a teacher.", "Use es for another person's identity or profession."],
+      ["Ellos son estudiantes.", "They are students.", "Use son for a plural identity or role."],
+      ["Ellos están en la biblioteca.", "They are in the library.", "Use están for a plural location."],
+      ["El libro es nuevo.", "The book is new.", "Use es for a normal trait of the book."],
+      ["Ana es profesora, pero está cansada hoy.", "Ana is a teacher, but she is tired today.", "Use es for who Ana is and está for how she is right now."]
     ]
   },
   {
@@ -1650,7 +1702,7 @@ const lessons = [
   {
     slug: "numbers-one-to-five",
     title: "Numbers One to Five",
-    summary: "Use tiny numbers with familiar objects.",
+    summary: "Count from one to five with familiar objects.",
     cefrLevel: "A1",
     theme: "Numbers",
     situation: "counting",
@@ -1663,26 +1715,71 @@ const lessons = [
       ["Tengo uno.", "I have one.", "Uno means one."],
       ["Tengo dos manzanas.", "I have two apples.", "Dos means two."],
       ["Tengo tres libros.", "I have three books.", "Tres means three."],
-      ["Quiero cuatro uvas.", "I want four grapes.", "Cuatro means four."]
+      ["Quiero cuatro uvas.", "I want four grapes.", "Cuatro means four."],
+      ["Tengo cinco minutos.", "I have five minutes.", "Cinco means five."]
+    ]
+  },
+  {
+    slug: "numbers-six-to-ten",
+    title: "Numbers Six to Ten",
+    summary: "Finish the first counting set so you can count from one to ten.",
+    cefrLevel: "A1",
+    theme: "Numbers",
+    situation: "counting",
+    imageKey: "numbers-and-colors:5",
+    topicSlug: "plural-agreement",
+    vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "classroom-basics"],
+    order: 465,
+    estimatedMinutes: 7,
+    sentences: [
+      ["Tengo seis uvas.", "I have six grapes.", "Seis means six."],
+      ["Tengo siete libros.", "I have seven books.", "Siete means seven."],
+      ["Tengo ocho manzanas.", "I have eight apples.", "Ocho means eight."],
+      ["Quiero nueve fresas.", "I want nine strawberries.", "Nueve means nine."],
+      ["Tengo diez minutos.", "I have ten minutes.", "Diez means ten."]
+    ]
+  },
+  {
+    slug: "color-words-basics",
+    title: "Basic Color Words",
+    summary: "Name the core colors before describing real objects.",
+    cefrLevel: "A1",
+    theme: "Descriptions",
+    situation: "naming colors",
+    imageKey: "numbers-and-colors:16",
+    topicSlug: "articles-gender",
+    vocabularySlugs: ["numbers-and-colors"],
+    order: 470,
+    estimatedMinutes: 7,
+    sentences: [
+      ["El color es rojo.", "The color is red.", "Rojo is the basic masculine form for red."],
+      ["El color es azul.", "The color is blue.", "Azul does not change for masculine or feminine."],
+      ["El color es verde.", "The color is green.", "Verde does not change for masculine or feminine."],
+      ["El color es amarillo.", "The color is yellow.", "Amarillo is the basic masculine form for yellow."],
+      ["El color es blanco.", "The color is white.", "Blanco is the basic masculine form for white."],
+      ["El color es negro.", "The color is black.", "Negro is the basic masculine form for black."]
     ]
   },
   {
     slug: "colors-with-things",
     title: "Colors with Things",
-    summary: "Add simple color descriptions to things you already know.",
+    summary: "Use color words with masculine and feminine things.",
     cefrLevel: "A1",
     theme: "Descriptions",
     situation: "describing objects",
     imageKey: "numbers-and-colors:16",
     topicSlug: "articles-gender",
-    vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "clothing-basics"],
-    order: 470,
+    vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "clothing-basics", "home-and-objects"],
+    order: 475,
     estimatedMinutes: 8,
     sentences: [
       ["La manzana es roja.", "The apple is red.", "Roja agrees with manzana."],
       ["El tomate es rojo.", "The tomato is red.", "Rojo agrees with tomate."],
       ["La camisa es azul.", "The shirt is blue.", "Azul works for masculine and feminine."],
-      ["El plátano es amarillo.", "The banana is yellow.", "Amarillo agrees with plátano."]
+      ["La ensalada es verde.", "The salad is green.", "Verde works for masculine and feminine."],
+      ["El plátano es amarillo.", "The banana is yellow.", "Amarillo agrees with plátano."],
+      ["La camisa es blanca.", "The shirt is white.", "Blanca agrees with camisa."],
+      ["La mochila es negra.", "The backpack is black.", "Negra agrees with mochila."]
     ]
   },
   {
@@ -2582,19 +2679,19 @@ const exercises = [
     lessonSlug: "zero-soy",
     topicSlug: "absolute-basics",
     type: ExerciseType.MULTIPLE_CHOICE,
-    prompt: "Meaning first.",
-    instruction: "Choose the meaning.",
-    questionText: "soy",
-    answerJson: { correct: "I am", accepted: ["I am", "i am"] },
-    explanation: "Soy means I am when you talk about identity, name, role, or what you are.",
+    prompt: "Soy in context.",
+    instruction: "Choose the meaning of the full sentence.",
+    questionText: "Soy Ana.",
+    answerJson: { correct: "I am Ana.", accepted: ["I am Ana.", "i am ana"] },
+    explanation: "Soy Ana means I am Ana. Soy identifies the speaker.",
     difficulty: 1,
     order: 1,
     xpReward: 10,
     imageKey: "identity-and-introductions:4",
     options: [
-      ["I am", "I am", true],
-      ["you are", "you are", false],
-      ["they are", "they are", false]
+      ["I am Ana.", "I am Ana.", true],
+      ["I am at home.", "I am at home.", false],
+      ["She is Ana.", "She is Ana.", false]
     ]
   },
   {
@@ -2618,23 +2715,39 @@ const exercises = [
     ]
   },
   {
+    slug: "zero-soy-origin",
+    lessonSlug: "zero-soy",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.TRANSLATION,
+    prompt: "Origin with soy.",
+    instruction: "Type the Spanish sentence.",
+    questionText: "I am from Austria.",
+    answerJson: { correct: "Soy de Austria.", accepted: ["soy de austria", "soy de austria."] },
+    explanation: "Use soy de for origin: Soy de Austria.",
+    difficulty: 2,
+    order: 3,
+    xpReward: 14,
+    imageKey: "identity-and-introductions:12",
+    options: []
+  },
+  {
     slug: "zero-estoy-means-i-am",
     lessonSlug: "zero-estoy",
     topicSlug: "absolute-basics",
     type: ExerciseType.MULTIPLE_CHOICE,
-    prompt: "Meaning first.",
-    instruction: "Choose the meaning.",
-    questionText: "estoy",
-    answerJson: { correct: "I am", accepted: ["I am", "i am"] },
-    explanation: "Estoy also means I am, but it is for right-now states or location.",
+    prompt: "Estoy in context.",
+    instruction: "Choose the meaning of the full sentence.",
+    questionText: "Estoy feliz.",
+    answerJson: { correct: "I am happy.", accepted: ["I am happy.", "i am happy"] },
+    explanation: "Estoy feliz means I am happy. Estoy describes a current feeling.",
     difficulty: 1,
     order: 1,
     xpReward: 10,
     imageKey: "grammar-scenes:5",
     options: [
-      ["I am", "I am", true],
-      ["he is", "he is", false],
-      ["we are", "we are", false]
+      ["I am happy.", "I am happy.", true],
+      ["I am a student.", "I am a student.", false],
+      ["She is happy.", "She is happy.", false]
     ]
   },
   {
@@ -2658,23 +2771,65 @@ const exercises = [
     ]
   },
   {
+    slug: "zero-estoy-state",
+    lessonSlug: "zero-estoy",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.CLOZE,
+    prompt: "Current condition.",
+    instruction: "Use estoy for a temporary condition.",
+    questionText: "Yo ____ cansado hoy.",
+    answerJson: { correct: "estoy", accepted: ["estoy"] },
+    explanation: "Yo estoy cansado hoy uses estoy for how the speaker feels right now.",
+    difficulty: 1,
+    order: 3,
+    xpReward: 12,
+    imageKey: "emotions-and-states:3",
+    options: [
+      ["estoy", "estoy", true],
+      ["soy", "soy", false],
+      ["es", "es", false]
+    ]
+  },
+  {
+    slug: "zero-estoy-cafe-builder",
+    lessonSlug: "zero-estoy",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Build a location sentence.",
+    instruction: "Put the words in order.",
+    questionText: "I am at the café.",
+    answerJson: { correctWords: ["Estoy", "en", "el", "café", "."] },
+    explanation: "Use estoy en to say where you are: Estoy en el café.",
+    difficulty: 1,
+    order: 4,
+    xpReward: 14,
+    imageKey: "places-around-town:1",
+    options: [
+      ["Estoy", "Estoy", false],
+      ["en", "en", false],
+      ["el", "el", false],
+      ["café", "café", false],
+      [".", ".", false]
+    ]
+  },
+  {
     slug: "zero-es-means-is",
     lessonSlug: "zero-es-esta",
     topicSlug: "absolute-basics",
     type: ExerciseType.MULTIPLE_CHOICE,
-    prompt: "He/she/it form.",
-    instruction: "Choose the meaning.",
-    questionText: "es",
-    answerJson: { correct: "is", accepted: ["is", "he is", "she is", "it is"] },
-    explanation: "Es means is for identity or traits: Ella es profesora.",
+    prompt: "Identity or role.",
+    instruction: "Complete the sentence with the identity form.",
+    questionText: "Ella ____ profesora.",
+    answerJson: { correct: "es", accepted: ["es"] },
+    explanation: "Ella es profesora uses es because a profession is identity.",
     difficulty: 1,
     order: 1,
     xpReward: 10,
     imageKey: "people-and-family:4",
     options: [
-      ["is", "is", true],
-      ["I am", "I am", false],
-      ["they are", "they are", false]
+      ["es", "es", true],
+      ["está", "está", false],
+      ["soy", "soy", false]
     ]
   },
   {
@@ -2698,6 +2853,88 @@ const exercises = [
     ]
   },
   {
+    slug: "zero-es-trait",
+    lessonSlug: "zero-es-esta",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.CLOZE,
+    prompt: "Normal trait.",
+    instruction: "Use es for what the book is like.",
+    questionText: "El libro ____ nuevo.",
+    answerJson: { correct: "es", accepted: ["es"] },
+    explanation: "El libro es nuevo uses es for a normal trait.",
+    difficulty: 1,
+    order: 3,
+    xpReward: 12,
+    imageKey: "classroom-basics:3",
+    options: [
+      ["es", "es", true],
+      ["está", "está", false],
+      ["soy", "soy", false]
+    ]
+  },
+  {
+    slug: "zero-esta-state",
+    lessonSlug: "zero-es-esta",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.CLOZE,
+    prompt: "Current feeling.",
+    instruction: "Use está for how Ana feels today.",
+    questionText: "Ana ____ feliz hoy.",
+    answerJson: { correct: "está", accepted: ["esta", "está"] },
+    explanation: "Ana está feliz hoy uses está because happiness is her current state.",
+    difficulty: 1,
+    order: 4,
+    xpReward: 12,
+    imageKey: "emotions-and-states:1",
+    options: [
+      ["está", "está", true],
+      ["es", "es", false],
+      ["soy", "soy", false]
+    ]
+  },
+  {
+    slug: "zero-es-esta-correction",
+    lessonSlug: "zero-es-esta",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.ERROR_CORRECTION,
+    prompt: "Fix the state verb.",
+    instruction: "Rewrite the sentence correctly.",
+    questionText: "Ana es cansada hoy.",
+    answerJson: { correct: "Ana está cansada hoy.", accepted: ["ana esta cansada hoy", "ana esta cansada hoy."] },
+    explanation: "Use está for Ana's current condition: Ana está cansada hoy.",
+    difficulty: 2,
+    order: 5,
+    xpReward: 16,
+    imageKey: "identity-and-introductions:9",
+    options: []
+  },
+  {
+    slug: "zero-es-esta-contrast-builder",
+    lessonSlug: "zero-es-esta",
+    topicSlug: "absolute-basics",
+    type: ExerciseType.SENTENCE_BUILDER,
+    prompt: "Build the contrast.",
+    instruction: "Put the words in order.",
+    questionText: "Ana is a teacher, but she is tired today.",
+    answerJson: { correctWords: ["Ana", "es", "profesora", ",", "pero", "está", "cansada", "hoy", "."] },
+    explanation: "Use es for Ana's profession and está for how she feels now.",
+    difficulty: 2,
+    order: 6,
+    xpReward: 18,
+    imageKey: "identity-and-introductions:9",
+    options: [
+      ["Ana", "Ana", false],
+      ["es", "es", false],
+      ["profesora", "profesora", false],
+      [",", ",", false],
+      ["pero", "pero", false],
+      ["está", "está", false],
+      ["cansada", "cansada", false],
+      ["hoy", "hoy", false],
+      [".", ".", false]
+    ]
+  },
+  {
     slug: "ser-estar-identity-soy",
     lessonSlug: "ser-vs-estar-basics",
     topicSlug: "ser-estar",
@@ -2718,6 +2955,86 @@ const exercises = [
     ]
   },
   {
+    slug: "ser-estar-identity-es",
+    lessonSlug: "ser-vs-estar-basics",
+    topicSlug: "ser-estar",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Another person's identity.",
+    instruction: "Use ser for Ana's profession.",
+    questionText: "Ana ____ profesora.",
+    answerJson: { correct: "es", accepted: ["es"] },
+    explanation: "Ana es profesora uses es because a profession is identity.",
+    difficulty: 1,
+    order: 2,
+    xpReward: 12,
+    imageKey: "people-and-family:4",
+    options: [
+      ["es", "es", true],
+      ["está", "está", false],
+      ["soy", "soy", false]
+    ]
+  },
+  {
+    slug: "ser-estar-identity-son",
+    lessonSlug: "ser-vs-estar-basics",
+    topicSlug: "ser-estar",
+    type: ExerciseType.CLOZE,
+    prompt: "Plural identity.",
+    instruction: "Use son for a plural role or identity.",
+    questionText: "Ellos ____ estudiantes.",
+    answerJson: { correct: "son", accepted: ["son"] },
+    explanation: "Ellos son estudiantes uses son because the group is being identified.",
+    difficulty: 1,
+    order: 3,
+    xpReward: 12,
+    imageKey: "classroom-basics:1",
+    options: [
+      ["son", "son", true],
+      ["están", "están", false],
+      ["es", "es", false]
+    ]
+  },
+  {
+    slug: "ser-estar-trait-es",
+    lessonSlug: "ser-vs-estar-basics",
+    topicSlug: "ser-estar",
+    type: ExerciseType.MULTIPLE_CHOICE,
+    prompt: "Normal trait.",
+    instruction: "Use ser for what the book is like.",
+    questionText: "El libro ____ nuevo.",
+    answerJson: { correct: "es", accepted: ["es"] },
+    explanation: "El libro es nuevo uses es for a normal trait.",
+    difficulty: 1,
+    order: 4,
+    xpReward: 12,
+    imageKey: "classroom-basics:3",
+    options: [
+      ["es", "es", true],
+      ["está", "está", false],
+      ["soy", "soy", false]
+    ]
+  },
+  {
+    slug: "ser-estar-location-estoy",
+    lessonSlug: "ser-vs-estar-basics",
+    topicSlug: "ser-estar",
+    type: ExerciseType.CLOZE,
+    prompt: "My location.",
+    instruction: "Use estar for where I am.",
+    questionText: "Yo ____ en la biblioteca.",
+    answerJson: { correct: "estoy", accepted: ["estoy"] },
+    explanation: "Yo estoy en la biblioteca uses estoy for your location.",
+    difficulty: 1,
+    order: 5,
+    xpReward: 12,
+    imageKey: "classroom-basics:10",
+    options: [
+      ["estoy", "estoy", true],
+      ["soy", "soy", false],
+      ["es", "es", false]
+    ]
+  },
+  {
     slug: "ser-estar-location-estan",
     lessonSlug: "ser-vs-estar-basics",
     topicSlug: "ser-estar",
@@ -2728,7 +3045,7 @@ const exercises = [
     answerJson: { correct: "están", accepted: ["estan", "están"] },
     explanation: "Use estar for location. Ellos están en la biblioteca.",
     difficulty: 1,
-    order: 2,
+    order: 6,
     xpReward: 12,
     imageKey: "classroom-basics:10",
     options: [
@@ -2744,11 +3061,11 @@ const exercises = [
     type: ExerciseType.MULTIPLE_CHOICE,
     prompt: "Temporary state or identity?",
     instruction: "Choose the best verb.",
-    questionText: "Ana ____ cansada hoy.",
+    questionText: "Ella ____ cansada.",
     answerJson: { correct: "está", accepted: ["esta", "está"] },
-    explanation: "Use estar for temporary states: Ana está cansada hoy.",
+    explanation: "Use estar for a temporary state: Ella está cansada.",
     difficulty: 2,
-    order: 3,
+    order: 7,
     xpReward: 14,
     imageKey: "identity-and-introductions:9",
     options: [
@@ -2758,23 +3075,44 @@ const exercises = [
     ]
   },
   {
+    slug: "ser-estar-state-correction",
+    lessonSlug: "ser-vs-estar-basics",
+    topicSlug: "ser-estar",
+    type: ExerciseType.ERROR_CORRECTION,
+    prompt: "Fix the temporary state.",
+    instruction: "Rewrite the sentence with the correct form of to be.",
+    questionText: "Ana es cansada hoy.",
+    answerJson: { correct: "Ana está cansada hoy.", accepted: ["ana esta cansada hoy", "ana esta cansada hoy."] },
+    explanation: "Ana's profession can use es, but her temporary tiredness uses está.",
+    difficulty: 2,
+    order: 8,
+    xpReward: 16,
+    imageKey: "identity-and-introductions:9",
+    options: []
+  },
+  {
     slug: "sentence-builder-soy-estudiante",
     lessonSlug: "ser-vs-estar-basics",
     topicSlug: "ser-estar",
     type: ExerciseType.SENTENCE_BUILDER,
-    prompt: "Build the sentence.",
+    prompt: "Build the contrast.",
     instruction: "Put the words in order.",
-    questionText: "I am a student.",
-    answerJson: { correctWords: ["Yo", "soy", "estudiante", "."] },
-    explanation: "The natural order is subject + verb + noun: Yo soy estudiante.",
-    difficulty: 1,
-    order: 4,
-    xpReward: 16,
-    imageKey: "identity-and-introductions:8",
+    questionText: "Ana is a teacher, but she is tired today.",
+    answerJson: { correctWords: ["Ana", "es", "profesora", ",", "pero", "está", "cansada", "hoy", "."] },
+    explanation: "Use es for Ana's profession and está for how she feels right now.",
+    difficulty: 2,
+    order: 9,
+    xpReward: 18,
+    imageKey: "identity-and-introductions:9",
     options: [
-      ["Yo", "Yo", false],
-      ["soy", "soy", false],
-      ["estudiante", "estudiante", false],
+      ["Ana", "Ana", false],
+      ["es", "es", false],
+      ["profesora", "profesora", false],
+      [",", ",", false],
+      ["pero", "pero", false],
+      ["está", "está", false],
+      ["cansada", "cansada", false],
+      ["hoy", "hoy", false],
       [".", ".", false]
     ]
   },

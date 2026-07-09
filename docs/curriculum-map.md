@@ -9,10 +9,12 @@ Every lesson should include:
 - One clear communicative goal.
 - One grammar target.
 - One vocabulary target.
-- Three to six model sentences.
+- Aim for at least six model sentences in a full lesson, sequenced from recognition to a useful complete sentence.
 - Active recall practice, not only recognition.
 - A short production task.
 - Review summary and weak-pattern tags.
+- Practice checks that only use a model sentence, vocabulary item, or rule explicitly introduced in that lesson. A missed check returns for correction without replaying passed checks.
+- Choice distractors should be drawn from the same taught set, not unrelated vocabulary from elsewhere in the course.
 
 Example:
 

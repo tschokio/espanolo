@@ -71,6 +71,30 @@ test("classifies ser vs estar mistakes", () => {
   assert.equal(result.errorCategory, "ser_estar");
 });
 
+test("keeps es and está distinct in contextual checks", () => {
+  const identity = evaluateExerciseAnswer(
+    baseExercise({
+      type: "CLOZE",
+      questionText: "Ana ____ profesora.",
+      answerJson: { correct: "es", accepted: ["es"], goal: "ser_identity" }
+    }),
+    { answer: "está" }
+  );
+  const location = evaluateExerciseAnswer(
+    baseExercise({
+      type: "CLOZE",
+      questionText: "Ana ____ en casa.",
+      answerJson: { correct: "está", accepted: ["esta", "está"], goal: "estar_location" }
+    }),
+    { answer: "es" }
+  );
+
+  assert.equal(identity.correct, false);
+  assert.equal(identity.errorCategory, "ser_estar");
+  assert.equal(location.correct, false);
+  assert.equal(location.errorCategory, "ser_estar");
+});
+
 test("classifies sentence builder word order mistakes", () => {
   const result = evaluateExerciseAnswer(
     baseExercise({

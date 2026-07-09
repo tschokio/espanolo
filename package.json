@@ -11,8 +11,9 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "node prisma/seed.js",
+    "db:seed": "node prisma/seed.js && node prisma/seed-lesson-practice.js",
     "db:seed:learning-loop": "node prisma/seed-learning-loop.js",
+    "db:seed:numbers-colors": "node prisma/seed-numbers-colors-expansion.js",
     "db:seed:lesson-practice": "node prisma/seed-lesson-practice.js",
     "assets:audit": "node scripts/audit-assets.js",
     "spanish:audit": "node scripts/audit-spanish.js"
@@ -36,6 +37,6 @@
     "tailwindcss": "^3.4.17"
   },
   "prisma": {
-    "seed": "node prisma/seed.js"
+    "seed": "npm run db:seed"
   }
 }

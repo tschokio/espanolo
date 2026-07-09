@@ -49,6 +49,29 @@ function lessonProgressNeedsSync(existingProgress, state) {
   );
 }
 
+function checkpointUnlockState(lesson, lessonSummaries = []) {
+  const unitSlug = lesson.unit?.slug || "unassigned";
+  const lessonOrder = lesson.order || 0;
+  const prerequisites = lessonSummaries.filter(
+    (candidate) =>
+      candidate &&
+      !candidate.isCheckpoint &&
+      (candidate.unit?.slug || "unassigned") === unitSlug &&
+      (candidate.order || 0) < lessonOrder
+  );
+  const incompletePrerequisites = prerequisites.filter((candidate) => (candidate.progress || 0) < 100);
+  const completedTimes = prerequisites
+    .map((candidate) => toDate(candidate.completedAt))
+    .filter(Boolean)
+    .map((date) => date.getTime());
+
+  return {
+    unlocked: incompletePrerequisites.length === 0,
+    incompleteCount: incompletePrerequisites.length,
+    unlockAt: incompletePrerequisites.length === 0 && completedTimes.length ? new Date(Math.max(...completedTimes)) : null
+  };
+}
+
 function applyCheckpointLocksToSummaries(lessonSummaries = []) {
   const lessons = lessonSummaries.filter(Boolean);
   const byUnit = new Map();
@@ -65,15 +88,12 @@ function applyCheckpointLocksToSummaries(lessonSummaries = []) {
     const ordered = [...unitLessons].sort((left, right) => (left.order || 0) - (right.order || 0));
     for (const lesson of ordered) {
       if (!lesson.isCheckpoint) continue;
-      const prerequisites = ordered.filter((candidate) => !candidate.isCheckpoint && (candidate.order || 0) < (lesson.order || 0));
-      const incompletePrerequisites = prerequisites.filter(
-        (candidate) => (candidate.progress || 0) < 100 || Boolean(candidate.reviewDue)
-      );
-      if (!incompletePrerequisites.length) continue;
+      const lockState = checkpointUnlockState(lesson, ordered);
+      if (lockState.unlocked) continue;
 
       lockedCheckpointIds.add(lesson.id);
       const unitLabel = lesson.unit?.label || "this unit";
-      const count = incompletePrerequisites.length;
+      const count = lockState.incompleteCount;
       lockedReasons.set(
         lesson.id,
         `Complete ${count} earlier ${count === 1 ? "lesson" : "lessons"} in ${unitLabel} before this checkpoint.`
@@ -103,7 +123,7 @@ function applyCheckpointLocksToSummaries(lessonSummaries = []) {
       actualProgress,
       actualCompletedExercises,
       actualStatus,
-      displayProgress: actualProgress,
+      displayProgress: 0,
       progress: 0,
       completedExercises: 0,
       completedAt: null,
@@ -117,5 +137,6 @@ function applyCheckpointLocksToSummaries(lessonSummaries = []) {
 module.exports = {
   applyCheckpointLocksToSummaries,
   buildLessonProgressState,
+  checkpointUnlockState,
   lessonProgressNeedsSync
 };

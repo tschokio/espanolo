@@ -41,33 +41,13 @@ function hasNormalizedTerm(normalizedText, term) {
   return new RegExp(`(^|\\s)${escapeRegExp(term)}(\\s|$)`).test(normalizedText);
 }
 
-function answerTeachingPieces(answerJson = {}) {
-  const pieces = [];
-  if (answerJson.correct) pieces.push(answerJson.correct);
-  if (Array.isArray(answerJson.correctWords)) pieces.push(answerJson.correctWords.join(" "));
-  if (Array.isArray(answerJson.accepted)) pieces.push(...answerJson.accepted);
-  if (Array.isArray(answerJson.alternatives)) {
-    pieces.push(...answerJson.alternatives.map((alternative) => alternative.answer || alternative.note || ""));
-  }
-  if (answerJson.audioText) pieces.push(answerJson.audioText);
-  if (answerJson.rubric) pieces.push(answerJson.rubric);
-  return pieces.filter(Boolean);
-}
-
 function lessonTeachingCorpus(lesson) {
   const pieces = [
     lesson.title,
     lesson.summary,
     lesson.situation,
     lesson.reviewSummary,
-    ...(lesson.sentences || []).flatMap((sentence) => [sentence.spanish, sentence.english, sentence.note]),
-    ...(lesson.exercises || []).flatMap((exercise) => [
-      exercise.prompt,
-      exercise.instruction,
-      exercise.questionText,
-      exercise.explanation,
-      ...answerTeachingPieces(exercise.answerJson)
-    ])
+    ...(lesson.sentences || []).flatMap((sentence) => [sentence.spanish, sentence.english, sentence.note])
   ].filter(Boolean);
   const raw = lowerRaw(pieces.join(" "));
   return {
@@ -179,6 +159,13 @@ function sentenceExercises(lesson) {
     const spanish = sentence.spanish.trim();
     const english = sentence.english.trim();
     if (!spanish || !english) continue;
+    const words = tokensForBuilder(spanish);
+    const lexicalWordCount = words.filter((word) => /[\p{L}\p{N}]/u.test(word)).length;
+
+    // A single conjugated form such as "es" or "está" needs a subject or
+    // situation before it can be translated unambiguously. Keep it as a
+    // teaching card, but do not turn it into a standalone recall question.
+    if (lexicalWordCount < 2) continue;
 
     exercises.push({
       key: `translate-${index + 1}`,
@@ -197,7 +184,6 @@ function sentenceExercises(lesson) {
       options: []
     });
 
-    const words = tokensForBuilder(spanish);
     if (words.length >= 3 && words.length <= 10) {
       exercises.push({
         key: `builder-${index + 1}`,
@@ -219,17 +205,20 @@ function sentenceExercises(lesson) {
   return exercises;
 }
 
-function vocabularyExercises(lesson, allWords) {
+function vocabularyExercises(lesson) {
   const corpus = lessonTeachingCorpus(lesson);
   const lessonWords = lesson.vocabularyGroups
     .flatMap((group) => group.words || [])
     .filter((word) => vocabularyWordIsTaught(word, corpus));
   const exercises = [];
   for (const [index, word] of lessonWords.entries()) {
-    const distractors = allWords
+    const distractors = lessonWords
       .filter((candidate) => candidate.id !== word.id)
       .map((candidate) => candidate.english)
       .filter(Boolean);
+    const options = choiceOptions(word.english, distractors);
+    if (options.length < 2) continue;
+
     exercises.push({
       key: `vocab-${index + 1}`,
       type: ExerciseType.MULTIPLE_CHOICE,
@@ -244,7 +233,7 @@ function vocabularyExercises(lesson, allWords) {
       explanation: `${word.spanish} means ${word.english}.`,
       difficulty: 1,
       imageKey: semanticImageKey(`${word.spanish} ${word.english}`, word.imageKey || lesson.imageKey),
-      options: choiceOptions(word.english, distractors)
+      options
     });
   }
   return exercises;
@@ -302,27 +291,26 @@ async function upsertExercise(lesson, topicId, exercise, order) {
 }
 
 async function main() {
-  const [lessons, allWords] = await Promise.all([
-    prisma.lesson.findMany({
-      where: { isPublished: true },
-      orderBy: [{ order: "asc" }, { title: "asc" }],
-      include: {
-        sentences: { orderBy: { id: "asc" } },
-        vocabularyGroups: { include: { words: true } },
-        exercises: { orderBy: { order: "asc" } }
-      }
-    }),
-    prisma.word.findMany()
-  ]);
+  const lessons = await prisma.lesson.findMany({
+    where: { isPublished: true },
+    orderBy: [{ order: "asc" }, { title: "asc" }],
+    include: {
+      sentences: { orderBy: { id: "asc" } },
+      vocabularyGroups: { include: { words: true } },
+      exercises: { orderBy: { order: "asc" } }
+    }
+  });
 
   let createdOrUpdated = 0;
   let removedStale = 0;
   for (const lesson of lessons) {
     const supplementPrefix = `supplement-${lesson.slug}-`;
-    const candidates = [...sentenceExercises(lesson), ...vocabularyExercises(lesson, allWords)]
+    const authoredExercises = lesson.exercises.filter((exercise) => !exercise.slug.startsWith(supplementPrefix));
+    const candidates = [...sentenceExercises(lesson), ...vocabularyExercises(lesson)]
       .filter((exercise) => exercise.options.length === 0 || exercise.options.length >= 2)
       .filter((exercise, index, list) => list.findIndex((candidate) => candidate.key === exercise.key) === index);
-    const validSupplementSlugs = new Set(candidates.map((exercise) => `${supplementPrefix}${exercise.key}`));
+    const selected = candidates.slice(0, Math.max(0, TARGET_EXERCISE_COUNT - authoredExercises.length));
+    const validSupplementSlugs = new Set(selected.map((exercise) => `${supplementPrefix}${exercise.key}`));
     const staleSupplements = lesson.exercises.filter(
       (exercise) => exercise.slug.startsWith(supplementPrefix) && !validSupplementSlugs.has(exercise.slug)
     );
@@ -331,22 +319,13 @@ async function main() {
       removedStale += staleSupplements.length;
     }
 
-    const retainedExercises = lesson.exercises.filter((exercise) => !staleSupplements.some((stale) => stale.id === exercise.id));
-    const existingCount = retainedExercises.length;
-    const needed = Math.max(0, TARGET_EXERCISE_COUNT - existingCount);
-    if (!needed) continue;
-
-    const existingSlugs = new Set(retainedExercises.map((exercise) => exercise.slug));
-    const candidatesToCreate = candidates.filter((exercise) => !existingSlugs.has(`${supplementPrefix}${exercise.key}`));
-
-    const selected = candidatesToCreate.slice(0, needed);
-    let order = Math.max(0, ...retainedExercises.map((exercise) => exercise.order || 0)) + 1;
+    let order = Math.max(0, ...authoredExercises.map((exercise) => exercise.order || 0)) + 1;
     for (const exercise of selected) {
       await upsertExercise(lesson, lesson.topicId, exercise, order);
       order += 1;
       createdOrUpdated += 1;
     }
-    console.log(`${lesson.slug}: ${existingCount} -> ${existingCount + selected.length}`);
+    console.log(`${lesson.slug}: ${authoredExercises.length} authored + ${selected.length} supplemental`);
   }
 
   console.log(`Supplemental lesson practice upserted: ${createdOrUpdated} exercises`);
@@ -366,6 +345,7 @@ if (require.main === module) {
 
 module.exports = {
   lessonTeachingCorpus,
+  sentenceExercises,
   vocabularyExercises,
   vocabularyWordIsTaught
 };
