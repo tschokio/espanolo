@@ -3,6 +3,7 @@ const test = require("node:test");
 
 const {
   lessonTeachingCorpus,
+  semanticImageKey,
   sentenceExercises,
   vocabularyExercises,
   vocabularyWordIsTaught
@@ -11,7 +12,7 @@ const {
 const pronounWords = [
   { id: "yo", spanish: "yo", english: "I", partOfSpeech: "pronoun", imageKey: "identity-and-introductions:5" },
   { id: "tu", spanish: "tú", english: "you", partOfSpeech: "pronoun", imageKey: "identity-and-introductions:6" },
-  { id: "el", spanish: "él", english: "he", partOfSpeech: "pronoun", imageKey: "people-and-family:10" },
+  { id: "el", spanish: "él", english: "he", partOfSpeech: "pronoun", imageKey: "people-and-family:1" },
   { id: "ella", spanish: "ella", english: "she", partOfSpeech: "pronoun", imageKey: "identity-and-introductions:1" },
   { id: "nosotros", spanish: "nosotros", english: "we", partOfSpeech: "pronoun", imageKey: "people-and-family:16" }
 ];
@@ -164,4 +165,17 @@ test("supplemental vocabulary choices use only words taught in the lesson", () =
 
   assert.deepEqual(new Set(optionValues), new Set(["book", "teacher"]));
   assert.ok(!optionValues.includes("taxi"));
+});
+
+test("semantic image selection uses the precise existing body and scenario cells", () => {
+  assert.equal(semanticImageKey("el ojo eye", "body-and-health:6"), "body-and-health:3");
+  assert.equal(semanticImageKey("la mano hand", "body-and-health:6"), "body-and-health:2");
+  assert.equal(semanticImageKey("Necesito medicina para el dolor.", "body-and-health:12"), "body-and-health:13");
+  assert.equal(semanticImageKey("Can you repeat, please?", "travel-and-survival:1"), "conversation-and-opinion:7");
+});
+
+test("semantic image selection does not substitute a wrong quantity image", () => {
+  assert.equal(semanticImageKey("Tengo seis uvas. I have six grapes.", "numbers-and-colors:5"), null);
+  assert.equal(semanticImageKey("Tengo dos manzanas. I have two apples.", "fruit-and-produce:1"), "numbers-and-colors:2");
+  assert.equal(semanticImageKey("La manzana es roja. The apple is red.", "fruit-and-produce:1"), "numbers-and-colors:7");
 });

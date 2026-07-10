@@ -323,7 +323,7 @@ const vocabularyGroups = [
       ["la lámpara", "lamp", "noun", "feminine", "La lámpara está en la mesa.", "home-objects:7"],
       ["la llave", "key", "noun", "feminine", "Busco la llave.", "home-objects:8"],
       ["la cocina", "kitchen", "noun", "feminine", "Estoy en la cocina.", "home-objects:11"],
-      ["el vaso", "cup", "noun", "masculine", "El vaso está en la mesa.", "home-objects:17"],
+      ["el vaso", "drinking glass", "noun", "masculine", "El vaso está en la mesa.", "food-and-ordering:1"],
       ["la mochila", "backpack", "noun", "feminine", "La mochila está en la silla.", "classroom-basics:8"],
       ["el reloj", "clock", "noun", "masculine", "El reloj está en la pared.", "weather-and-time:13"]
     ]
@@ -337,7 +337,7 @@ const vocabularyGroups = [
     words: [
       ["yo", "I", "pronoun", null, "Yo soy estudiante.", "identity-and-introductions:5"],
       ["tú", "you", "pronoun", null, "Tú estudias mucho.", "identity-and-introductions:6"],
-      ["él", "he", "pronoun", null, "Él trabaja hoy.", "people-and-family:10"],
+      ["él", "he", "pronoun", null, "Él trabaja hoy.", "people-and-family:1"],
       ["ella", "she", "pronoun", null, "Ella está feliz.", "identity-and-introductions:1"],
       ["nosotros", "we", "pronoun", null, "Nosotros caminamos.", "people-and-family:16"],
       ["ellos", "they", "pronoun", null, "Ellos están en el parque.", "people-and-family:16"],
@@ -561,14 +561,14 @@ const vocabularyGroups = [
       ["Quisiera", "I would like", "phrase", null, "Quisiera una mesa, por favor.", "food-and-ordering:19"],
       ["para llevar", "to go", "phrase", null, "Quisiera dos cafés para llevar.", "food-and-ordering:20"],
       ["sin", "without", "preposition", null, "Quisiera agua sin gas.", "food-and-ordering:1"],
-      ["la dirección", "address / direction", "noun", "feminine", "Necesito la dirección del hotel.", "city-transport:15"],
-      ["siga derecho", "go straight", "phrase", null, "Siga derecho hasta la estación.", "city-transport:14"],
-      ["gire a la izquierda", "turn left", "phrase", null, "Gire a la izquierda en la plaza.", "city-transport:15"],
+      ["la dirección", "address / direction", "noun", "feminine", "Necesito la dirección del hotel.", "travel-and-survival:5"],
+      ["siga derecho", "go straight", "phrase", null, "Siga derecho hasta la estación.", "irregular-verbs:9"],
+      ["gire a la izquierda", "turn left", "phrase", null, "Gire a la izquierda en la plaza.", "irregular-verbs:9"],
       ["la farmacia", "pharmacy", "noun", "feminine", "La farmacia está cerca.", "places-around-town:13"],
       ["el dolor", "pain", "noun", "masculine", "Tengo dolor de cabeza.", "body-and-health:7"],
-      ["la medicina", "medicine", "noun", "feminine", "Necesito medicina para el dolor.", "body-and-health:12"],
-      ["la alergia", "allergy", "noun", "feminine", "Tengo alergia a la aspirina.", "body-and-health:12"],
-      ["¿Cada cuánto?", "How often?", "phrase", null, "¿Cada cuánto tomo la medicina?", "body-and-health:12"]
+      ["la medicina", "medicine", "noun", "feminine", "Necesito medicina para el dolor.", "body-and-health:13"],
+      ["la alergia", "allergy", "noun", "feminine", "Tengo alergia a la aspirina.", "body-and-health:13"],
+      ["¿Cada cuánto?", "How often?", "phrase", null, "¿Cada cuánto tomo la medicina?", "body-and-health:13"]
     ]
   },
   {
@@ -582,8 +582,8 @@ const vocabularyGroups = [
       ["el audio", "audio", "noun", "masculine", "Escucho el audio sin leer.", "reading-and-listening-lab:2"],
       ["la pregunta", "question", "noun", "feminine", "Contesto la pregunta.", "reading-and-listening-lab:5"],
       ["la respuesta", "answer", "noun", "feminine", "Escribo la respuesta.", "reading-and-listening-lab:6"],
-      ["el resumen", "summary", "noun", "masculine", "Escribo un resumen corto.", "reading-and-listening-lab:7"],
-      ["la palabra nueva", "new word", "phrase", "feminine", "Guardo una palabra nueva.", "reading-and-listening-lab:8"],
+      ["el resumen", "summary", "noun", "masculine", "Escribo un resumen corto.", "reading-and-listening-lab:6"],
+      ["la palabra nueva", "new word", "phrase", "feminine", "Guardo una palabra nueva.", "reading-and-listening-lab:4"],
       ["escuchar", "to listen", "verb", null, "Escucho primero.", "reading-and-listening-lab:2"],
       ["leer", "to read", "verb", null, "Leo después.", "reading-and-listening-lab:1"],
       ["la transcripción", "transcript", "noun", "feminine", "Reviso la transcripción.", "reading-and-listening-lab:4"],
@@ -2587,7 +2587,7 @@ const exercises = [
     difficulty: 1,
     order: 3,
     xpReward: 8,
-    imageKey: "people-and-family:10",
+    imageKey: "people-and-family:1",
     options: [
       ["he", "he", true],
       ["she", "she", false],
@@ -2667,7 +2667,7 @@ const exercises = [
     difficulty: 1,
     order: 7,
     xpReward: 10,
-    imageKey: "people-and-family:10",
+    imageKey: "people-and-family:1",
     options: [
       ["él", "él", true],
       ["ella", "ella", false],
@@ -4209,7 +4209,7 @@ const exercises = [
     difficulty: 2,
     order: 4,
     xpReward: 18,
-    imageKey: "food-and-ordering:17",
+    imageKey: "food-and-ordering:2",
     options: []
   },
   {
@@ -4261,7 +4261,7 @@ const exercises = [
     difficulty: 1,
     order: 3,
     xpReward: 16,
-    imageKey: "food-and-ordering:19",
+    imageKey: "food-and-ordering:2",
     options: [
       ["Un", "Un", false],
       ["café", "café", false],
@@ -4302,7 +4302,7 @@ const exercises = [
     difficulty: 2,
     order: 1,
     xpReward: 18,
-    imageKey: "travel-and-survival:5",
+    imageKey: "identity-and-introductions:12",
     options: []
   },
   {
@@ -4338,7 +4338,7 @@ const exercises = [
     difficulty: 2,
     order: 3,
     xpReward: 18,
-    imageKey: "places-around-town:9",
+    imageKey: "places-around-town:1",
     options: []
   },
   {
@@ -4370,7 +4370,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 12,
-    imageKey: "food-and-ordering:17",
+    imageKey: "food-and-ordering:2",
     options: [
       ["un", "un", true],
       ["una", "una", false],
@@ -4460,7 +4460,7 @@ const exercises = [
     difficulty: 1,
     order: 1,
     xpReward: 12,
-    imageKey: "body-and-health:6",
+    imageKey: "body-and-health:1",
     options: [
       ["la", "la", true],
       ["el", "el", false],
@@ -5715,7 +5715,7 @@ const exercises = [
     difficulty: 2,
     order: 3,
     xpReward: 18,
-    imageKey: "conversation-and-opinion:4",
+    imageKey: "conversation-and-opinion:7",
     options: [
       ["¿", "¿", false],
       ["Puede", "Puede", false],
@@ -5778,7 +5778,7 @@ const exercises = [
     difficulty: 2,
     order: 2,
     xpReward: 18,
-    imageKey: "body-and-health:12",
+    imageKey: "body-and-health:13",
     options: []
   },
   {
@@ -5794,7 +5794,7 @@ const exercises = [
     difficulty: 2,
     order: 3,
     xpReward: 18,
-    imageKey: "body-and-health:12",
+    imageKey: "body-and-health:13",
     options: []
   },
   {
@@ -5810,7 +5810,7 @@ const exercises = [
     difficulty: 3,
     order: 4,
     xpReward: 20,
-    imageKey: "body-and-health:12",
+    imageKey: "body-and-health:13",
     options: []
   },
   {
@@ -6462,9 +6462,29 @@ async function main() {
       }
     });
 
+    const retainedWordIds = [];
     for (const word of group.words) {
-      await upsertGroupWord(savedGroup.id, word);
+      const savedWord = await upsertGroupWord(savedGroup.id, word);
+      retainedWordIds.push(savedWord.id);
     }
+    await prisma.word.deleteMany({
+      where: {
+        groupId: savedGroup.id,
+        id: { notIn: retainedWordIds }
+      }
+    });
+  }
+
+  const audioLabGroup = await prisma.vocabularyGroup.findUnique({ where: { slug: "audio-lab-saved" } });
+  if (audioLabGroup) {
+    await prisma.vocabularyGroup.update({
+      where: { id: audioLabGroup.id },
+      data: { imageKey: "reading-and-listening-lab:2" }
+    });
+    await prisma.word.updateMany({
+      where: { groupId: audioLabGroup.id },
+      data: { imageKey: null }
+    });
   }
 
   const groupRecords = await prisma.vocabularyGroup.findMany();

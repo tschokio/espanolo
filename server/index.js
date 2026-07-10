@@ -1296,14 +1296,14 @@ async function ensureAudioLabVocabularyGroup() {
       title: "Audio Lab Saved",
       description: "Words and phrases saved from pronunciation lookup.",
       situation: "personal audio",
-      imageKey: "daily-actions:15"
+      imageKey: "reading-and-listening-lab:2"
     },
     create: {
       slug: "audio-lab-saved",
       title: "Audio Lab Saved",
       description: "Words and phrases saved from pronunciation lookup.",
       situation: "personal audio",
-      imageKey: "daily-actions:15"
+      imageKey: "reading-and-listening-lab:2"
     }
   });
 }
@@ -1322,7 +1322,7 @@ async function saveAudioLookupWord(userId, text, english) {
     partOfSpeech: spanish.split(/\s+/).length > 1 ? "phrase" : "word",
     gender: null,
     example: spanish,
-    imageKey: group.imageKey,
+    imageKey: null,
     groupId: group.id
   };
 

@@ -76,6 +76,25 @@ function vocabularyWordIsTaught(word, corpus) {
 
 function semanticImageKey(text, fallback) {
   const normalized = normalize(text);
+  if (/\b(seis|six|siete|seven|ocho|eight|nueve|nine|diez|ten)\b/.test(normalized)) return null;
+  if (/\b(cinco|five)\b/.test(normalized)) return "numbers-and-colors:5";
+  if (/\b(cuatro|four)\b/.test(normalized)) return "numbers-and-colors:4";
+  if (/\b(tres|three)\b/.test(normalized)) return "numbers-and-colors:3";
+  if (/\b(dos|two)\b/.test(normalized)) return "numbers-and-colors:2";
+  if (/\b(uno|one)\b/.test(normalized)) return "numbers-and-colors:1";
+  if (/\b(tomate.*roj|red tomato)\b/.test(normalized)) return "numbers-and-colors:6";
+  if (/\b(manzana.*roj|red apple|apple is red)\b/.test(normalized)) return "numbers-and-colors:7";
+  if (/\b(camisa.*azul|blue shirt|shirt is blue)\b/.test(normalized)) return "numbers-and-colors:8";
+  if (/\b(ensalada.*verde|green salad|salad is green)\b/.test(normalized)) return "numbers-and-colors:9";
+  if (/\b(platano.*amarill|yellow banana|banana is yellow)\b/.test(normalized)) return "numbers-and-colors:10";
+  if (/\b(pan.*blanc|white bread|bread is white)\b/.test(normalized)) return "numbers-and-colors:11";
+  if (/\b(cafe.*negr|black coffee|coffee is black)\b/.test(normalized)) return "numbers-and-colors:12";
+  if (/\b(rojo|roja|red)\b/.test(normalized)) return "numbers-and-colors:6";
+  if (/\b(azul|blue)\b/.test(normalized)) return "numbers-and-colors:8";
+  if (/\b(verde|green)\b/.test(normalized)) return "numbers-and-colors:9";
+  if (/\b(amarillo|amarilla|yellow)\b/.test(normalized)) return "numbers-and-colors:10";
+  if (/\b(blanco|blanca|white)\b/.test(normalized)) return "numbers-and-colors:11";
+  if (/\b(negro|negra|black)\b/.test(normalized)) return "numbers-and-colors:12";
   if (/\b(me llamo|my name is)\b/.test(normalized)) return "identity-and-introductions:2";
   if (/\b(yo soy ana|soy ana|i am ana)\b/.test(normalized)) return "identity-and-introductions:1";
   if (/\b(soy de|from austria)\b/.test(normalized)) return "identity-and-introductions:12";
@@ -83,6 +102,7 @@ function semanticImageKey(text, fallback) {
   if (/^yo i\b/.test(normalized) || normalized === "yo") return "identity-and-introductions:5";
   if (/^tu you\b/.test(normalized) || normalized === "tu") return "identity-and-introductions:6";
   if (/^ella she\b/.test(normalized) || normalized === "ella") return "identity-and-introductions:1";
+  if (/^(el he|he el)\b/.test(normalized) || normalized === "el" || /\bel means he\b/.test(normalized)) return "people-and-family:1";
   if (/\b(yo soy estudiante|yo estudiante|i am a student)\b/.test(normalized)) return "identity-and-introductions:8";
   if (/\b(ana esta cansada|ana is tired)\b/.test(normalized)) return "identity-and-introductions:9";
   if (/\b(nervios|nervous)\b/.test(normalized)) return "emotions-and-states:4";
@@ -102,15 +122,32 @@ function semanticImageKey(text, fallback) {
   if (/\b(la manzana es roja|apple is red)\b/.test(normalized)) return "numbers-and-colors:7";
   if (/\b(manzana|apple)\b/.test(normalized)) return "fruit-and-produce:1";
   if (/\b(platano|banana)\b/.test(normalized)) return "fruit-and-produce:2";
+  if (/\b(naranja|orange)\b/.test(normalized)) return "fruit-and-produce:3";
+  if (/\b(limon|lemon)\b/.test(normalized)) return "fruit-and-produce:4";
+  if (/\b(fresa|strawberr)\b/.test(normalized)) return "fruit-and-produce:5";
+  if (/\b(uvas|grapes)\b/.test(normalized)) return "fruit-and-produce:6";
+  if (/\b(pera|pear)\b/.test(normalized)) return "fruit-and-produce:7";
+  if (/\b(tomate|tomato)\b/.test(normalized)) return "fruit-and-produce:11";
+  if (/\b(ensalada|salad)\b/.test(normalized)) return "fruit-and-produce:24";
+  if (/\b(fruta|fruit)\b/.test(normalized)) return "fruit-and-produce:20";
   if (/\b(taxi)\b/.test(normalized)) return "city-transport:3";
   if (/\b(hotel)\b/.test(normalized)) return "city-transport:13";
   if (/\b(estacion|station|platform)\b/.test(normalized)) return "city-transport:7";
+  if (/\b(pasaporte|passport)\b/.test(normalized)) return "city-transport:11";
   if (/\b(mapa|map)\b/.test(normalized)) return "travel-and-survival:5";
   if (/\b(me duele.*cabeza|head hurts|my head hurts)\b/.test(normalized)) return "body-and-health:7";
   if (/\b(cabeza|head)\b/.test(normalized)) return "body-and-health:1";
-  if (/\b(doctor|farmacia|farmaceutica|medicine|medicina|alergia|allergy|aspirin)\b/.test(normalized)) return "body-and-health:12";
+  if (/\b(mano|hand)\b/.test(normalized)) return "body-and-health:2";
+  if (/\b(ojo|eye)\b/.test(normalized)) return "body-and-health:3";
+  if (/\b(boca|mouth)\b/.test(normalized)) return "body-and-health:4";
+  if (/\b(pie|foot)\b/.test(normalized)) return "body-and-health:5";
+  if (/\b(cuerpo|body)\b/.test(normalized)) return "body-and-health:6";
+  if (/\b(doctor|medico)\b/.test(normalized)) return "body-and-health:12";
+  if (/\b(farmacia|farmaceutica|medicine|medicina|alergia|allergy|aspirin)\b/.test(normalized)) return "body-and-health:13";
   if (/\b(hambre|hungry)\b/.test(normalized)) return "body-and-health:10";
   if (/\b(sed|thirsty)\b/.test(normalized)) return "body-and-health:11";
+  if (/\b(tengo frio|i am cold)\b/.test(normalized)) return "body-and-health:8";
+  if (/\b(tengo calor|i am hot)\b/.test(normalized)) return "body-and-health:9";
   if (/\b(no me gusta la lluvia|do not like rain)\b/.test(normalized)) return "preferences-and-hobbies:8";
   if (/\b(lluvia|rain)\b/.test(normalized)) return "weather-and-time:2";
   if (/\b(hace sol|sunny)\b/.test(normalized)) return "weather-and-time:1";
@@ -124,6 +161,8 @@ function semanticImageKey(text, fallback) {
   if (/\b(estudio por la tarde|study in the afternoon)\b/.test(normalized)) return "a2-daily-routine:8";
   if (/\b(limpio cada semana|clean every week)\b/.test(normalized)) return "a2-daily-routine:15";
   if (/\b(cocino|cook)\b/.test(normalized)) return "a2-daily-routine:9";
+  if (/\b(limpio el cuarto|clean the room)\b/.test(normalized)) return "a2-daily-routine:10";
+  if (/\b(me acuesto|acostarse|go to bed)\b/.test(normalized)) return "a2-daily-routine:11";
   if (/\b(por la noche.*le|read at night|at night.*read)\b/.test(normalized)) return "a2-daily-routine:12";
   if (/\b(leo|leer|read)\b/.test(normalized)) return "daily-actions:7";
   if (/\b(musica|music)\b/.test(normalized)) return "preferences-and-hobbies:1";
@@ -131,13 +170,36 @@ function semanticImageKey(text, fallback) {
   if (/\b(futbol|soccer)\b/.test(normalized)) return "preferences-and-hobbies:3";
   if (/\b(el te|tea|prefieres cafe o te|prefiero el te)\b/.test(normalized)) return "preferences-and-hobbies:9";
   if (/\b(color favorito|favorite color)\b/.test(normalized)) return "preferences-and-hobbies:12";
-  if (/\b(mas despacio|more slowly)\b/.test(normalized)) return "daily-actions:6";
+  if (/\b(repetir|repeat|mas despacio|more slowly)\b/.test(normalized)) return "conversation-and-opinion:7";
   if (/\b(no entiendo|do not understand)\b/.test(normalized)) return "grammar-scenes:12";
   if (/\b(necesito ayuda|need help)\b/.test(normalized)) return "travel-and-survival:12";
   if (/\b(perdon|sorry|excuse me)\b/.test(normalized)) return "travel-and-survival:1";
   if (/\b(gracias|thank you)\b/.test(normalized)) return "identity-and-introductions:16";
   if (/\b(cuanto cuesta|cost)\b/.test(normalized)) return "travel-and-survival:19";
   if (/\b(por favor|please)\b/.test(normalized)) return "food-and-ordering:17";
+  if (/\b(libro|book)\b/.test(normalized)) return "classroom-basics:3";
+  if (/\b(lapiz|pencil)\b/.test(normalized)) return "classroom-basics:4";
+  if (/\b(biblioteca|library)\b/.test(normalized)) return "classroom-basics:10";
+  if (/\b(profesora|teacher)\b/.test(normalized)) return "classroom-basics:2";
+  if (/\b(estudiante|student)\b/.test(normalized)) return "classroom-basics:1";
+  if (/\b(llave|keys?)\b/.test(normalized)) return "home-objects:8";
+  if (/\b(mochila|backpack)\b/.test(normalized)) return "classroom-basics:8";
+  if (/\b(silla|chair)\b/.test(normalized)) return "home-objects:2";
+  if (/\b(mesa|table)\b/.test(normalized)) return "home-objects:1";
+  if (/\b(tienda|store)\b/.test(normalized)) return "places-around-town:2";
+  if (/\b(parque|park)\b/.test(normalized)) return "places-around-town:3";
+  if (/\b(restaurante|restaurant)\b/.test(normalized)) return "places-around-town:10";
+  if (/\b(museo|museum)\b/.test(normalized)) return "places-around-town:15";
+  if (/\b(arbol|tree)\b/.test(normalized)) return "nature-and-animals:1";
+  if (/\b(flor|flower)\b/.test(normalized)) return "nature-and-animals:2";
+  if (/\b(perro|dog)\b/.test(normalized)) return "nature-and-animals:3";
+  if (/\b(gato|cat)\b/.test(normalized)) return "nature-and-animals:4";
+  if (/\b(pajaro|bird)\b/.test(normalized)) return "nature-and-animals:5";
+  if (/\b(hablo|hablar|speak)\b/.test(normalized)) return "daily-actions:1";
+  if (/\b(estudio|estudiar|study)\b/.test(normalized)) return "daily-actions:2";
+  if (/\b(trabajo|trabajar|work)\b/.test(normalized)) return "daily-actions:3";
+  if (/\b(compro|comprar|buy)\b/.test(normalized)) return "daily-actions:4";
+  if (/\b(camino|caminamos|caminar|walk)\b/.test(normalized)) return "daily-actions:5";
   return fallback;
 }
 
@@ -232,7 +294,7 @@ function vocabularyExercises(lesson) {
       },
       explanation: `${word.spanish} means ${word.english}.`,
       difficulty: 1,
-      imageKey: semanticImageKey(`${word.spanish} ${word.english}`, word.imageKey || lesson.imageKey),
+      imageKey: semanticImageKey(`${word.spanish} ${word.english}`, word.imageKey),
       options
     });
   }
@@ -345,6 +407,7 @@ if (require.main === module) {
 
 module.exports = {
   lessonTeachingCorpus,
+  semanticImageKey,
   sentenceExercises,
   vocabularyExercises,
   vocabularyWordIsTaught

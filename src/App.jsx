@@ -175,6 +175,24 @@ function parseImageKey(imageKey) {
   return { ...sheet, row, col, index };
 }
 
+function lessonSentenceImageKey(lesson, sentence) {
+  const english = normalizeText(sentence?.english);
+  const spanish = normalizeText(sentence?.spanish);
+  const matchingExercise = (lesson?.exercises || []).find(
+    (exercise) => exercise.imageKey && english && normalizeText(exercise.questionText) === english
+  );
+  if (matchingExercise) return matchingExercise.imageKey;
+
+  const words = (lesson?.vocabularyGroups || []).flatMap((group) => group.words || []);
+  const matchingWord = words.find(
+    (word) =>
+      word.imageKey &&
+      spanish &&
+      (normalizeText(word.spanish) === spanish || normalizeText(word.example) === spanish)
+  );
+  return matchingWord?.imageKey || null;
+}
+
 function dictionaryLinks(text) {
   const encoded = encodeURIComponent(text || "");
   return {
@@ -764,7 +782,8 @@ function LessonPracticePreview({ lesson, exercises = [], onStart }) {
 function sessionPromptMode(type, word, position, repeated = false) {
   if (type === "learn" && !isWordLearned(word) && !repeated) return "flashcard";
   const modes = type === "memory" ? ["picture", "typing", "recognition", "flashcard"] : ["recognition", "picture", "flashcard", "typing"];
-  return modes[position % modes.length];
+  const mode = modes[position % modes.length];
+  return mode === "picture" && !word.imageKey ? "recognition" : mode;
 }
 
 function buildWordSession(type, selectedGroups, groups, options = {}) {
@@ -783,8 +802,10 @@ function buildWordSession(type, selectedGroups, groups, options = {}) {
   const pool = [...randomPriority, ...rest];
   const primaryLimit = Math.min(pool.length, sessionSize);
   const primary = pool.slice(0, primaryLimit);
-  const modeFor = (word, index, repeated = false) =>
-    questionStyle === "mixed" ? sessionPromptMode(type, word, index, repeated) : questionStyle;
+  const modeFor = (word, index, repeated = false) => {
+    const mode = questionStyle === "mixed" ? sessionPromptMode(type, word, index, repeated) : questionStyle;
+    return mode === "picture" && !word.imageKey ? "recognition" : mode;
+  };
   const items = primary.map((word, index) => ({
     key: `${type}-${word.id}-${index}`,
     wordId: word.id,
@@ -1980,6 +2001,7 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
       ? { type: "practice", exercise: practiceQueue[0] }
       : null
     : lessonSteps[step];
+  const currentLearnImageKey = current?.type === "learn" ? lessonSentenceImageKey(lesson, current.sentence) : null;
   const finished = inPractice && practiceQueue.length === 0;
   const correct = results.filter((result) => result.correct).length;
   const score = practiceExercises.length ? Math.round((correct / practiceExercises.length) * 100) : 100;
@@ -2174,8 +2196,10 @@ function FocusedLessonSession({ lesson, onBack, refreshDashboard }) {
         </div>
       ) : current.type === "learn" ? (
         <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-soft sm:p-8">
-          <div className="grid gap-5 sm:grid-cols-[140px_1fr] sm:items-center">
-            <AssetImage imageKey={lesson.imageKey} alt={lesson.title} className="aspect-square w-full max-w-[160px]" />
+          <div className={classNames("grid gap-5 sm:items-center", currentLearnImageKey && "sm:grid-cols-[140px_1fr]")}>
+            {currentLearnImageKey && (
+              <AssetImage imageKey={currentLearnImageKey} alt={current.sentence.spanish} className="aspect-square w-full max-w-[160px]" />
+            )}
             <div>
               <p className="text-sm font-black uppercase tracking-wide text-lagoon-700">Learn {current.index + 1}/{learnSteps.length}</p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -2736,7 +2760,7 @@ function WordLearnerView({ refreshDashboard }) {
         <div className={classNames("grid gap-5", activeMode === "picture" ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1")}>
           {activeMode === "picture" && (
             <div>
-              <AssetImage imageKey={word.imageKey || selectedGroup?.imageKey} alt={word.spanish} className="aspect-square w-full" />
+              <AssetImage imageKey={word.imageKey} alt={word.spanish} className="aspect-square w-full" />
               <div className="mt-3 flex justify-between text-sm font-bold text-slate-500">
                 <span>{sessionIndex + 1} / {sessionTotal}</span>
                 <span>{word.review.state}</span>
@@ -2754,7 +2778,7 @@ function WordLearnerView({ refreshDashboard }) {
                 </div>
                 {flipped && (
                   <div className="mt-6 grid gap-4 rounded-lg border border-lagoon-200 bg-white p-4 sm:grid-cols-[150px_1fr] sm:items-center">
-                    <AssetImage imageKey={word.imageKey || selectedGroup?.imageKey} alt={word.spanish} className="aspect-square w-full" />
+                    <AssetImage imageKey={word.imageKey} alt={word.spanish} className="aspect-square w-full" />
                     <div>
                       <p className="text-sm font-black text-lagoon-700">Meaning</p>
                       <p className="mt-1 text-2xl font-black text-lagoon-900">{word.english}</p>
@@ -3069,7 +3093,7 @@ function WordLearnerView({ refreshDashboard }) {
             <div className={classNames("grid gap-5", activeMode === "picture" ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1")}>
               {activeMode === "picture" && (
                 <div>
-                  <AssetImage imageKey={word.imageKey || selectedGroup?.imageKey} alt={word.spanish} className="aspect-square w-full" />
+                  <AssetImage imageKey={word.imageKey} alt={word.spanish} className="aspect-square w-full" />
                   <div className="mt-3 flex justify-between text-sm font-bold text-slate-500">
                     <span>{session ? `${sessionIndex + 1} / ${sessionTotal}` : `${index + 1} / ${words.length}`}</span>
                     <span>{word.review.state}</span>
@@ -3087,7 +3111,7 @@ function WordLearnerView({ refreshDashboard }) {
                     </div>
                     {flipped && (
                       <div className="mt-6 grid gap-4 rounded-lg border border-lagoon-200 bg-white p-4 sm:grid-cols-[150px_1fr] sm:items-center">
-                        <AssetImage imageKey={word.imageKey || selectedGroup?.imageKey} alt={word.spanish} className="aspect-square w-full" />
+                        <AssetImage imageKey={word.imageKey} alt={word.spanish} className="aspect-square w-full" />
                         <div>
                           <p className="text-sm font-black text-lagoon-700">Meaning</p>
                           <p className="mt-1 text-2xl font-black text-lagoon-900">{word.english}</p>
@@ -3987,7 +4011,9 @@ function PracticePanel({
         <div className="border-b border-stone-200 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-1 gap-4">
-              <AssetImage imageKey={exercise.imageKey} alt={exercise.prompt} className="h-20 w-20 shrink-0 sm:h-24 sm:w-24" />
+              {exercise.imageKey && (
+                <AssetImage imageKey={exercise.imageKey} alt={exercise.prompt} className="h-20 w-20 shrink-0 sm:h-24 sm:w-24" />
+              )}
               <div className="min-w-0">
                 <p className="text-sm font-bold text-slate-500">{exercise.prompt}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -4780,7 +4806,7 @@ function LessonsView({ lessons, refreshDashboard }) {
                 {lesson.vocabularyGroups.flatMap((group) =>
                   group.words.map((word) => (
                     <div key={word.id} className="flex gap-3 rounded-lg border border-stone-200 bg-white p-3">
-                      <AssetImage imageKey={word.imageKey || group.imageKey} alt={word.spanish} className="h-16 w-16 shrink-0" />
+                      {word.imageKey && <AssetImage imageKey={word.imageKey} alt={word.spanish} className="h-16 w-16 shrink-0" />}
                       <div className="min-w-0">
                         <p className="font-extrabold text-slate-950">{word.spanish}</p>
                         <p className="text-sm text-slate-600">{word.english}</p>
@@ -5239,7 +5265,7 @@ function ReadingListeningLabView({ dashboard, refreshDashboard }) {
           <div className="grid gap-3">
             {(lesson.vocabularyGroups || []).flatMap((group) => group.words.slice(0, 6)).slice(0, 8).map((word) => (
               <div key={word.id} className="flex items-center gap-3 rounded-md border border-stone-200 bg-white p-2">
-                <AssetImage imageKey={word.imageKey} alt={word.spanish} className="h-12 w-12 shrink-0" />
+                {word.imageKey && <AssetImage imageKey={word.imageKey} alt={word.spanish} className="h-12 w-12 shrink-0" />}
                 <div className="min-w-0">
                   <p className="truncate font-black text-slate-950">{word.spanish}</p>
                   <p className="text-xs font-semibold text-slate-600">{word.english}</p>
@@ -5758,10 +5784,7 @@ function WordCatcherGame({ game, refreshDashboard }) {
   useEffect(() => {
     api("/api/words").then((data) => {
       const allWords = data.groups.flatMap((group) =>
-        group.words.map((word) => ({
-          ...word,
-          imageKey: word.imageKey || group.imageKey
-        }))
+        group.words.filter((word) => word.imageKey)
       );
       const usable = shuffleItems(allWords).slice(0, 60);
       setWords(usable);
