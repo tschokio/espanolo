@@ -7,7 +7,6 @@ import {
   Copy,
   Flame,
   Gamepad2,
-  Gift,
   GraduationCap,
   Image,
   ExternalLink,
@@ -914,8 +913,8 @@ function ThemeToggle({ theme, onToggle, showLabel = false }) {
       title={isDark ? "Use light mode" : "Use dark mode"}
       aria-label={isDark ? "Use light mode" : "Use dark mode"}
       className={classNames(
-        "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-200 bg-white font-black text-slate-700 hover:bg-stone-100",
-        showLabel ? "px-3" : "w-11 px-0"
+        "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white font-bold text-slate-600 hover:bg-stone-100 hover:text-slate-900",
+        showLabel ? "px-3.5" : "w-11 px-0"
       )}
     >
       <Icon size={19} />
@@ -939,8 +938,11 @@ function App() {
 
   if (booting) {
     return (
-      <div className="grid min-h-screen place-items-center bg-orange-50 text-slate-700">
-        <div className="rounded-lg bg-white px-5 py-4 shadow-soft">Loading Vamos Espanolo...</div>
+      <div className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_top_left,#fff7ed,#ecfeff_45%,#ffffff)] text-slate-700">
+        <div className="flex items-center gap-3 rounded-2xl bg-white/90 px-6 py-4 shadow-card backdrop-blur">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-coral-500 border-t-transparent" />
+          <span className="font-bold">Loading Vamos Español…</span>
+        </div>
       </div>
     );
   }
@@ -979,18 +981,25 @@ function AuthScreen({ error, setError, onAuthed, theme, toggleTheme }) {
   };
 
   return (
-    <main className="app-auth-screen min-h-screen bg-[radial-gradient(circle_at_top_left,#fff7ed,#ecfeff_45%,#ffffff)] px-4 py-8">
-      <div className="mx-auto mb-4 flex max-w-6xl justify-end">
+    <main className="app-auth-screen relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#fff7ed,#ecfeff_45%,#ffffff)] px-4 py-8">
+      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-coral-300/30 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 top-1/3 h-80 w-80 rounded-full bg-lagoon-300/25 blur-3xl" />
+      <div className="relative mx-auto mb-4 flex max-w-6xl justify-end">
         <ThemeToggle theme={theme} onToggle={toggleTheme} showLabel />
       </div>
-      <div className="mx-auto grid min-h-[calc(100vh-7rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1fr_430px]">
-        <section className="max-w-2xl">
+      <div className="relative mx-auto grid min-h-[calc(100vh-7rem)] max-w-6xl items-center gap-10 lg:grid-cols-[1fr_430px]">
+        <section className="max-w-2xl animate-fade-in">
           <Logo large />
-          <h1 className="mt-8 text-4xl font-extrabold leading-tight text-slate-950 sm:text-6xl">
-            Spanish grammar that feels like a game.
+          <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-coral-100 bg-coral-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-coral-600">
+            <Sparkles size={14} />
+            Learn Spanish, the fun way
+          </div>
+          <h1 className="mt-5 text-4xl font-black leading-[1.05] tracking-tight text-slate-900 sm:text-6xl">
+            Spanish that feels
+            <br className="hidden sm:block" /> like a <span className="text-coral-500">game</span>.
           </h1>
-          <p className="mt-5 max-w-xl text-lg text-slate-600">
-            Practice grammar, review weak spots, earn XP, and turn Spanish into a daily habit.
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
+            Practice grammar, review your weak spots, earn XP, and turn Spanish into a daily habit you actually enjoy.
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             <FeaturePill icon={ListChecks} label="Spaced review" />
@@ -999,14 +1008,23 @@ function AuthScreen({ error, setError, onAuthed, theme, toggleTheme }) {
           </div>
         </section>
 
-        <form onSubmit={submit} className="rounded-lg border border-white/70 bg-white p-6 shadow-soft">
-          <div className="mb-6 flex rounded-lg bg-slate-100 p-1 text-sm font-semibold">
+        <form
+          onSubmit={submit}
+          className="animate-fade-in rounded-3xl border border-white/80 bg-white/95 p-7 shadow-card backdrop-blur"
+        >
+          <div className="mb-1 text-lg font-black text-slate-900">
+            {mode === "login" ? "Welcome back" : "Create your account"}
+          </div>
+          <p className="mb-5 text-sm text-slate-500">
+            {mode === "login" ? "Log in to continue your streak." : "Start learning in less than a minute."}
+          </p>
+          <div className="mb-6 flex rounded-xl bg-slate-100 p-1 text-sm font-bold">
             <button
               type="button"
               onClick={() => setMode("login")}
               className={classNames(
-                "flex-1 rounded-md px-3 py-2",
-                mode === "login" ? "bg-white text-coral-600 shadow-sm" : "text-slate-600"
+                "flex-1 rounded-lg px-3 py-2 transition",
+                mode === "login" ? "bg-white text-coral-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
               Login
@@ -1015,8 +1033,8 @@ function AuthScreen({ error, setError, onAuthed, theme, toggleTheme }) {
               type="button"
               onClick={() => setMode("register")}
               className={classNames(
-                "flex-1 rounded-md px-3 py-2",
-                mode === "register" ? "bg-white text-coral-600 shadow-sm" : "text-slate-600"
+                "flex-1 rounded-lg px-3 py-2 transition",
+                mode === "register" ? "bg-white text-coral-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
               Register
@@ -1029,7 +1047,7 @@ function AuthScreen({ error, setError, onAuthed, theme, toggleTheme }) {
               <input
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
-                className="mt-2 w-full rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-lagoon-500"
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 outline-none transition focus:border-lagoon-500 focus:ring-2 focus:ring-lagoon-500/20"
                 placeholder="Ana"
               />
             </label>
@@ -1041,7 +1059,7 @@ function AuthScreen({ error, setError, onAuthed, theme, toggleTheme }) {
               type="email"
               value={form.email}
               onChange={(event) => setForm({ ...form, email: event.target.value })}
-              className="mt-2 w-full rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-lagoon-500"
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 outline-none transition focus:border-lagoon-500 focus:ring-2 focus:ring-lagoon-500/20"
               placeholder="you@example.com"
             />
           </label>
@@ -1052,16 +1070,20 @@ function AuthScreen({ error, setError, onAuthed, theme, toggleTheme }) {
               type="password"
               value={form.password}
               onChange={(event) => setForm({ ...form, password: event.target.value })}
-              className="mt-2 w-full rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-lagoon-500"
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 outline-none transition focus:border-lagoon-500 focus:ring-2 focus:ring-lagoon-500/20"
               placeholder="8+ characters"
             />
           </label>
 
-          {error && <div className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+              {error}
+            </div>
+          )}
 
           <button
             disabled={busy}
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-coral-500 px-4 py-3 font-bold text-white shadow-sm transition hover:bg-coral-600 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-coral-500 to-coral-600 px-4 py-3.5 font-bold text-white shadow-glow transition hover:brightness-105 active:scale-[0.99] disabled:opacity-60"
           >
             <Rocket size={18} />
             {busy ? "Working..." : mode === "login" ? "Start Learning" : "Create Account"}
@@ -1110,28 +1132,30 @@ function LearningApp({ user, setUser, theme, setTheme, toggleTheme }) {
 
   return (
     <div className="app-shell min-h-screen bg-stone-50 text-slate-900">
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-stone-200 bg-white lg:block">
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-stone-200/80 bg-white lg:block">
         <div className="flex h-full flex-col">
           <div className="border-b border-stone-100 p-6">
             <Logo />
           </div>
-          <nav className="flex-1 space-y-1 p-4">
+          <nav className="flex-1 space-y-1.5 p-4">
             {nav.map((item) => (
               <NavButton key={item.key} item={item} active={activeNav === item.key} onClick={() => setActive(item.key)} />
             ))}
           </nav>
-          <div className="m-4 rounded-lg border border-orange-100 bg-orange-50 p-4">
-            <div className="mb-3 grid h-16 w-16 place-items-center rounded-lg bg-white text-4xl shadow-sm">LL</div>
-            <p className="font-bold text-coral-600">¡Tu puedes!</p>
-            <p className="mt-1 text-sm text-slate-600">Pequenos pasos, grandes conquistas.</p>
+          <div className="m-4 overflow-hidden rounded-2xl border border-coral-100 bg-coral-50 p-4">
+            <div className="flex items-center gap-2 text-coral-600">
+              <Flame size={18} />
+              <p className="font-black">{dashboard?.stats.streakDays || user.streakDays} day streak</p>
+            </div>
+            <p className="mt-1.5 text-sm leading-snug text-slate-600">Pequeños pasos, grandes conquistas.</p>
           </div>
         </div>
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/90 backdrop-blur">
-          <div className="flex min-h-20 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-            <div className="hidden items-center gap-6 lg:flex">
+        <header className="sticky top-0 z-10 border-b border-stone-200/80 bg-white/80 backdrop-blur-md">
+          <div className="flex min-h-[4.5rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+            <div className="hidden items-center gap-5 lg:flex">
               <TopMetric icon={Flame} label="Day Streak" value={dashboard?.stats.streakDays || user.streakDays} />
               <TopMetric icon={Star} label="XP" value={(dashboard?.stats.xp || user.xp).toLocaleString()} />
               <TopMetric icon={Medal} label="Level" value={dashboard?.stats.level || user.level} />
@@ -1141,51 +1165,59 @@ function LearningApp({ user, setUser, theme, setTheme, toggleTheme }) {
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <ThemeToggle theme={theme} onToggle={toggleTheme} />
-              <button className="hidden h-11 w-11 place-items-center rounded-md border border-stone-200 bg-white text-coral-500 sm:grid">
-                <Gift size={21} />
-              </button>
-              <div className="flex items-center gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2">
-                <div className="grid h-9 w-9 place-items-center rounded-full bg-lagoon-100 font-bold text-lagoon-700">
+              <div className="flex items-center gap-2.5 rounded-xl border border-stone-200 bg-white px-2.5 py-1.5">
+                <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-lagoon-400 to-lagoon-600 text-sm font-black text-white">
                   {user.name.slice(0, 1).toUpperCase()}
                 </div>
-                <span className="hidden text-sm font-semibold sm:block">¡Hola, {user.name}!</span>
-                <ChevronDown size={17} />
+                <span className="hidden text-sm font-bold text-slate-700 sm:block">¡Hola, {user.name}!</span>
               </div>
-              <button onClick={logout} className="grid h-11 w-11 place-items-center rounded-md text-slate-500 hover:bg-stone-100">
+              <button
+                onClick={logout}
+                title="Log out"
+                aria-label="Log out"
+                className="grid h-11 w-11 place-items-center rounded-xl text-slate-500 hover:bg-stone-100 hover:text-coral-600"
+              >
                 <LogOut size={20} />
               </button>
             </div>
           </div>
         </header>
 
-        <main className="mx-auto max-w-[1500px] px-4 pb-28 pt-5 sm:px-6 lg:px-8">
-          {error && <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-red-700">{error}</div>}
+        <main className="mx-auto max-w-[1500px] px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 font-medium text-red-700">{error}</div>
+          )}
           {loading || !dashboard ? (
-            <div className="rounded-lg bg-white p-8 shadow-soft">Loading your learning path...</div>
+            <div className="flex items-center gap-3 rounded-2xl bg-white p-8 text-slate-500 shadow-soft">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-coral-500 border-t-transparent" />
+              Loading your learning path...
+            </div>
           ) : (
-            <ActiveView
-              active={active}
-              user={user}
-              dashboard={dashboard}
-              refreshDashboard={refreshDashboard}
-              setActive={setActive}
-              launchLessonId={launchLessonId}
-              setLaunchLessonId={setLaunchLessonId}
-              theme={theme}
-              setTheme={setTheme}
-            />
+            <div className="animate-fade-in">
+              <ActiveView
+                active={active}
+                user={user}
+                dashboard={dashboard}
+                refreshDashboard={refreshDashboard}
+                setActive={setActive}
+                launchLessonId={launchLessonId}
+                setLaunchLessonId={setLaunchLessonId}
+                theme={theme}
+                setTheme={setTheme}
+              />
+            </div>
           )}
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex gap-1 overflow-x-auto border-t border-stone-200 bg-white px-2 py-2 lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex gap-1 overflow-x-auto border-t border-stone-200/80 bg-white/90 px-2 py-2 backdrop-blur-md lg:hidden">
         {nav.map((item) => (
           <button
             key={item.key}
             onClick={() => setActive(item.key)}
             className={classNames(
-              "flex min-w-[68px] flex-1 flex-col items-center gap-1 rounded-md px-1 py-2 text-[11px] font-semibold",
-              activeNav === item.key ? "bg-coral-50 text-coral-600" : "text-slate-500"
+              "flex min-w-[68px] flex-1 flex-col items-center gap-1 rounded-xl px-1 py-2 text-[11px] font-bold transition",
+              activeNav === item.key ? "bg-coral-50 text-coral-600" : "text-slate-500 hover:bg-stone-100"
             )}
           >
             <item.icon size={19} />
@@ -6768,11 +6800,13 @@ function NavButton({ item, active, onClick }) {
     <button
       onClick={onClick}
       className={classNames(
-        "flex w-full items-center gap-3 rounded-md px-4 py-3 text-left font-bold",
-        active ? "bg-coral-500 text-white" : "text-slate-600 hover:bg-stone-100"
+        "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left font-bold transition",
+        active
+          ? "bg-gradient-to-br from-coral-500 to-coral-600 text-white shadow-glow"
+          : "text-slate-600 hover:bg-stone-100 hover:text-slate-900"
       )}
     >
-      <item.icon size={21} />
+      <item.icon size={20} className={classNames("transition", !active && "text-slate-400 group-hover:text-coral-500")} />
       {item.label}
     </button>
   );
@@ -6780,11 +6814,13 @@ function NavButton({ item, active, onClick }) {
 
 function TopMetric({ icon: Icon, label, value }) {
   return (
-    <div className="flex items-center gap-3 border-r border-stone-200 pr-6 last:border-r-0">
-      <Icon className="text-coral-500" size={31} />
-      <div>
-        <p className="font-black">{value}</p>
-        <p className="text-sm text-slate-500">{label}</p>
+    <div className="flex items-center gap-2.5 border-r border-stone-200 pr-5 last:border-r-0">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-coral-50 text-coral-500">
+        <Icon size={20} />
+      </span>
+      <div className="leading-tight">
+        <p className="text-lg font-black text-slate-900">{value}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</p>
       </div>
     </div>
   );
@@ -6809,8 +6845,10 @@ function InfoTile({ label, value }) {
 
 function FeaturePill({ icon: Icon, label }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-white bg-white/70 px-4 py-3 font-bold text-slate-700 shadow-sm">
-      <Icon size={18} className="text-lagoon-600" />
+    <div className="flex items-center gap-2.5 rounded-2xl border border-white/80 bg-white/70 px-4 py-3 font-bold text-slate-700 shadow-soft backdrop-blur">
+      <span className="grid h-8 w-8 place-items-center rounded-lg bg-lagoon-50 text-lagoon-600">
+        <Icon size={16} />
+      </span>
       {label}
     </div>
   );
@@ -6846,13 +6884,21 @@ function AssetImage({ imageKey, className = "", alt = "Learning image" }) {
 function Logo({ large = false, compact = false }) {
   return (
     <div className="flex items-center gap-3">
-      <div className={classNames("grid place-items-center rounded-lg bg-coral-500 font-black text-white shadow-sm", large ? "h-14 w-14 text-2xl" : "h-11 w-11 text-xl")}>
+      <div
+        className={classNames(
+          "grid place-items-center rounded-2xl bg-gradient-to-br from-coral-500 to-coral-600 font-black text-white shadow-glow ring-1 ring-white/30",
+          large ? "h-14 w-14 text-2xl" : "h-11 w-11 text-xl"
+        )}
+      >
         ¡V
       </div>
       {!compact && (
-        <div>
-          <div className={classNames("font-black leading-none text-coral-500", large ? "text-4xl" : "text-3xl")}>Vamos!</div>
-          <div className="text-xs font-black uppercase tracking-[0.22em] text-lagoon-600">Espanolo</div>
+        <div className="leading-none">
+          <div className={classNames("font-black tracking-tight text-slate-900", large ? "text-4xl" : "text-2xl")}>
+            Vamos
+            <span className="text-coral-500">!</span>
+          </div>
+          <div className="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.3em] text-lagoon-600">Español</div>
         </div>
       )}
     </div>

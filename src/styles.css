@@ -26,6 +26,10 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 button,
@@ -37,6 +41,83 @@ textarea {
 
 button {
   touch-action: manipulation;
+}
+
+/* Smooth, consistent micro-interactions across interactive controls */
+button,
+a,
+select,
+[role="button"] {
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+/* Refined, accessible focus states */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px rgba(245, 73, 44, 0.55);
+  border-radius: 0.5rem;
+}
+
+html[data-theme="dark"] :focus-visible {
+  box-shadow:
+    0 0 0 2px #0f172a,
+    0 0 0 4px rgba(94, 227, 216, 0.6);
+}
+
+/* Text selection */
+::selection {
+  background: rgba(245, 73, 44, 0.18);
+}
+
+html[data-theme="dark"] ::selection {
+  background: rgba(94, 227, 216, 0.28);
+}
+
+/* Elegant, unobtrusive scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+  background-clip: content-box;
+}
+
+html[data-theme="dark"] * {
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+html[data-theme="dark"] *::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  background-clip: content-box;
 }
 
 textarea {
@@ -57,7 +138,7 @@ html[data-theme="dark"] .app-auth-screen {
   background: radial-gradient(circle at top left, #312e81 0%, #0f172a 42%, #020617 100%) !important;
 }
 
-html[data-theme="dark"] :is(.bg-white, .bg-white\/90, .bg-white\/70) {
+html[data-theme="dark"] :is(.bg-white, .bg-white\/90, .bg-white\/80, .bg-white\/70, .bg-white\/95) {
   background-color: rgb(17 24 39 / 0.96) !important;
 }
 
