@@ -170,12 +170,18 @@ test("supplemental vocabulary choices use only words taught in the lesson", () =
 test("semantic image selection uses the precise existing body and scenario cells", () => {
   assert.equal(semanticImageKey("el ojo eye", "body-and-health:6"), "body-and-health:3");
   assert.equal(semanticImageKey("la mano hand", "body-and-health:6"), "body-and-health:2");
-  assert.equal(semanticImageKey("Necesito medicina para el dolor.", "body-and-health:12"), "body-and-health:13");
-  assert.equal(semanticImageKey("Can you repeat, please?", "travel-and-survival:1"), "conversation-and-opinion:7");
+  assert.equal(semanticImageKey("Necesito medicina para el dolor.", "body-and-health:12"), "pharmacy-and-medicine:3");
+  assert.equal(semanticImageKey("Can you repeat, please?", "travel-and-survival:1"), "communication-repair:10");
 });
 
-test("semantic image selection does not substitute a wrong quantity image", () => {
-  assert.equal(semanticImageKey("Tengo seis uvas. I have six grapes.", "numbers-and-colors:5"), null);
-  assert.equal(semanticImageKey("Tengo dos manzanas. I have two apples.", "fruit-and-produce:1"), "numbers-and-colors:2");
-  assert.equal(semanticImageKey("La manzana es roja. The apple is red.", "fruit-and-produce:1"), "numbers-and-colors:7");
+test("semantic image selection uses exact quantity and color cells", () => {
+  assert.equal(semanticImageKey("Tengo seis uvas. I have six grapes.", "numbers-and-colors:5"), "quantities-and-clear-colors:11");
+  assert.equal(semanticImageKey("Tengo dos manzanas. I have two apples.", "fruit-and-produce:1"), "quantities-and-clear-colors:2");
+  assert.equal(semanticImageKey("La manzana es roja. The apple is red.", "fruit-and-produce:1"), "quantities-and-clear-colors:24");
+});
+
+test("semantic image selection uses exact scene relationships", () => {
+  assert.equal(semanticImageKey("El libro está en la mesa.", "home-objects:1"), "object-location-scenes:1");
+  assert.equal(semanticImageKey("No tengo un mapa.", "travel-and-survival:5"), "wants-needs-and-possession:2");
+  assert.equal(semanticImageKey("¿Dónde está la estación?", "city-transport:7"), "directions-and-question-intents:10");
 });
