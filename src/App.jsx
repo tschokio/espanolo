@@ -3712,21 +3712,269 @@ function PronunciationLookupView() {
   );
 }
 
-const SPEAKING_STARTER_DECK = [
-  { spanish: "Hola, ¿cómo estás?", english: "Hello, how are you?", tag: "Greetings" },
-  { spanish: "Buenos días", english: "Good morning", tag: "Greetings" },
-  { spanish: "Muchas gracias", english: "Thank you very much", tag: "Courtesy" },
-  { spanish: "¿Cómo te llamas?", english: "What's your name?", tag: "Introductions" },
-  { spanish: "Me llamo Ana", english: "My name is Ana", tag: "Introductions" },
-  { spanish: "¿Dónde está el baño?", english: "Where is the bathroom?", tag: "Travel" },
-  { spanish: "Quisiera un café, por favor", english: "I would like a coffee, please", tag: "Food" },
-  { spanish: "La cuenta, por favor", english: "The check, please", tag: "Food" },
-  { spanish: "No entiendo", english: "I don't understand", tag: "Everyday" },
-  { spanish: "¿Puedes repetir, por favor?", english: "Can you repeat, please?", tag: "Everyday" },
-  { spanish: "Estoy aprendiendo español", english: "I'm learning Spanish", tag: "Everyday" },
-  { spanish: "¿Cuánto cuesta?", english: "How much does it cost?", tag: "Shopping" },
-  { spanish: "Hasta luego", english: "See you later", tag: "Greetings" },
-  { spanish: "Tengo hambre", english: "I'm hungry", tag: "Everyday" }
+// Large, always-translated speaking library. `type` is "word" or "sentence"
+// so learners can drill single vocabulary or full phrases; `tag` groups items
+// into categories for focused practice.
+const SPEAKING_LIBRARY = [
+  // Saludos y cortesía
+  { spanish: "Hola", english: "Hello", tag: "Greetings", type: "word" },
+  { spanish: "Adiós", english: "Goodbye", tag: "Greetings", type: "word" },
+  { spanish: "Gracias", english: "Thank you", tag: "Greetings", type: "word" },
+  { spanish: "Por favor", english: "Please", tag: "Greetings", type: "word" },
+  { spanish: "Perdón", english: "Sorry / Excuse me", tag: "Greetings", type: "word" },
+  { spanish: "Buenos días", english: "Good morning", tag: "Greetings", type: "sentence" },
+  { spanish: "Buenas tardes", english: "Good afternoon", tag: "Greetings", type: "sentence" },
+  { spanish: "Buenas noches", english: "Good night", tag: "Greetings", type: "sentence" },
+  { spanish: "Muchas gracias", english: "Thank you very much", tag: "Greetings", type: "sentence" },
+  { spanish: "De nada", english: "You're welcome", tag: "Greetings", type: "sentence" },
+  { spanish: "¿Cómo estás?", english: "How are you?", tag: "Greetings", type: "sentence" },
+  { spanish: "Muy bien, gracias", english: "Very well, thank you", tag: "Greetings", type: "sentence" },
+  { spanish: "Hasta luego", english: "See you later", tag: "Greetings", type: "sentence" },
+  { spanish: "Hasta mañana", english: "See you tomorrow", tag: "Greetings", type: "sentence" },
+  { spanish: "Mucho gusto", english: "Nice to meet you", tag: "Greetings", type: "sentence" },
+  { spanish: "Lo siento", english: "I'm sorry", tag: "Greetings", type: "sentence" },
+  { spanish: "Con permiso", english: "Excuse me (to pass)", tag: "Greetings", type: "sentence" },
+  { spanish: "Bienvenido", english: "Welcome", tag: "Greetings", type: "word" },
+
+  // Presentaciones
+  { spanish: "¿Cómo te llamas?", english: "What's your name?", tag: "Introductions", type: "sentence" },
+  { spanish: "Me llamo Ana", english: "My name is Ana", tag: "Introductions", type: "sentence" },
+  { spanish: "Soy de España", english: "I'm from Spain", tag: "Introductions", type: "sentence" },
+  { spanish: "¿De dónde eres?", english: "Where are you from?", tag: "Introductions", type: "sentence" },
+  { spanish: "Tengo veinte años", english: "I'm twenty years old", tag: "Introductions", type: "sentence" },
+  { spanish: "Encantado de conocerte", english: "Pleased to meet you", tag: "Introductions", type: "sentence" },
+  { spanish: "Hablo un poco de español", english: "I speak a little Spanish", tag: "Introductions", type: "sentence" },
+  { spanish: "Estoy aprendiendo español", english: "I'm learning Spanish", tag: "Introductions", type: "sentence" },
+
+  // Familia y personas
+  { spanish: "La familia", english: "The family", tag: "Family & People", type: "word" },
+  { spanish: "La madre", english: "The mother", tag: "Family & People", type: "word" },
+  { spanish: "El padre", english: "The father", tag: "Family & People", type: "word" },
+  { spanish: "El hermano", english: "The brother", tag: "Family & People", type: "word" },
+  { spanish: "La hermana", english: "The sister", tag: "Family & People", type: "word" },
+  { spanish: "El hijo", english: "The son", tag: "Family & People", type: "word" },
+  { spanish: "La hija", english: "The daughter", tag: "Family & People", type: "word" },
+  { spanish: "El abuelo", english: "The grandfather", tag: "Family & People", type: "word" },
+  { spanish: "La abuela", english: "The grandmother", tag: "Family & People", type: "word" },
+  { spanish: "El amigo", english: "The friend (m)", tag: "Family & People", type: "word" },
+  { spanish: "La amiga", english: "The friend (f)", tag: "Family & People", type: "word" },
+  { spanish: "El niño", english: "The boy", tag: "Family & People", type: "word" },
+  { spanish: "La mujer", english: "The woman", tag: "Family & People", type: "word" },
+  { spanish: "El hombre", english: "The man", tag: "Family & People", type: "word" },
+  { spanish: "Tengo dos hermanos", english: "I have two siblings", tag: "Family & People", type: "sentence" },
+  { spanish: "Mi familia es grande", english: "My family is big", tag: "Family & People", type: "sentence" },
+
+  // Números
+  { spanish: "Uno", english: "One", tag: "Numbers", type: "word" },
+  { spanish: "Dos", english: "Two", tag: "Numbers", type: "word" },
+  { spanish: "Tres", english: "Three", tag: "Numbers", type: "word" },
+  { spanish: "Cuatro", english: "Four", tag: "Numbers", type: "word" },
+  { spanish: "Cinco", english: "Five", tag: "Numbers", type: "word" },
+  { spanish: "Seis", english: "Six", tag: "Numbers", type: "word" },
+  { spanish: "Siete", english: "Seven", tag: "Numbers", type: "word" },
+  { spanish: "Ocho", english: "Eight", tag: "Numbers", type: "word" },
+  { spanish: "Nueve", english: "Nine", tag: "Numbers", type: "word" },
+  { spanish: "Diez", english: "Ten", tag: "Numbers", type: "word" },
+  { spanish: "Veinte", english: "Twenty", tag: "Numbers", type: "word" },
+  { spanish: "Cincuenta", english: "Fifty", tag: "Numbers", type: "word" },
+  { spanish: "Cien", english: "One hundred", tag: "Numbers", type: "word" },
+  { spanish: "Mil", english: "One thousand", tag: "Numbers", type: "word" },
+
+  // Colores
+  { spanish: "Rojo", english: "Red", tag: "Colors", type: "word" },
+  { spanish: "Azul", english: "Blue", tag: "Colors", type: "word" },
+  { spanish: "Verde", english: "Green", tag: "Colors", type: "word" },
+  { spanish: "Amarillo", english: "Yellow", tag: "Colors", type: "word" },
+  { spanish: "Naranja", english: "Orange", tag: "Colors", type: "word" },
+  { spanish: "Negro", english: "Black", tag: "Colors", type: "word" },
+  { spanish: "Blanco", english: "White", tag: "Colors", type: "word" },
+  { spanish: "Rosa", english: "Pink", tag: "Colors", type: "word" },
+  { spanish: "Morado", english: "Purple", tag: "Colors", type: "word" },
+  { spanish: "Gris", english: "Gray", tag: "Colors", type: "word" },
+  { spanish: "Marrón", english: "Brown", tag: "Colors", type: "word" },
+
+  // Días y tiempo
+  { spanish: "Lunes", english: "Monday", tag: "Days & Time", type: "word" },
+  { spanish: "Martes", english: "Tuesday", tag: "Days & Time", type: "word" },
+  { spanish: "Miércoles", english: "Wednesday", tag: "Days & Time", type: "word" },
+  { spanish: "Jueves", english: "Thursday", tag: "Days & Time", type: "word" },
+  { spanish: "Viernes", english: "Friday", tag: "Days & Time", type: "word" },
+  { spanish: "Sábado", english: "Saturday", tag: "Days & Time", type: "word" },
+  { spanish: "Domingo", english: "Sunday", tag: "Days & Time", type: "word" },
+  { spanish: "Hoy", english: "Today", tag: "Days & Time", type: "word" },
+  { spanish: "Mañana", english: "Tomorrow", tag: "Days & Time", type: "word" },
+  { spanish: "Ayer", english: "Yesterday", tag: "Days & Time", type: "word" },
+  { spanish: "La semana", english: "The week", tag: "Days & Time", type: "word" },
+  { spanish: "El mes", english: "The month", tag: "Days & Time", type: "word" },
+  { spanish: "¿Qué hora es?", english: "What time is it?", tag: "Days & Time", type: "sentence" },
+  { spanish: "Son las tres", english: "It's three o'clock", tag: "Days & Time", type: "sentence" },
+
+  // Comida y bebida
+  { spanish: "El agua", english: "The water", tag: "Food & Drink", type: "word" },
+  { spanish: "El café", english: "The coffee", tag: "Food & Drink", type: "word" },
+  { spanish: "El pan", english: "The bread", tag: "Food & Drink", type: "word" },
+  { spanish: "La leche", english: "The milk", tag: "Food & Drink", type: "word" },
+  { spanish: "El huevo", english: "The egg", tag: "Food & Drink", type: "word" },
+  { spanish: "La manzana", english: "The apple", tag: "Food & Drink", type: "word" },
+  { spanish: "El queso", english: "The cheese", tag: "Food & Drink", type: "word" },
+  { spanish: "La carne", english: "The meat", tag: "Food & Drink", type: "word" },
+  { spanish: "El pescado", english: "The fish", tag: "Food & Drink", type: "word" },
+  { spanish: "El arroz", english: "The rice", tag: "Food & Drink", type: "word" },
+  { spanish: "La fruta", english: "The fruit", tag: "Food & Drink", type: "word" },
+  { spanish: "La verdura", english: "The vegetable", tag: "Food & Drink", type: "word" },
+  { spanish: "Quisiera un café, por favor", english: "I would like a coffee, please", tag: "Food & Drink", type: "sentence" },
+  { spanish: "La cuenta, por favor", english: "The check, please", tag: "Food & Drink", type: "sentence" },
+  { spanish: "Tengo hambre", english: "I'm hungry", tag: "Food & Drink", type: "sentence" },
+  { spanish: "Tengo sed", english: "I'm thirsty", tag: "Food & Drink", type: "sentence" },
+  { spanish: "Está delicioso", english: "It's delicious", tag: "Food & Drink", type: "sentence" },
+  { spanish: "¿Qué me recomienda?", english: "What do you recommend?", tag: "Food & Drink", type: "sentence" },
+
+  // Viajes y direcciones
+  { spanish: "El aeropuerto", english: "The airport", tag: "Travel & Directions", type: "word" },
+  { spanish: "La estación", english: "The station", tag: "Travel & Directions", type: "word" },
+  { spanish: "El tren", english: "The train", tag: "Travel & Directions", type: "word" },
+  { spanish: "El autobús", english: "The bus", tag: "Travel & Directions", type: "word" },
+  { spanish: "El hotel", english: "The hotel", tag: "Travel & Directions", type: "word" },
+  { spanish: "La calle", english: "The street", tag: "Travel & Directions", type: "word" },
+  { spanish: "Izquierda", english: "Left", tag: "Travel & Directions", type: "word" },
+  { spanish: "Derecha", english: "Right", tag: "Travel & Directions", type: "word" },
+  { spanish: "Recto", english: "Straight ahead", tag: "Travel & Directions", type: "word" },
+  { spanish: "¿Dónde está el baño?", english: "Where is the bathroom?", tag: "Travel & Directions", type: "sentence" },
+  { spanish: "¿Dónde está la estación?", english: "Where is the station?", tag: "Travel & Directions", type: "sentence" },
+  { spanish: "¿Cómo llego al centro?", english: "How do I get downtown?", tag: "Travel & Directions", type: "sentence" },
+  { spanish: "Estoy perdido", english: "I'm lost", tag: "Travel & Directions", type: "sentence" },
+  { spanish: "¿Está lejos?", english: "Is it far?", tag: "Travel & Directions", type: "sentence" },
+  { spanish: "Quiero un billete de ida y vuelta", english: "I want a round-trip ticket", tag: "Travel & Directions", type: "sentence" },
+
+  // Compras
+  { spanish: "La tienda", english: "The shop", tag: "Shopping", type: "word" },
+  { spanish: "El dinero", english: "The money", tag: "Shopping", type: "word" },
+  { spanish: "El precio", english: "The price", tag: "Shopping", type: "word" },
+  { spanish: "La talla", english: "The size", tag: "Shopping", type: "word" },
+  { spanish: "Barato", english: "Cheap", tag: "Shopping", type: "word" },
+  { spanish: "Caro", english: "Expensive", tag: "Shopping", type: "word" },
+  { spanish: "¿Cuánto cuesta?", english: "How much does it cost?", tag: "Shopping", type: "sentence" },
+  { spanish: "¿Puedo pagar con tarjeta?", english: "Can I pay by card?", tag: "Shopping", type: "sentence" },
+  { spanish: "Solo estoy mirando", english: "I'm just looking", tag: "Shopping", type: "sentence" },
+  { spanish: "Me lo llevo", english: "I'll take it", tag: "Shopping", type: "sentence" },
+
+  // Casa
+  { spanish: "La casa", english: "The house", tag: "Home", type: "word" },
+  { spanish: "La puerta", english: "The door", tag: "Home", type: "word" },
+  { spanish: "La ventana", english: "The window", tag: "Home", type: "word" },
+  { spanish: "La mesa", english: "The table", tag: "Home", type: "word" },
+  { spanish: "La silla", english: "The chair", tag: "Home", type: "word" },
+  { spanish: "La cama", english: "The bed", tag: "Home", type: "word" },
+  { spanish: "La cocina", english: "The kitchen", tag: "Home", type: "word" },
+  { spanish: "El baño", english: "The bathroom", tag: "Home", type: "word" },
+  { spanish: "El dormitorio", english: "The bedroom", tag: "Home", type: "word" },
+  { spanish: "La llave", english: "The key", tag: "Home", type: "word" },
+
+  // Cuerpo y salud
+  { spanish: "La cabeza", english: "The head", tag: "Body & Health", type: "word" },
+  { spanish: "La mano", english: "The hand", tag: "Body & Health", type: "word" },
+  { spanish: "El ojo", english: "The eye", tag: "Body & Health", type: "word" },
+  { spanish: "El pie", english: "The foot", tag: "Body & Health", type: "word" },
+  { spanish: "El brazo", english: "The arm", tag: "Body & Health", type: "word" },
+  { spanish: "La pierna", english: "The leg", tag: "Body & Health", type: "word" },
+  { spanish: "El médico", english: "The doctor", tag: "Body & Health", type: "word" },
+  { spanish: "Me duele la cabeza", english: "My head hurts", tag: "Body & Health", type: "sentence" },
+  { spanish: "Estoy enfermo", english: "I'm sick", tag: "Body & Health", type: "sentence" },
+  { spanish: "Necesito un médico", english: "I need a doctor", tag: "Body & Health", type: "sentence" },
+
+  // Trabajo y escuela
+  { spanish: "El trabajo", english: "The work / job", tag: "Work & School", type: "word" },
+  { spanish: "La escuela", english: "The school", tag: "Work & School", type: "word" },
+  { spanish: "El profesor", english: "The teacher", tag: "Work & School", type: "word" },
+  { spanish: "El estudiante", english: "The student", tag: "Work & School", type: "word" },
+  { spanish: "El libro", english: "The book", tag: "Work & School", type: "word" },
+  { spanish: "La oficina", english: "The office", tag: "Work & School", type: "word" },
+  { spanish: "El ordenador", english: "The computer", tag: "Work & School", type: "word" },
+  { spanish: "¿En qué trabajas?", english: "What do you do for work?", tag: "Work & School", type: "sentence" },
+  { spanish: "Trabajo en una oficina", english: "I work in an office", tag: "Work & School", type: "sentence" },
+  { spanish: "Tengo una reunión", english: "I have a meeting", tag: "Work & School", type: "sentence" },
+
+  // Clima y naturaleza
+  { spanish: "El sol", english: "The sun", tag: "Weather & Nature", type: "word" },
+  { spanish: "La lluvia", english: "The rain", tag: "Weather & Nature", type: "word" },
+  { spanish: "El viento", english: "The wind", tag: "Weather & Nature", type: "word" },
+  { spanish: "La nieve", english: "The snow", tag: "Weather & Nature", type: "word" },
+  { spanish: "El mar", english: "The sea", tag: "Weather & Nature", type: "word" },
+  { spanish: "La montaña", english: "The mountain", tag: "Weather & Nature", type: "word" },
+  { spanish: "El árbol", english: "The tree", tag: "Weather & Nature", type: "word" },
+  { spanish: "Hace calor", english: "It's hot", tag: "Weather & Nature", type: "sentence" },
+  { spanish: "Hace frío", english: "It's cold", tag: "Weather & Nature", type: "sentence" },
+  { spanish: "Está lloviendo", english: "It's raining", tag: "Weather & Nature", type: "sentence" },
+
+  // Verbos comunes
+  { spanish: "Ser", english: "To be (permanent)", tag: "Common Verbs", type: "word" },
+  { spanish: "Estar", english: "To be (state)", tag: "Common Verbs", type: "word" },
+  { spanish: "Tener", english: "To have", tag: "Common Verbs", type: "word" },
+  { spanish: "Hacer", english: "To do / make", tag: "Common Verbs", type: "word" },
+  { spanish: "Ir", english: "To go", tag: "Common Verbs", type: "word" },
+  { spanish: "Comer", english: "To eat", tag: "Common Verbs", type: "word" },
+  { spanish: "Beber", english: "To drink", tag: "Common Verbs", type: "word" },
+  { spanish: "Hablar", english: "To speak", tag: "Common Verbs", type: "word" },
+  { spanish: "Querer", english: "To want", tag: "Common Verbs", type: "word" },
+  { spanish: "Poder", english: "To be able to", tag: "Common Verbs", type: "word" },
+  { spanish: "Vivir", english: "To live", tag: "Common Verbs", type: "word" },
+  { spanish: "Trabajar", english: "To work", tag: "Common Verbs", type: "word" },
+  { spanish: "Aprender", english: "To learn", tag: "Common Verbs", type: "word" },
+  { spanish: "Comprar", english: "To buy", tag: "Common Verbs", type: "word" },
+
+  // Adjetivos
+  { spanish: "Grande", english: "Big", tag: "Adjectives", type: "word" },
+  { spanish: "Pequeño", english: "Small", tag: "Adjectives", type: "word" },
+  { spanish: "Bueno", english: "Good", tag: "Adjectives", type: "word" },
+  { spanish: "Malo", english: "Bad", tag: "Adjectives", type: "word" },
+  { spanish: "Nuevo", english: "New", tag: "Adjectives", type: "word" },
+  { spanish: "Viejo", english: "Old", tag: "Adjectives", type: "word" },
+  { spanish: "Bonito", english: "Pretty", tag: "Adjectives", type: "word" },
+  { spanish: "Feo", english: "Ugly", tag: "Adjectives", type: "word" },
+  { spanish: "Rápido", english: "Fast", tag: "Adjectives", type: "word" },
+  { spanish: "Lento", english: "Slow", tag: "Adjectives", type: "word" },
+  { spanish: "Fácil", english: "Easy", tag: "Adjectives", type: "word" },
+  { spanish: "Difícil", english: "Difficult", tag: "Adjectives", type: "word" },
+  { spanish: "Feliz", english: "Happy", tag: "Adjectives", type: "word" },
+  { spanish: "Cansado", english: "Tired", tag: "Adjectives", type: "word" },
+
+  // Animales
+  { spanish: "El perro", english: "The dog", tag: "Animals", type: "word" },
+  { spanish: "El gato", english: "The cat", tag: "Animals", type: "word" },
+  { spanish: "El pájaro", english: "The bird", tag: "Animals", type: "word" },
+  { spanish: "El caballo", english: "The horse", tag: "Animals", type: "word" },
+  { spanish: "La vaca", english: "The cow", tag: "Animals", type: "word" },
+  { spanish: "El pez", english: "The fish", tag: "Animals", type: "word" },
+  { spanish: "El ratón", english: "The mouse", tag: "Animals", type: "word" },
+  { spanish: "El pollo", english: "The chicken", tag: "Animals", type: "word" },
+
+  // Preguntas útiles
+  { spanish: "¿Qué?", english: "What?", tag: "Questions", type: "word" },
+  { spanish: "¿Quién?", english: "Who?", tag: "Questions", type: "word" },
+  { spanish: "¿Dónde?", english: "Where?", tag: "Questions", type: "word" },
+  { spanish: "¿Cuándo?", english: "When?", tag: "Questions", type: "word" },
+  { spanish: "¿Por qué?", english: "Why?", tag: "Questions", type: "word" },
+  { spanish: "¿Cómo?", english: "How?", tag: "Questions", type: "word" },
+  { spanish: "¿Cuánto?", english: "How much?", tag: "Questions", type: "word" },
+  { spanish: "¿Hablas inglés?", english: "Do you speak English?", tag: "Questions", type: "sentence" },
+  { spanish: "¿Puedes ayudarme?", english: "Can you help me?", tag: "Questions", type: "sentence" },
+  { spanish: "¿Qué significa esto?", english: "What does this mean?", tag: "Questions", type: "sentence" },
+  { spanish: "¿Puedes repetir, por favor?", english: "Can you repeat, please?", tag: "Questions", type: "sentence" },
+  { spanish: "¿Cómo se dice esto en español?", english: "How do you say this in Spanish?", tag: "Questions", type: "sentence" },
+
+  // Frases del día a día
+  { spanish: "No entiendo", english: "I don't understand", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "No lo sé", english: "I don't know", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "Claro que sí", english: "Of course", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "Estoy de acuerdo", english: "I agree", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "Un momento, por favor", english: "One moment, please", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "No hay problema", english: "No problem", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "Estoy cansado", english: "I'm tired", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "Tengo prisa", english: "I'm in a hurry", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "Me gusta mucho", english: "I like it a lot", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "¿Puedo ayudarte?", english: "Can I help you?", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "Nos vemos pronto", english: "See you soon", tag: "Everyday Sentences", type: "sentence" },
+  { spanish: "Que tengas un buen día", english: "Have a good day", tag: "Everyday Sentences", type: "sentence" }
 ];
 
 function shuffleArray(items) {
@@ -3740,14 +3988,22 @@ function shuffleArray(items) {
 
 function SpeakingLabView() {
   const supported = useMemo(() => Boolean(getSpeechRecognition()), []);
-  const [source, setSource] = useState("starter"); // starter | saved | custom
-  const [deck, setDeck] = useState(() => shuffleArray(SPEAKING_STARTER_DECK));
+  const categories = useMemo(() => {
+    const seen = [];
+    for (const item of SPEAKING_LIBRARY) {
+      if (!seen.includes(item.tag)) seen.push(item.tag);
+    }
+    return seen;
+  }, []);
+
+  const [mode, setMode] = useState("words"); // words | sentences | category | saved | custom
+  const [category, setCategory] = useState(categories[0]);
+  const [deck, setDeck] = useState(() => shuffleArray(SPEAKING_LIBRARY.filter((item) => item.type === "word")));
   const [index, setIndex] = useState(0);
   const [savedWords, setSavedWords] = useState([]);
   const [savedLoading, setSavedLoading] = useState(false);
   const [customText, setCustomText] = useState("");
   const [customEnglish, setCustomEnglish] = useState("");
-  const [showEnglish, setShowEnglish] = useState(false);
   const [audioState, setAudioState] = useState("idle");
   const [lastResult, setLastResult] = useState("");
   const [session, setSession] = useState({ perfect: 0, close: 0, missed: 0, streak: 0, bestStreak: 0 });
@@ -3772,22 +4028,40 @@ function SpeakingLabView() {
 
   const current = deck[index] || null;
 
-  const loadDeck = (nextSource) => {
-    setSource(nextSource);
+  const buildDeck = (nextMode, nextCategory) => {
+    if (nextMode === "words") {
+      return shuffleArray(SPEAKING_LIBRARY.filter((item) => item.type === "word"));
+    }
+    if (nextMode === "sentences") {
+      return shuffleArray(SPEAKING_LIBRARY.filter((item) => item.type === "sentence"));
+    }
+    if (nextMode === "category") {
+      return shuffleArray(SPEAKING_LIBRARY.filter((item) => item.tag === nextCategory));
+    }
+    if (nextMode === "saved") {
+      return shuffleArray(
+        savedWords
+          .filter((word) => word.spanish)
+          .map((word) => ({ spanish: word.spanish, english: word.english || "", tag: "Saved", type: "word" }))
+      );
+    }
+    return [];
+  };
+
+  const loadMode = (nextMode, nextCategory = category) => {
+    setMode(nextMode);
+    if (nextCategory !== category) setCategory(nextCategory);
     setLastResult("");
-    setShowEnglish(false);
     setAudioState("idle");
     setIndex(0);
-    if (nextSource === "starter") {
-      setDeck(shuffleArray(SPEAKING_STARTER_DECK));
-    } else if (nextSource === "saved") {
-      const mapped = savedWords
-        .filter((word) => word.spanish)
-        .map((word) => ({ spanish: word.spanish, english: word.english || "", tag: "Saved" }));
-      setDeck(shuffleArray(mapped));
-    } else if (nextSource === "custom") {
-      setDeck([]);
-    }
+    setDeck(buildDeck(nextMode, nextCategory));
+  };
+
+  const reshuffle = () => {
+    setLastResult("");
+    setAudioState("idle");
+    setIndex(0);
+    setDeck(buildDeck(mode, category));
   };
 
   const goTo = (nextIndex) => {
@@ -3795,40 +4069,43 @@ function SpeakingLabView() {
     const wrapped = (nextIndex + deck.length) % deck.length;
     setIndex(wrapped);
     setLastResult("");
-    setShowEnglish(false);
     setAudioState("idle");
   };
 
   const startCustom = () => {
     const spanish = customText.trim();
     if (!spanish) return;
-    setDeck([{ spanish, english: customEnglish.trim(), tag: "Custom" }]);
+    setDeck([{ spanish, english: customEnglish.trim(), tag: "Custom", type: "sentence" }]);
     setIndex(0);
     setLastResult("");
-    setShowEnglish(false);
     setAudioState("idle");
   };
 
   const registerScore = (result) => {
     setLastResult(result);
-    setSession((current) => {
+    setSession((prev) => {
       if (result === "success") {
-        const streak = current.streak + 1;
-        return { ...current, perfect: current.perfect + 1, streak, bestStreak: Math.max(current.bestStreak, streak) };
+        const streak = prev.streak + 1;
+        return { ...prev, perfect: prev.perfect + 1, streak, bestStreak: Math.max(prev.bestStreak, streak) };
       }
       if (result === "close") {
-        return { ...current, close: current.close + 1, streak: 0 };
+        return { ...prev, close: prev.close + 1, streak: 0 };
       }
-      return { ...current, missed: current.missed + 1, streak: 0 };
+      return { ...prev, missed: prev.missed + 1, streak: 0 };
     });
   };
 
   const totalAttempts = session.perfect + session.close + session.missed;
   const accuracy = totalAttempts ? Math.round(((session.perfect + session.close * 0.5) / totalAttempts) * 100) : 0;
 
-  const sourceTabs = [
-    { key: "starter", label: "Starter phrases" },
-    { key: "saved", label: `My saved words${savedWords.length ? ` (${savedWords.length})` : ""}` },
+  const wordCount = useMemo(() => SPEAKING_LIBRARY.filter((item) => item.type === "word").length, []);
+  const sentenceCount = useMemo(() => SPEAKING_LIBRARY.filter((item) => item.type === "sentence").length, []);
+
+  const modeTabs = [
+    { key: "words", label: `Random words (${wordCount})` },
+    { key: "sentences", label: `Random sentences (${sentenceCount})` },
+    { key: "category", label: "Categories" },
+    { key: "saved", label: `Saved${savedWords.length ? ` (${savedWords.length})` : ""}` },
     { key: "custom", label: "Free practice" }
   ];
 
@@ -3839,10 +4116,10 @@ function SpeakingLabView() {
           title="Speaking Lab"
           icon={Mic}
           action={
-            source !== "custom" && deck.length ? (
+            mode !== "custom" && deck.length ? (
               <button
                 type="button"
-                onClick={() => loadDeck(source)}
+                onClick={reshuffle}
                 className="inline-flex items-center gap-2 rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-stone-50"
                 title="Shuffle deck"
               >
@@ -3859,14 +4136,14 @@ function SpeakingLabView() {
           )}
 
           <div className="flex flex-wrap gap-2">
-            {sourceTabs.map((item) => (
+            {modeTabs.map((item) => (
               <button
                 key={item.key}
                 type="button"
-                onClick={() => loadDeck(item.key)}
+                onClick={() => loadMode(item.key)}
                 className={classNames(
                   "rounded-full border px-4 py-2 text-sm font-bold transition",
-                  source === item.key
+                  mode === item.key
                     ? "border-coral-300 bg-coral-50 text-coral-700"
                     : "border-stone-200 bg-white text-slate-600 hover:bg-stone-50"
                 )}
@@ -3876,10 +4153,30 @@ function SpeakingLabView() {
             ))}
           </div>
 
-          {source === "custom" && (
+          {mode === "category" && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {categories.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => loadMode("category", tag)}
+                  className={classNames(
+                    "rounded-full border px-3 py-1.5 text-xs font-bold transition",
+                    category === tag
+                      ? "border-lagoon-300 bg-lagoon-50 text-lagoon-700"
+                      : "border-stone-200 bg-white text-slate-600 hover:bg-stone-50"
+                  )}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {mode === "custom" && (
             <div className="mt-4 grid gap-3 rounded-lg border border-stone-200 bg-stone-50 p-4">
               <label className="block text-sm font-semibold text-slate-700">
-                Spanish phrase to practice
+                Spanish word or phrase to practice
                 <input
                   value={customText}
                   onChange={(event) => setCustomText(event.target.value)}
@@ -3888,7 +4185,7 @@ function SpeakingLabView() {
                 />
               </label>
               <label className="block text-sm font-semibold text-slate-700">
-                English hint (optional)
+                English translation (optional)
                 <input
                   value={customEnglish}
                   onChange={(event) => setCustomEnglish(event.target.value)}
@@ -3908,7 +4205,7 @@ function SpeakingLabView() {
             </div>
           )}
 
-          {source === "saved" && savedLoading && (
+          {mode === "saved" && savedLoading && (
             <p className="mt-4 text-sm font-semibold text-slate-600">Loading your saved words...</p>
           )}
 
@@ -3917,6 +4214,7 @@ function SpeakingLabView() {
               <div className="flex items-center justify-between gap-3">
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-wide text-lagoon-700">
                   {current.tag || "Practice"}
+                  {current.type ? ` · ${current.type === "word" ? "Word" : "Sentence"}` : ""}
                 </span>
                 {deck.length > 1 && (
                   <span className="text-xs font-bold text-slate-500">
@@ -3927,21 +4225,7 @@ function SpeakingLabView() {
 
               <h2 className="mt-4 text-4xl font-black leading-tight text-slate-950">{current.spanish}</h2>
 
-              {current.english && (
-                <div className="mt-3">
-                  {showEnglish ? (
-                    <p className="text-lg font-bold text-slate-600">{current.english}</p>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowEnglish(true)}
-                      className="text-sm font-bold text-lagoon-600 hover:text-lagoon-700"
-                    >
-                      Show English hint
-                    </button>
-                  )}
-                </div>
-              )}
+              {current.english && <p className="mt-3 text-lg font-bold text-slate-600">{current.english}</p>}
 
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <button
@@ -3958,7 +4242,7 @@ function SpeakingLabView() {
                   <Volume2 size={18} />
                   Listen
                 </button>
-                <SpeakCheck key={`${source}-${index}-${current.spanish}`} target={current.spanish} onScore={registerScore} />
+                <SpeakCheck key={`${mode}-${index}-${current.spanish}`} target={current.spanish} onScore={registerScore} />
               </div>
 
               {lastResult && (
@@ -3997,14 +4281,14 @@ function SpeakingLabView() {
                 </div>
               )}
             </div>
-          ) : source === "saved" && !savedLoading ? (
+          ) : mode === "saved" && !savedLoading ? (
             <div className="mt-5 rounded-lg border border-honey-200 bg-honey-50 p-5">
               <p className="font-black text-honey-900">No saved words yet</p>
               <p className="mt-1 text-sm font-semibold text-slate-700">
                 Save words in the Audio Lab tab and they'll show up here to practice speaking.
               </p>
             </div>
-          ) : source === "custom" ? null : (
+          ) : mode === "custom" ? null : (
             <p className="mt-5 text-sm font-semibold text-slate-600">Nothing to practice yet.</p>
           )}
         </Panel>
@@ -4033,15 +4317,15 @@ function SpeakingLabView() {
           <ol className="grid gap-3 text-sm font-semibold text-slate-700">
             <li className="flex gap-3">
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-lagoon-100 font-black text-lagoon-700">1</span>
-              Tap <span className="font-black">Listen</span> to hear the phrase.
+              Read the Spanish and its English translation.
             </li>
             <li className="flex gap-3">
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-lagoon-100 font-black text-lagoon-700">2</span>
-              Tap <span className="font-black">Speak</span> and say it out loud.
+              Tap <span className="font-black">Listen</span>, then <span className="font-black">Speak</span> it out loud.
             </li>
             <li className="flex gap-3">
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-lagoon-100 font-black text-lagoon-700">3</span>
-              Get instant feedback, then move to the next phrase.
+              Get instant feedback, then move to the next card.
             </li>
           </ol>
           <p className="mt-4 rounded-md bg-stone-50 p-3 text-xs font-semibold text-slate-500">
