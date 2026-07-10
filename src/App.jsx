@@ -4860,8 +4860,8 @@ function SpeakCheck({ target = "", onTranscript = null, onScore = null, compact 
     ? "grid h-8 w-8 place-items-center rounded-md border"
     : "inline-flex min-w-[96px] items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-bold";
   const badge = {
-    success: { text: "¡Perfecto!", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-    close: { text: heard ? `Casi — “${heard}”` : "Casi", cls: "bg-honey-100 text-honey-700 border-honey-200" },
+    success: { text: heard ? `¡Perfecto! — “${heard}”` : "¡Perfecto!", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+    close: { text: heard ? `Casi — se oyó “${heard}”` : "Casi", cls: "bg-honey-100 text-honey-700 border-honey-200" },
     fail: { text: heard ? `Se oyó “${heard}”` : "No te entendí", cls: "bg-red-100 text-red-700 border-red-200" },
     error: { text: "Mic no disponible", cls: "bg-stone-100 text-slate-600 border-stone-200" }
   }[status];
