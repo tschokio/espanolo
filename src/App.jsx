@@ -3913,7 +3913,7 @@ function SpeakingLabView() {
           )}
 
           {current ? (
-            <div className="mt-5 rounded-xl border border-lagoon-100 bg-gradient-to-br from-lagoon-50 to-white p-6">
+            <div className="mt-5 rounded-xl border border-lagoon-100 bg-lagoon-50 p-6">
               <div className="flex items-center justify-between gap-3">
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-wide text-lagoon-700">
                   {current.tag || "Practice"}
