@@ -13,6 +13,7 @@ import {
   ListChecks,
   LogOut,
   Medal,
+  Mic,
   Moon,
   NotebookTabs,
   PenTool,
@@ -4407,6 +4408,134 @@ function ExerciseQueue({
   );
 }
 
+function getSpeechRecognition() {
+  if (typeof window === "undefined") return null;
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+// Client-side speech scoring reuses the same normalization the server grader
+// uses, so "understandable" here means the same thing quizzes accept.
+function scoreSpeech(target, transcript) {
+  const expected = normalizeText(target);
+  const heard = normalizeText(transcript);
+  if (!expected || !heard) return "fail";
+  if (expected === heard) return "success";
+  if (heard.includes(expected) || expected.includes(heard)) return "close";
+  const expectedTokens = expected.split(" ").filter(Boolean);
+  const heardTokens = new Set(heard.split(" ").filter(Boolean));
+  const overlap = expectedTokens.filter((token) => heardTokens.has(token)).length;
+  if (expectedTokens.length && overlap / expectedTokens.length >= 0.6) return "close";
+  return "fail";
+}
+
+// Speaking check built on the browser's free Web Speech API. When `target` is
+// provided it self-grades and shows pronunciation feedback (practice mode);
+// when `onTranscript` is provided it feeds the transcript to the caller so a
+// learner can answer any exercise by speaking (fill mode).
+function SpeakCheck({ target = "", onTranscript = null, compact = false, lang = "es-ES" }) {
+  const Recognition = useMemo(() => getSpeechRecognition(), []);
+  const [status, setStatus] = useState("idle"); // idle | listening | success | close | fail | error
+  const [heard, setHeard] = useState("");
+  const recognitionRef = useRef(null);
+
+  useEffect(
+    () => () => {
+      try {
+        recognitionRef.current?.abort?.();
+      } catch {
+        /* ignore */
+      }
+    },
+    []
+  );
+
+  if (!Recognition) return null;
+
+  const listening = status === "listening";
+
+  const begin = () => {
+    if (listening) {
+      recognitionRef.current?.stop?.();
+      return;
+    }
+    let recognition;
+    try {
+      recognition = new Recognition();
+    } catch {
+      setStatus("error");
+      return;
+    }
+    recognition.lang = lang;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 4;
+    recognition.continuous = false;
+    recognitionRef.current = recognition;
+    setHeard("");
+    setStatus("listening");
+
+    recognition.onresult = (event) => {
+      const alternatives = Array.from(event.results?.[0] || [])
+        .map((alt) => alt?.transcript || "")
+        .filter(Boolean);
+      const best = alternatives[0] || "";
+      setHeard(best);
+      onTranscript?.(best);
+      if (target) {
+        const outcomes = alternatives.map((alt) => scoreSpeech(target, alt));
+        setStatus(outcomes.includes("success") ? "success" : outcomes.includes("close") ? "close" : "fail");
+      } else {
+        setStatus("idle");
+      }
+    };
+    recognition.onerror = (event) => {
+      setStatus(event?.error === "no-speech" || event?.error === "aborted" ? "fail" : "error");
+    };
+    recognition.onend = () => {
+      setStatus((prev) => (prev === "listening" ? "idle" : prev));
+      recognitionRef.current = null;
+    };
+
+    try {
+      recognition.start();
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  const buttonClass = compact
+    ? "grid h-8 w-8 place-items-center rounded-md border"
+    : "inline-flex min-w-[96px] items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-bold";
+  const badge = {
+    success: { text: "¡Perfecto!", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+    close: { text: heard ? `Casi — “${heard}”` : "Casi", cls: "bg-honey-100 text-honey-700 border-honey-200" },
+    fail: { text: heard ? `Se oyó “${heard}”` : "No te entendí", cls: "bg-red-100 text-red-700 border-red-200" },
+    error: { text: "Mic no disponible", cls: "bg-stone-100 text-slate-600 border-stone-200" }
+  }[status];
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={begin}
+        aria-label={listening ? "Stop listening" : "Speak to practice pronunciation"}
+        title={listening ? "Listening… click to stop" : "Speak to check your pronunciation"}
+        className={classNames(
+          buttonClass,
+          listening
+            ? "animate-pulse border-coral-300 bg-coral-50 text-coral-600"
+            : "border-stone-200 bg-white text-slate-700 hover:bg-stone-50"
+        )}
+      >
+        <Mic size={compact ? 16 : 17} />
+        {!compact && (listening ? "Listening…" : "Speak")}
+      </button>
+      {badge && (
+        <span className={classNames("rounded-full border px-2.5 py-1 text-xs font-bold", badge.cls)}>{badge.text}</span>
+      )}
+    </div>
+  );
+}
+
 function PronunciationTools({ text, compact = false, hideTextInTitle = false, allowCopy = true }) {
   const links = dictionaryLinks(text);
   const [audioState, setAudioState] = useState("idle");
@@ -4464,6 +4593,7 @@ function PronunciationTools({ text, compact = false, hideTextInTitle = false, al
           Copy
         </button>
       )}
+      <SpeakCheck target={text} compact={compact} />
       <a
         href={links.spanishDict}
         target="_blank"
@@ -4496,13 +4626,16 @@ function AnswerChoices({ exercise, answer, setAnswer, disabled = false, feedback
   if (!exercise.options.length || freeText) {
     return (
       <div>
-        <input
-          value={answer}
-          onChange={(event) => setAnswer(event.target.value)}
-          disabled={disabled}
-          className="w-full rounded-md border border-stone-200 px-3 py-3 outline-none focus:border-lagoon-500 disabled:bg-stone-100"
-          placeholder="Type your answer"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            value={answer}
+            onChange={(event) => setAnswer(event.target.value)}
+            disabled={disabled}
+            className="w-full rounded-md border border-stone-200 px-3 py-3 outline-none focus:border-lagoon-500 disabled:bg-stone-100"
+            placeholder="Type your answer"
+          />
+          {!disabled && <SpeakCheck onTranscript={setAnswer} compact />}
+        </div>
         {!!exercise.options.length && (
           <button disabled={disabled} onClick={() => setFreeText(false)} className="mt-3 text-sm font-bold text-lagoon-600 disabled:opacity-50">
             Use choices
