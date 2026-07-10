@@ -17,7 +17,7 @@ Existing sheets that should be retained:
 
 | Priority | Proposed sheet | Grid | What it fixes |
 | --- | --- | --- | --- |
-| 1 | `quantities-and-clear-colors.webp` | 5x5 | Missing pictures for six through ten; color questions that currently fall back to a mixed swatch sheet or unrelated object. |
+| 1 | `quantities-and-clear-colors.webp` | 5x5 | Missing pictures for six through ten; clear individual colors; yellow-shirt, white-shirt, black-backpack, and gender-paired color examples previously left in `asset-numbers-colors.md`. |
 | 1 | `subject-pronouns-and-roles.webp` | 4x4 | `él`, `ella`, `nosotros`, and `ellos` currently use generic work/group scenes that include distracting furniture and do not identify the referent clearly. |
 | 1 | `communication-repair.webp` | 4x4 | “I do not understand,” “more slowly,” “repeat,” “help,” “please,” “sorry,” and other repair phrases currently reuse generic conversation, menu, or travel scenes. |
 | 1 | `directions-and-question-intents.webp` | 5x5 | “Go straight,” “turn left,” near/far, address/direction, and question-word exercises do not have precise visual support. |
@@ -48,7 +48,7 @@ Target file: `images/quantities-and-clear-colors.webp`
 ```text
 Create a 1200x1200 square educational Spanish-learning image sheet divided into a mathematically precise 5x5 grid. Every cell is exactly 240x240 pixels. Use equal clean gutters and obey the shared generation contract.
 
-Purpose: unmistakable quantity recognition from one through ten and unmistakable beginner color recognition. For cells 1–10, use identical small blue wooden counting disks, all fully visible, separated, non-overlapping, and arranged in tidy rows. The learner must be able to count every disk instantly. Do not use digits. For cells 16–21, show one large centered matte wooden color tile; do not add any second color except a thin medium-gray outline around the white tile so it remains visible.
+Purpose: unmistakable quantity recognition from one through ten, unmistakable beginner color recognition, and concrete masculine/feminine color examples. For cells 1–10, use identical small blue wooden counting disks, all fully visible, separated, non-overlapping, and arranged in tidy rows. The learner must be able to count every disk instantly. Do not use digits. For cells 16–21, show one large centered matte wooden color tile; do not add any second color except a thin medium-gray outline around the white tile so it remains visible.
 
 Cells, left to right and top to bottom:
 1. Exactly one blue counting disk.
@@ -65,19 +65,19 @@ Cells, left to right and top to bottom:
 12. Exactly seven separate closed books, all fully visible and easy to count.
 13. Exactly eight separate red apples, all fully visible and easy to count.
 14. Exactly nine separate strawberries, all fully visible and easy to count.
-15. Exactly ten separate small round counters in two rows of five.
+15. One centered yellow shirt, isolated with no person, logo, hanger, or other clothing; the yellow color must be visually dominant.
 16. One large pure red wooden color tile.
 17. One large pure blue wooden color tile.
 18. One large pure green wooden color tile.
 19. One large pure yellow wooden color tile.
 20. One large pure white wooden color tile with only a thin gray outline.
 21. One large pure black wooden color tile.
-22. One centered red tomato whose redness is visually dominant.
-23. One centered blue shirt whose blueness is visually dominant.
-24. One centered bowl of green salad whose greenness is visually dominant.
-25. One centered yellow banana whose yellowness is visually dominant.
+22. One centered white shirt, isolated with a thin soft-gray edge so the white fabric remains visible; no person, logo, hanger, or other clothing.
+23. One centered black backpack, isolated with enough lighting to preserve its shape; no person, logo, desk, or extra object.
+24. Two matching red everyday objects side by side: one red tomato and one red apple, equal visual weight, isolated on a neutral background. This supports masculine `rojo` and feminine `roja` without text.
+25. Four tidy two-object color pairs arranged as a precise 2x2 mini-layout inside this cell: red tomato with red apple; yellow banana with yellow shirt; white bread slice with white shirt; black coffee cup with black backpack. Every object must remain recognizable, pairs must not overlap, and there must be no labels. This is a compact comparison cell for masculine and feminine color examples.
 
-Critical checks: exact object counts are mandatory; no hidden or overlapping objects; no extra fruit, books, disks, digits, or labels.
+Critical checks: exact object counts are mandatory; no hidden or overlapping count objects; cells 15, 22, and 23 must contain exactly one isolated target object; cell 25 must contain exactly the four specified pairs; no extra fruit, books, disks, clothing, digits, or labels.
 ```
 
 ## Prompt 2: Subject Pronouns and Roles, 4x4

@@ -1,5 +1,7 @@
 # Numbers And Colors Expansion Assets
 
+> Superseded: do not generate either sheet in this file. All still-missing quantity and color concepts have been merged into **Prompt 1: Quantities and Clear Colors** in `asset-update.md`. The existing `numbers-and-colors.webp` remains in use until that replacement is generated and integrated.
+
 Use `1200x1200` WebP sheets. Keep each cell independently croppable, centered, bright, and free of readable text, labels, digits, letters, watermarks, or UI elements.
 
 ## Numbers To Ten, 4x4
