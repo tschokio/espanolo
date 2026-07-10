@@ -59,12 +59,18 @@ let total = 0;
 
 for (const file of seedFiles) {
   const rel = path.relative(root, file);
+  // Duplicate slugs are only a real bug when they collide inside a single
+  // file. Some seed scripts (e.g. seed-learning-loop.js) intentionally mirror
+  // slugs defined in seed.js and upsert them by their unique slug, so those
+  // cross-file matches are expected and harmless.
+  const slugsInFile = new Set();
   for (const ex of loadExercises(file)) {
     total++;
     const where = `${rel}:${ex.slug}`;
-    if (seenSlugs.has(ex.slug) && seenSlugs.get(ex.slug) !== rel) {
-      problems.push(`[dup-slug] ${where} (also in ${seenSlugs.get(ex.slug)})`);
+    if (slugsInFile.has(ex.slug)) {
+      problems.push(`[dup-slug-in-file] ${where}`);
     }
+    slugsInFile.add(ex.slug);
     seenSlugs.set(ex.slug, rel);
 
     const opts = Array.isArray(ex.options) ? ex.options : [];

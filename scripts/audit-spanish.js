@@ -14,7 +14,11 @@ const ignoredLinePatterns = [
   /\bvocabularySlugs:\s*\[/,
   /\bimageKey:\s*["']/,
   /\bpromptMarkdown:\s*["']/,
-  /\baccepted:\s*\[/
+  /\baccepted:\s*\[/,
+  // Object entries whose KEY is a kebab-case identifier (e.g. the
+  // exercise-slug -> imageKey map). These keys are intentionally ASCII
+  // slugs, not display Spanish, so accent checks must not apply to them.
+  /^\s*["'][a-z0-9-]+["']\s*:/
 ];
 
 const checks = [
