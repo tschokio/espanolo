@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowLeft,
+  ArrowRight,
   BarChart3,
   BookOpen,
   CheckCircle2,
@@ -18,6 +20,7 @@ import {
   NotebookTabs,
   PenTool,
   Plus,
+  RefreshCw,
   Rocket,
   Search,
   Settings,
@@ -1386,17 +1389,24 @@ function WordsWorkspace({ initialTab = "memory", dashboard, refreshDashboard }) 
           { label: "Mastered", value: dashboard?.stats?.masteredWords || 0 }
         ]}
       >
-        Practice vocabulary, memory, and audio in one place.
+        Practice vocabulary, memory, audio, and speaking in one place.
       </WorkspaceSummary>
       <WorkspaceTabs
         active={tab}
         onChange={setTab}
         tabs={[
           { key: "memory", label: "Words & Memory", icon: NotebookTabs },
-          { key: "audio", label: "Audio Lab", icon: Volume2 }
+          { key: "audio", label: "Audio Lab", icon: Volume2 },
+          { key: "speaking", label: "Speaking Lab", icon: Mic }
         ]}
       />
-      {tab === "audio" ? <PronunciationLookupView /> : <WordLearnerView refreshDashboard={refreshDashboard} />}
+      {tab === "audio" ? (
+        <PronunciationLookupView />
+      ) : tab === "speaking" ? (
+        <SpeakingLabView />
+      ) : (
+        <WordLearnerView refreshDashboard={refreshDashboard} />
+      )}
     </div>
   );
 }
@@ -3702,6 +3712,348 @@ function PronunciationLookupView() {
   );
 }
 
+const SPEAKING_STARTER_DECK = [
+  { spanish: "Hola, ¿cómo estás?", english: "Hello, how are you?", tag: "Greetings" },
+  { spanish: "Buenos días", english: "Good morning", tag: "Greetings" },
+  { spanish: "Muchas gracias", english: "Thank you very much", tag: "Courtesy" },
+  { spanish: "¿Cómo te llamas?", english: "What's your name?", tag: "Introductions" },
+  { spanish: "Me llamo Ana", english: "My name is Ana", tag: "Introductions" },
+  { spanish: "¿Dónde está el baño?", english: "Where is the bathroom?", tag: "Travel" },
+  { spanish: "Quisiera un café, por favor", english: "I would like a coffee, please", tag: "Food" },
+  { spanish: "La cuenta, por favor", english: "The check, please", tag: "Food" },
+  { spanish: "No entiendo", english: "I don't understand", tag: "Everyday" },
+  { spanish: "¿Puedes repetir, por favor?", english: "Can you repeat, please?", tag: "Everyday" },
+  { spanish: "Estoy aprendiendo español", english: "I'm learning Spanish", tag: "Everyday" },
+  { spanish: "¿Cuánto cuesta?", english: "How much does it cost?", tag: "Shopping" },
+  { spanish: "Hasta luego", english: "See you later", tag: "Greetings" },
+  { spanish: "Tengo hambre", english: "I'm hungry", tag: "Everyday" }
+];
+
+function shuffleArray(items) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function SpeakingLabView() {
+  const supported = useMemo(() => Boolean(getSpeechRecognition()), []);
+  const [source, setSource] = useState("starter"); // starter | saved | custom
+  const [deck, setDeck] = useState(() => shuffleArray(SPEAKING_STARTER_DECK));
+  const [index, setIndex] = useState(0);
+  const [savedWords, setSavedWords] = useState([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [customText, setCustomText] = useState("");
+  const [customEnglish, setCustomEnglish] = useState("");
+  const [showEnglish, setShowEnglish] = useState(false);
+  const [audioState, setAudioState] = useState("idle");
+  const [lastResult, setLastResult] = useState("");
+  const [session, setSession] = useState({ perfect: 0, close: 0, missed: 0, streak: 0, bestStreak: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    setSavedLoading(true);
+    api("/api/pronunciation/vocabulary/recent")
+      .then((data) => {
+        if (!cancelled) setSavedWords(data.words || []);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedWords([]);
+      })
+      .finally(() => {
+        if (!cancelled) setSavedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const current = deck[index] || null;
+
+  const loadDeck = (nextSource) => {
+    setSource(nextSource);
+    setLastResult("");
+    setShowEnglish(false);
+    setAudioState("idle");
+    setIndex(0);
+    if (nextSource === "starter") {
+      setDeck(shuffleArray(SPEAKING_STARTER_DECK));
+    } else if (nextSource === "saved") {
+      const mapped = savedWords
+        .filter((word) => word.spanish)
+        .map((word) => ({ spanish: word.spanish, english: word.english || "", tag: "Saved" }));
+      setDeck(shuffleArray(mapped));
+    } else if (nextSource === "custom") {
+      setDeck([]);
+    }
+  };
+
+  const goTo = (nextIndex) => {
+    if (!deck.length) return;
+    const wrapped = (nextIndex + deck.length) % deck.length;
+    setIndex(wrapped);
+    setLastResult("");
+    setShowEnglish(false);
+    setAudioState("idle");
+  };
+
+  const startCustom = () => {
+    const spanish = customText.trim();
+    if (!spanish) return;
+    setDeck([{ spanish, english: customEnglish.trim(), tag: "Custom" }]);
+    setIndex(0);
+    setLastResult("");
+    setShowEnglish(false);
+    setAudioState("idle");
+  };
+
+  const registerScore = (result) => {
+    setLastResult(result);
+    setSession((current) => {
+      if (result === "success") {
+        const streak = current.streak + 1;
+        return { ...current, perfect: current.perfect + 1, streak, bestStreak: Math.max(current.bestStreak, streak) };
+      }
+      if (result === "close") {
+        return { ...current, close: current.close + 1, streak: 0 };
+      }
+      return { ...current, missed: current.missed + 1, streak: 0 };
+    });
+  };
+
+  const totalAttempts = session.perfect + session.close + session.missed;
+  const accuracy = totalAttempts ? Math.round(((session.perfect + session.close * 0.5) / totalAttempts) * 100) : 0;
+
+  const sourceTabs = [
+    { key: "starter", label: "Starter phrases" },
+    { key: "saved", label: `My saved words${savedWords.length ? ` (${savedWords.length})` : ""}` },
+    { key: "custom", label: "Free practice" }
+  ];
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <section className="space-y-5">
+        <Panel
+          title="Speaking Lab"
+          icon={Mic}
+          action={
+            source !== "custom" && deck.length ? (
+              <button
+                type="button"
+                onClick={() => loadDeck(source)}
+                className="inline-flex items-center gap-2 rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-stone-50"
+                title="Shuffle deck"
+              >
+                <RefreshCw size={15} />
+                Shuffle
+              </button>
+            ) : null
+          }
+        >
+          {!supported && (
+            <div className="mb-4 rounded-lg border border-honey-200 bg-honey-50 p-4 font-bold text-honey-900">
+              Speech recognition isn't available in this browser. Try Chrome, Edge, or Safari to use the mic.
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {sourceTabs.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => loadDeck(item.key)}
+                className={classNames(
+                  "rounded-full border px-4 py-2 text-sm font-bold transition",
+                  source === item.key
+                    ? "border-coral-300 bg-coral-50 text-coral-700"
+                    : "border-stone-200 bg-white text-slate-600 hover:bg-stone-50"
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {source === "custom" && (
+            <div className="mt-4 grid gap-3 rounded-lg border border-stone-200 bg-stone-50 p-4">
+              <label className="block text-sm font-semibold text-slate-700">
+                Spanish phrase to practice
+                <input
+                  value={customText}
+                  onChange={(event) => setCustomText(event.target.value)}
+                  className="mt-2 w-full rounded-md border border-stone-200 bg-white px-4 py-3 text-lg font-black text-slate-950 outline-none focus:border-lagoon-500"
+                  placeholder="e.g. ¿Dónde está la estación?"
+                />
+              </label>
+              <label className="block text-sm font-semibold text-slate-700">
+                English hint (optional)
+                <input
+                  value={customEnglish}
+                  onChange={(event) => setCustomEnglish(event.target.value)}
+                  className="mt-2 w-full rounded-md border border-stone-200 bg-white px-4 py-2 font-semibold text-slate-800 outline-none focus:border-lagoon-500"
+                  placeholder="Where is the station?"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={startCustom}
+                disabled={!customText.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-3 font-black text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Target size={17} />
+                Practice this
+              </button>
+            </div>
+          )}
+
+          {source === "saved" && savedLoading && (
+            <p className="mt-4 text-sm font-semibold text-slate-600">Loading your saved words...</p>
+          )}
+
+          {current ? (
+            <div className="mt-5 rounded-xl border border-lagoon-100 bg-gradient-to-br from-lagoon-50 to-white p-6">
+              <div className="flex items-center justify-between gap-3">
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-wide text-lagoon-700">
+                  {current.tag || "Practice"}
+                </span>
+                {deck.length > 1 && (
+                  <span className="text-xs font-bold text-slate-500">
+                    {index + 1} / {deck.length}
+                  </span>
+                )}
+              </div>
+
+              <h2 className="mt-4 text-4xl font-black leading-tight text-slate-950">{current.spanish}</h2>
+
+              {current.english && (
+                <div className="mt-3">
+                  {showEnglish ? (
+                    <p className="text-lg font-bold text-slate-600">{current.english}</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowEnglish(true)}
+                      className="text-sm font-bold text-lagoon-600 hover:text-lagoon-700"
+                    >
+                      Show English hint
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => playPronunciationClip(current.spanish, setAudioState)}
+                  className={classNames(
+                    "inline-flex items-center gap-2 rounded-md border px-4 py-3 font-black",
+                    audioState === "playing"
+                      ? "border-lagoon-300 bg-lagoon-50 text-lagoon-800"
+                      : "border-stone-200 bg-white text-slate-800 hover:bg-stone-50",
+                    audioState === "error" && "border-red-200 bg-red-50 text-red-700"
+                  )}
+                >
+                  <Volume2 size={18} />
+                  Listen
+                </button>
+                <SpeakCheck key={`${source}-${index}-${current.spanish}`} target={current.spanish} onScore={registerScore} />
+              </div>
+
+              {lastResult && (
+                <div
+                  className={classNames(
+                    "mt-5 rounded-lg border p-4 font-bold",
+                    lastResult === "success" && "border-emerald-200 bg-emerald-50 text-emerald-800",
+                    lastResult === "close" && "border-honey-200 bg-honey-50 text-honey-900",
+                    lastResult === "fail" && "border-red-200 bg-red-50 text-red-700"
+                  )}
+                >
+                  {lastResult === "success" && "¡Perfecto! That sounded spot on. Keep the streak going."}
+                  {lastResult === "close" && "Close! The recognizer almost got it — try again a touch slower and clearer."}
+                  {lastResult === "fail" && "Not quite. Tap Listen, then repeat it back and speak clearly into the mic."}
+                </div>
+              )}
+
+              {deck.length > 1 && (
+                <div className="mt-6 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => goTo(index - 1)}
+                    className="inline-flex items-center gap-2 rounded-md border border-stone-200 bg-white px-4 py-2 font-bold text-slate-700 hover:bg-stone-50"
+                  >
+                    <ArrowLeft size={16} />
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goTo(index + 1)}
+                    className="inline-flex items-center gap-2 rounded-md bg-coral-500 px-5 py-2 font-black text-white hover:bg-coral-600"
+                  >
+                    Next
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : source === "saved" && !savedLoading ? (
+            <div className="mt-5 rounded-lg border border-honey-200 bg-honey-50 p-5">
+              <p className="font-black text-honey-900">No saved words yet</p>
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                Save words in the Audio Lab tab and they'll show up here to practice speaking.
+              </p>
+            </div>
+          ) : source === "custom" ? null : (
+            <p className="mt-5 text-sm font-semibold text-slate-600">Nothing to practice yet.</p>
+          )}
+        </Panel>
+      </section>
+
+      <aside className="space-y-5">
+        <Panel title="Session" icon={Flame}>
+          <div className="grid grid-cols-2 gap-3">
+            <InfoTile label="Perfect" value={session.perfect} />
+            <InfoTile label="Close" value={session.close} />
+            <InfoTile label="Missed" value={session.missed} />
+            <InfoTile label="Accuracy" value={`${accuracy}%`} />
+          </div>
+          <div className="mt-4 rounded-lg border border-coral-100 bg-coral-50 p-4">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-coral-700">
+                <Flame size={16} />
+                Streak
+              </span>
+              <span className="text-2xl font-black text-coral-700">{session.streak}</span>
+            </div>
+            <p className="mt-1 text-xs font-bold text-coral-600">Best this session: {session.bestStreak}</p>
+          </div>
+        </Panel>
+        <Panel title="How it works" icon={Sparkles}>
+          <ol className="grid gap-3 text-sm font-semibold text-slate-700">
+            <li className="flex gap-3">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-lagoon-100 font-black text-lagoon-700">1</span>
+              Tap <span className="font-black">Listen</span> to hear the phrase.
+            </li>
+            <li className="flex gap-3">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-lagoon-100 font-black text-lagoon-700">2</span>
+              Tap <span className="font-black">Speak</span> and say it out loud.
+            </li>
+            <li className="flex gap-3">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-lagoon-100 font-black text-lagoon-700">3</span>
+              Get instant feedback, then move to the next phrase.
+            </li>
+          </ol>
+          <p className="mt-4 rounded-md bg-stone-50 p-3 text-xs font-semibold text-slate-500">
+            Speech is matched with the same rules quizzes use, so accents are forgiven. It scores what you say, not a
+            perfect accent — great for building confidence.
+          </p>
+        </Panel>
+      </aside>
+    </div>
+  );
+}
+
 function DashboardView({ dashboard, setActive, onStartLesson }) {
   const plan = dashboard.dailyPlan || {};
   const review = dashboard.review || { counts: {}, weakSpots: [], estimatedMinutes: 0 };
@@ -4432,7 +4784,7 @@ function scoreSpeech(target, transcript) {
 // provided it self-grades and shows pronunciation feedback (practice mode);
 // when `onTranscript` is provided it feeds the transcript to the caller so a
 // learner can answer any exercise by speaking (fill mode).
-function SpeakCheck({ target = "", onTranscript = null, compact = false, lang = "es-ES" }) {
+function SpeakCheck({ target = "", onTranscript = null, onScore = null, compact = false, lang = "es-ES" }) {
   const Recognition = useMemo(() => getSpeechRecognition(), []);
   const [status, setStatus] = useState("idle"); // idle | listening | success | close | fail | error
   const [heard, setHeard] = useState("");
@@ -4482,7 +4834,9 @@ function SpeakCheck({ target = "", onTranscript = null, compact = false, lang = 
       onTranscript?.(best);
       if (target) {
         const outcomes = alternatives.map((alt) => scoreSpeech(target, alt));
-        setStatus(outcomes.includes("success") ? "success" : outcomes.includes("close") ? "close" : "fail");
+        const result = outcomes.includes("success") ? "success" : outcomes.includes("close") ? "close" : "fail";
+        setStatus(result);
+        onScore?.(result, best);
       } else {
         setStatus("idle");
       }
