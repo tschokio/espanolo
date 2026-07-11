@@ -2349,10 +2349,10 @@ function WordLearnerView({ refreshDashboard }) {
   const loadWords = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     const payload = await api("/api/words");
-    const cityGroup = payload.groups.find((group) => group.slug === "city-transport");
+    const availableGroupIds = new Set(payload.groups.map((group) => group.id));
     setData(payload);
-    setSelectedGroupId((current) => current || cityGroup?.id || payload.groups[0]?.id || "");
-    setSelectedGroupIds((current) => (current.length ? current : cityGroup?.id ? [cityGroup.id] : payload.groups[0]?.id ? [payload.groups[0].id] : []));
+    setSelectedGroupId((current) => (availableGroupIds.has(current) ? current : ""));
+    setSelectedGroupIds((current) => current.filter((id) => availableGroupIds.has(id)));
     setLoading(false);
   };
 
@@ -2374,7 +2374,6 @@ function WordLearnerView({ refreshDashboard }) {
     if (!sourceData?.groups?.length) return;
     const group =
       sourceData.groups.find((item) => item.id === groupId) ||
-      sourceData.groups.find((item) => item.slug === "city-transport") ||
       sourceData.groups[0];
     const items = buildWordSession(type, group, sourceData.groups, { sessionSize, questionStyle });
 

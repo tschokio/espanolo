@@ -91,6 +91,11 @@ function sentenceSpanishValues(block) {
   return [...sentences.matchAll(/\[\s*"((?:\\.|[^"\\])*)"\s*,/g)].map((match) => JSON.parse(`"${match[1]}"`));
 }
 
+function vocabularySpanishValues(block) {
+  const words = arrayFieldSection(block, "words");
+  return [...words.matchAll(/\[\s*"((?:\\.|[^"\\])*)"\s*,/g)].map((match) => JSON.parse(`"${match[1]}"`));
+}
+
 function normalizeSeedText(value) {
   return String(value || "")
     .normalize("NFD")
@@ -114,9 +119,8 @@ const lessonBlocks = collectObjectBlocks(extractArraySection(seedSource, "lesson
 const exerciseBlocks = collectObjectBlocks(extractArraySection(seedSource, "exercises"));
 
 const topics = new Set(collectObjectBlocks(extractArraySection(seedSource, "topics")).map((block) => fieldValue(block, "slug")));
-const vocabularyGroups = new Set(
-  collectObjectBlocks(extractArraySection(seedSource, "vocabularyGroups")).map((block) => fieldValue(block, "slug"))
-);
+const vocabularyGroupBlocks = collectObjectBlocks(extractArraySection(seedSource, "vocabularyGroups"));
+const vocabularyGroups = new Set(vocabularyGroupBlocks.map((block) => fieldValue(block, "slug")));
 const lessons = lessonBlocks.map((block) => ({
   block,
   slug: fieldValue(block, "slug"),
@@ -155,6 +159,23 @@ test("seed lesson order and references are valid", () => {
   }
   const duplicates = [...orderCounts.entries()].filter(([, count]) => count > 1);
   assert.deepEqual(duplicates, []);
+});
+
+test("words mode includes expanded numbers, colors, and essential words", () => {
+  const wordsFor = (slug) => {
+    const group = vocabularyGroupBlocks.find((block) => fieldValue(block, "slug") === slug);
+    assert.ok(group, `${slug} vocabulary group should exist`);
+    return new Set(vocabularySpanishValues(group));
+  };
+  const numbersAndColors = wordsFor("numbers-and-colors");
+  const essentials = wordsFor("essential-words");
+
+  for (const word of ["cero", "diez", "once", "quince", "veinte", "rojo", "azul", "naranja", "morado", "gris"]) {
+    assert.ok(numbersAndColors.has(word), `numbers-and-colors should include ${word}`);
+  }
+  for (const word of ["sí", "no", "hoy", "mañana", "bien", "pero", "con", "qué", "dónde", "por qué"]) {
+    assert.ok(essentials.has(word), `essential-words should include ${word}`);
+  }
 });
 
 test("active curriculum units have lessons and checkpoints", () => {
