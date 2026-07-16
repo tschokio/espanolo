@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { applyCheckpointLocksToSummaries, buildLessonProgressState, checkpointUnlockState, lessonProgressNeedsSync } = require("./progress-core");
+const { applyCheckpointLocksToSummaries, buildLessonProgressState, checkpointUnlockState, progressiveLessonUnlockState, lessonProgressNeedsSync } = require("./progress-core");
 
 test("drops old complete progress when a lesson gains new exercises", () => {
   const completedAt = new Date("2026-07-01T00:00:00.000Z");
@@ -85,7 +85,7 @@ test("keeps fresh checkpoints locked until earlier unit lessons are complete", (
   assert.equal(checkpoint.actualProgress, 0);
   assert.equal(checkpoint.completedExercises, 0);
   assert.equal(checkpoint.actualCompletedExercises, 0);
-  assert.match(checkpoint.lockedReason, /Complete 2 earlier lessons/);
+  assert.match(checkpoint.lockedReason, /Complete 2 earlier learning packages/);
 });
 
 test("locks and hides saved checkpoint progress until earlier unit lessons are complete", () => {
@@ -113,7 +113,37 @@ test("locks and hides saved checkpoint progress until earlier unit lessons are c
   assert.equal(checkpoint.actualProgress, 92);
   assert.equal(checkpoint.completedExercises, 0);
   assert.equal(checkpoint.actualCompletedExercises, 11);
-  assert.match(checkpoint.lockedReason, /Complete 2 earlier lessons/);
+  assert.match(checkpoint.lockedReason, /Complete 2 earlier learning packages/);
+});
+
+test("opens exactly the next untouched package across unit and level boundaries", () => {
+  const lessons = applyCheckpointLocksToSummaries([
+    { id: "first", title: "First", order: 1, unit: { slug: "a1-one", label: "A1.1" }, progress: 100, isCheckpoint: false },
+    { id: "next", title: "Next", order: 2, unit: { slug: "a1-one", label: "A1.1" }, progress: 0, isCheckpoint: false },
+    { id: "later", title: "Later", order: 3, unit: { slug: "a1-one", label: "A1.1" }, progress: 0, isCheckpoint: false },
+    { id: "future-level", title: "Future", order: 100, unit: { slug: "a2-one", label: "A2.1" }, progress: 0, isCheckpoint: false }
+  ]);
+
+  assert.equal(lessons.find((lesson) => lesson.id === "first").isLocked, false);
+  assert.equal(lessons.find((lesson) => lesson.id === "next").isLocked, false);
+  assert.equal(lessons.find((lesson) => lesson.id === "later").isLocked, true);
+  assert.equal(lessons.find((lesson) => lesson.id === "future-level").isLocked, true);
+  assert.equal(lessons.find((lesson) => lesson.id === "later").unlockState.blockingLesson.id, "next");
+});
+
+test("keeps legacy started packages and completed review material accessible", () => {
+  const lessons = applyCheckpointLocksToSummaries([
+    { id: "gap", order: 1, progress: 0, isCheckpoint: false },
+    { id: "legacy-started", order: 2, progress: 25, isCheckpoint: false },
+    { id: "legacy-complete", order: 3, progress: 100, reviewDue: true, isCheckpoint: false },
+    { id: "new-after-gap", order: 4, progress: 0, isCheckpoint: false }
+  ]);
+
+  assert.equal(lessons.find((lesson) => lesson.id === "gap").isLocked, false);
+  assert.equal(lessons.find((lesson) => lesson.id === "legacy-started").isLocked, false);
+  assert.equal(lessons.find((lesson) => lesson.id === "legacy-complete").isLocked, false);
+  assert.equal(lessons.find((lesson) => lesson.id === "new-after-gap").isLocked, true);
+  assert.equal(progressiveLessonUnlockState({ id: "started", order: 9, progress: 10 }, [{ id: "gap", order: 1, progress: 0 }]).unlocked, true);
 });
 
 test("keeps checkpoint progress visible after unit lessons are complete", () => {

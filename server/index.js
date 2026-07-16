@@ -11,9 +11,39 @@ const { PrismaClient, Role, AttemptSource, ReviewState } = require("@prisma/clie
 const {
   acceptedAnswersForExercise,
   evaluateExerciseAnswer,
+  exerciseLearningSupport,
   expectedAnswerForExercise,
-  scheduleExerciseReview,
-  scheduleWordReview
+  requiresCheckpointUnlock,
+  scheduleExercisePractice,
+  exerciseReviewQuality,
+  summarizeRetrievalAttempts,
+  buildSkillProfile,
+  deferredChannelPracticeAction,
+  lessonReinforcementInterval,
+  scheduleWordPractice,
+  evaluateSpanishWordAnswer,
+  selectLessonVocabularyWords,
+  lessonVocabularyContextTexts,
+  validatedIntroducedVocabularyIds,
+  chooseDailyPlanPriority,
+  buildReviewUrgencyDiagnostics,
+  dailyReviewPriorityReason,
+  completedLessonSessionToday,
+  familiarPracticeTargets,
+  selectFamiliarPracticeTarget,
+  selectFamiliarPracticeTargetForSkill,
+  exerciseIsFamiliarForPractice,
+  interleaveReviewItems,
+  buildConceptWeaknesses,
+  selectConceptContrastCandidates,
+  reviewEntityKey,
+  deduplicateReviewEntities,
+  normalizeWordAttemptMode,
+  wordAttemptExpectsSpanish,
+  wordContextAnswer,
+  listeningAlternativeMeaning,
+  estimateLessonMinutes,
+  estimateLessonReviewMinutes
 } = require("./learning-core");
 const {
   applyCheckpointLocksToSummaries,
@@ -21,6 +51,10 @@ const {
   checkpointUnlockState,
   lessonProgressNeedsSync
 } = require("./progress-core");
+const {
+  bestPlayablePronunciationSource,
+  summarizePronunciationProviders
+} = require("./pronunciation-core");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -33,10 +67,12 @@ const SESSION_COOKIE = "espanolo_sid";
 const SESSION_DAYS = 30;
 const EXTERNAL_LOOKUP_TIMEOUT_MS = 9000;
 const PRONUNCIATION_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const PRONUNCIATION_AVAILABILITY_TTL_MS = 24 * 60 * 60 * 1000;
 const PRONUNCIATION_CACHE_VERSION = 2;
 const PRONUNCIATION_USER_AGENT =
   "Mozilla/5.0 (compatible; EspanoloLearning/0.1; self-hosted pronunciation resolver)";
 const pronunciationCache = new Map();
+const pronunciationAvailabilityCache = new Map();
 
 function runGit(args, fallback = "") {
   try {
@@ -518,24 +554,67 @@ async function closeResponse(response) {
   }
 }
 
-async function isPronunciationSourcePlayable(source) {
+async function probePronunciationSource(source) {
   const attempts = [
     { method: "HEAD", headers: headersForAudioSource(source) },
     { headers: { ...headersForAudioSource(source), Range: "bytes=0-0" } }
   ];
+  let receivedResponse = false;
 
   for (const options of attempts) {
     try {
       const response = await fetchExternal(source.url, options);
+      receivedResponse = true;
       const playable = (response.ok || response.status === 206) && isAudioResponse(response);
       await closeResponse(response);
-      if (playable) return true;
+      if (playable) return "playable";
     } catch {
-      // Try the next probe shape before marking this source unavailable.
+      // A network failure is not evidence that the provider has no clip.
     }
   }
 
-  return false;
+  return receivedResponse ? "unavailable" : "unknown";
+}
+
+function pronunciationSourceSignature(sources = []) {
+  return (Array.isArray(sources) ? sources : [])
+    .map((source) => `${source.provider}:${source.url}:${source.sourceText || ""}`)
+    .join("|");
+}
+
+async function resolvePronunciationWithAvailability(text) {
+  const pronunciation = await resolvePronunciation(text);
+  const cacheKey = normalizeAnswer(pronunciation.text);
+  const signature = pronunciationSourceSignature(pronunciation.sources);
+  const cached = pronunciationAvailabilityCache.get(cacheKey);
+  if (cached && cached.signature === signature && Date.now() < cached.expiresAt) return cached.payload;
+
+  const sources = await Promise.all(
+    pronunciation.sources.map(async (source) => {
+      const availability = await probePronunciationSource(source);
+      return { ...source, availability, playable: availability === "playable" };
+    })
+  );
+  const providers = summarizePronunciationProviders(sources);
+  const bestSource = bestPlayablePronunciationSource(sources);
+  const payload = {
+    ...pronunciation,
+    sources,
+    providers,
+    bestSource: bestSource ? {
+      provider: bestSource.provider,
+      label: bestSource.label,
+      sourceText: bestSource.sourceText
+    } : null,
+    availabilityResolvedAt: new Date().toISOString()
+  };
+  const uncertain = providers.some((provider) => provider.availability === "unknown");
+  pronunciationAvailabilityCache.set(cacheKey, {
+    signature,
+    expiresAt: Date.now() + (uncertain ? 5 * 60 * 1000 : PRONUNCIATION_AVAILABILITY_TTL_MS),
+    payload
+  });
+  return payload;
 }
 
 const publicUser = (user) => ({
@@ -546,10 +625,12 @@ const publicUser = (user) => ({
   xp: user.xp,
   level: user.level,
   streakDays: user.streakDays,
-  avatarUrl: user.avatarUrl
+  avatarUrl: user.avatarUrl,
+  nativeLanguage: user.nativeLanguage || "de",
+  learningMode: user.learningMode || "home"
 });
 
-const publicExercise = (exercise) => ({
+const publicExercise = (exercise, lessonSentences = exercise?.lesson?.sentences || []) => ({
   id: exercise.id,
   slug: exercise.slug,
   type: exercise.type,
@@ -563,8 +644,21 @@ const publicExercise = (exercise) => ({
   lessonId: exercise.lessonId,
   topicId: exercise.topicId,
   answerGoal: exercise.answerJson?.goal || "",
+  learningSupport: exerciseLearningSupport(exercise),
   audioText: exercise.type === "LISTENING_DICTATION" ? exercise.answerJson?.audioText || exercise.answerJson?.correct || "" : "",
+  silentMeaning: listeningAlternativeMeaning(exercise, lessonSentences),
   rubric: exercise.answerJson?.rubric || "",
+  functionalGoals: Array.isArray(exercise.answerJson?.functionalCheck?.groups)
+    ? {
+        minimumMatched: Math.max(1, Math.floor(Number(exercise.answerJson.functionalCheck.minimumMatched) || exercise.answerJson.functionalCheck.groups.length)),
+        groups: exercise.answerJson.functionalCheck.groups.map((group, index) => ({
+          key: String(group.key || `function-${index + 1}`),
+          labelDe: String(group.labelDe || group.label || `Funktion ${index + 1}`),
+          labelEn: String(group.labelEn || group.label || `Function ${index + 1}`),
+          required: Boolean(group.required)
+        }))
+      }
+    : null,
   trainer: exercise.answerJson?.trainer || null,
   scenario: exercise.answerJson?.scenario || null,
   lab: exercise.answerJson?.lab || null,
@@ -588,6 +682,16 @@ const isLessonReviewDue = (progress, now = new Date()) =>
   );
 
 const curriculumUnits = [
+  {
+    slug: "a1-p-sound-foundation",
+    label: "A1.P",
+    title: "Spanish Sound Foundation",
+    phase: "A1 Foundation",
+    description: "Five clear vowels, consonant spelling, r and rr, stress, written accents, rhythm, and intonation.",
+    order: 0,
+    startOrder: 1,
+    endOrder: 9
+  },
   {
     slug: "a1-0-absolute-start",
     label: "A1.0",
@@ -649,8 +753,28 @@ const curriculumUnits = [
     endOrder: 415
   },
   {
-    slug: "a1-6-health-and-states",
+    slug: "a1-6-numbers-in-life",
     label: "A1.6",
+    title: "Numbers in Everyday Life",
+    phase: "A1 Foundation",
+    description: "Numbers from one to one hundred in age, dates, prices, times, quantities, and contact details.",
+    order: 6.5,
+    startOrder: 416,
+    endOrder: 420
+  },
+  {
+    slug: "a1-7-personal-profile",
+    label: "A1.7",
+    title: "Your Personal World",
+    phase: "A1 Interaction",
+    description: "Age, birthday, family, home, work or study, languages, contact details, and a complete first personal conversation.",
+    order: 6.7,
+    startOrder: 421,
+    endOrder: 427
+  },
+  {
+    slug: "a1-6-health-and-states",
+    label: "A1.8",
     title: "Health and Body States",
     phase: "A1 Expansion",
     description: "Body words, me duele, hunger, thirst, hot, and cold.",
@@ -660,13 +784,43 @@ const curriculumUnits = [
   },
   {
     slug: "a1-7-descriptions-and-weather",
-    label: "A1.7",
+    label: "A1.9",
     title: "Descriptions and Weather",
     phase: "A1 Expansion",
-    description: "Numbers, colors, nature, weather, and the final A1 checkpoint.",
+    description: "Colors, nature, weather, and a focused consolidation checkpoint.",
     order: 8,
-    startOrder: 460,
+    startOrder: 470,
     endOrder: 495
+  },
+  {
+    slug: "a1-8-essential-present",
+    label: "A1.10",
+    title: "Essential Present Bridge",
+    phase: "A1 Mastery",
+    description: "Regular -er and -ir verbs, hay, possessives, weekdays, clock time, and the final bridge into A2.",
+    order: 8.5,
+    startOrder: 498,
+    endOrder: 518
+  },
+  {
+    slug: "a1-11-connections-choice",
+    label: "A1.11",
+    title: "Al, Del, and Focused Information Questions",
+    phase: "A1 Mastery",
+    description: "Destination and source with al, del, a la, and de la, plus qué for categories and cuál or cuáles for identifying an answer.",
+    order: 8.6,
+    startOrder: 518.02,
+    endOrder: 518.06
+  },
+  {
+    slug: "a1-11-getting-around",
+    label: "A1.12",
+    title: "Getting Around and Arriving",
+    phase: "A1 Transfer",
+    description: "Orientation, short directions, transport tickets, departure details, hotel check-in, and targeted travel repair.",
+    order: 8.7,
+    startOrder: 518.1,
+    endOrder: 518.7
   },
   {
     slug: "a2-1-daily-routine",
@@ -709,31 +863,424 @@ const curriculumUnits = [
     endOrder: 720
   },
   {
-    slug: "a2-5-object-pronouns-shopping",
+    slug: "a2-5-making-plans",
     label: "A2.5",
-    title: "Object Pronouns and Shopping",
-    phase: "Planned A2",
-    description: "Lo, la, los, las, indirect objects, shopping, prices, and concrete object actions.",
+    title: "Making Plans and Everyday Coordination",
+    phase: "A2 Interaction",
+    description: "Invitations, polite responses, alternatives, time and place negotiation, changes, clarification, and complete confirmation.",
+    order: 12.5,
+    startOrder: 723,
+    endOrder: 729
+  },
+  {
+    slug: "a2-6-formal-address",
+    label: "A2.6",
+    title: "Tú, Usted, and Ustedes",
+    phase: "A2 Interaction",
+    description: "Familiar and respectful singular address, plural address, polite service requests, and explicit changes in form of address.",
+    order: 12.7,
+    startOrder: 729.1,
+    endOrder: 729.6
+  },
+  {
+    slug: "a2-5-object-pronouns-shopping",
+    label: "A2.7",
+    title: "Personal A, Object Pronouns, and Shopping",
+    phase: "A2 Expansion",
+    description: "Personal a with identified people, lo, la, los, las, participant pronouns me, te, and nos, indirect objects, shopping, prices, and concrete object actions.",
     order: 13,
-    planned: true
+    startOrder: 730,
+    endOrder: 770
   },
   {
     slug: "a2-6-past-events",
-    label: "A2.6",
+    label: "A2.8",
     title: "Past Events",
-    phase: "Planned A2",
+    phase: "A2 Expansion",
     description: "Preterite and imperfect foundations for simple stories and past routines.",
     order: 14,
-    planned: true
+    startOrder: 780,
+    endOrder: 830
+  },
+  {
+    slug: "a2-9-solving-everyday-problems",
+    label: "A2.9",
+    title: "Solving Everyday Problems",
+    phase: "A2 Interaction",
+    description: "Fault reports, evidence, exchanges and refunds, household repairs, service appointments, clarification, and confirmed outcomes.",
+    order: 14.3,
+    startOrder: 831.1,
+    endOrder: 831.7
+  },
+  {
+    slug: "a2-10-health-appointments",
+    label: "A2.10",
+    title: "Health Appointments and Instructions",
+    phase: "A2 Interaction",
+    description: "Symptom duration and severity, appointment coordination, check-in details, focused questions, instruction comprehension, and teach-back clarification.",
+    order: 14.4,
+    startOrder: 831.71,
+    endOrder: 831.77
+  },
+  {
+    slug: "a2-11-phone-messages",
+    label: "A2.11",
+    title: "Phone Calls and Messages",
+    phase: "A2 Interaction",
+    description: "Regional phone openings, reaching a person, leaving and understanding messages, checking contact details, repairing poor audio, and callback plans.",
+    order: 14.45,
+    startOrder: 831.78,
+    endOrder: 831.84
+  },
+  {
+    slug: "a2-12-indefinite-negative-words",
+    label: "A2.12",
+    title: "Someone, Something, Nobody, and Neither",
+    phase: "A2 Foundation",
+    description: "People versus things, positive and negative word pairs, Spanish negative-word placement, frequency, and positive or negative agreement.",
+    order: 14.47,
+    startOrder: 831.85,
+    endOrder: 831.87
+  },
+  {
+    slug: "a2-13-adjective-foundation",
+    label: "A2.13",
+    title: "Adjective Agreement and Common Short Forms",
+    phase: "A2 Foundation",
+    description: "Gender and number agreement, reliable descriptive position, adjective forms in -e, and the frequent short forms buen, mal, gran, primer, algún, and ningún.",
+    order: 14.48,
+    startOrder: 831.88,
+    endOrder: 831.9
+  },
+  {
+    slug: "a2-14-quantity-possessives",
+    label: "A2.14",
+    title: "Quantity, Degree, and Independent Possession",
+    phase: "A2 Foundation",
+    description: "Mucho, poco, demasiado, and bastante with nouns versus actions, plus el mío, la tuya, los nuestros, and explicit de ownership.",
+    order: 14.49,
+    startOrder: 831.92,
+    endOrder: 831.96
+  },
+  {
+    slug: "a2-7-describing-comparing",
+    label: "A2.15",
+    title: "Describing and Comparing",
+    phase: "A2 Mastery",
+    description: "Comparatives, equality, superlatives, demonstratives, ongoing actions, and the contrast between routine and now.",
+    order: 14.5,
+    startOrder: 832,
+    endOrder: 838
   },
   {
     slug: "b1-bridge",
-    label: "B1",
-    title: "Intermediate Bridge",
-    phase: "Planned B1",
-    description: "Past tense control, opinions, reading, listening, and guided production.",
+    label: "B1.1",
+    title: "Opinions and Connected Production",
+    phase: "B1 Bridge",
+    description: "Opinions, reasons, polite interaction, comparisons, and connected guided production.",
     order: 15,
-    planned: true
+    startOrder: 840,
+    endOrder: 890
+  },
+  {
+    slug: "b1-stories-comprehension",
+    label: "B1.2",
+    title: "Stories and Comprehension",
+    phase: "B1 Development",
+    description: "Main ideas, event sequence, relative clauses, reported information, inference, and coherent retelling.",
+    order: 16,
+    startOrder: 900,
+    endOrder: 950
+  },
+  {
+    slug: "b1-future-conditions",
+    label: "B1.3",
+    title: "Future and Real Conditions",
+    phase: "B1 Development",
+    description: "Future choices, regular and irregular forms, probability, realistic conditions, and practical planning.",
+    order: 17,
+    startOrder: 960,
+    endOrder: 1010
+  },
+  {
+    slug: "b1-present-subjunctive",
+    label: "B1.4",
+    title: "Present Subjunctive by Meaning",
+    phase: "B1 Development",
+    description: "Meaning triggers, regular and irregular forms, wishes, influence, advice, reactions, doubt, and fact contrast.",
+    order: 18,
+    startOrder: 1020,
+    endOrder: 1070
+  },
+  {
+    slug: "b1-perfect-tenses",
+    label: "B1.5",
+    title: "Perfect Tenses and Past Connections",
+    phase: "B1 Development",
+    description: "Present relevance, participles, experience markers, regional variation, and events completed before another past point.",
+    order: 19,
+    startOrder: 1080,
+    endOrder: 1130
+  },
+  {
+    slug: "b1-conditional-hypotheses",
+    label: "B1.6",
+    title: "Conditional and Hypotheses",
+    phase: "B1 Development",
+    description: "Softened wishes, conditional forms, courteous requests, advice, and hypothetical si sentences.",
+    order: 20,
+    startOrder: 1140,
+    endOrder: 1190
+  },
+  {
+    slug: "b1-commands-pronouns",
+    label: "B1.7",
+    title: "Commands and Combined Pronouns",
+    phase: "B1 Development",
+    description: "Affirmative and negative commands, pronoun placement, written accents, and double-object combinations.",
+    order: 21,
+    startOrder: 1200,
+    endOrder: 1250
+  },
+  {
+    slug: "b1-por-para",
+    label: "B1.8",
+    title: "Por and Para by Relationship",
+    phase: "B1 Development",
+    description: "Goal, destination, recipient, deadline, cause, exchange, route, duration, means, and rate.",
+    order: 22,
+    startOrder: 1260,
+    endOrder: 1310
+  },
+  {
+    slug: "b1-9-workplace-collaboration",
+    label: "B1.9",
+    title: "Workplace Collaboration and Coordination",
+    phase: "B1 Transfer",
+    description: "Clarifying assignments, reporting progress, negotiating priorities and deadlines, using feedback, closing meeting decisions, and repairing misunderstandings without blame.",
+    order: 22.5,
+    startOrder: 1311.1,
+    endOrder: 1311.7
+  },
+  {
+    slug: "b1-10-everyday-conversation",
+    label: "B1.10",
+    title: "Everyday Conversation and Relationships",
+    phase: "B1 Transfer",
+    description: "Following up on real details, expanding and returning answers, telling short anecdotes, responding to personal news, moving between topics, repairing interruptions, and closing naturally.",
+    order: 22.7,
+    startOrder: 1312.1,
+    endOrder: 1312.7
+  },
+  {
+    slug: "b1-11-messages-emails",
+    label: "B1.11",
+    title: "Messages, Emails, and Written Action",
+    phase: "B1 Transfer",
+    description: "Register and purpose, precise requests, relevant context, point-by-point replies, attachments, pending status, polite follow-up, documented problems, and proportionate written resolution.",
+    order: 22.8,
+    startOrder: 1313.1,
+    endOrder: 1313.7
+  },
+  {
+    slug: "b2-discourse-connectors",
+    label: "B2.1",
+    title: "Nuanced Discourse and Connectors",
+    phase: "B2 Independent Use",
+    description: "Concession, precise cause and consequence, cautious claims, register, and balanced argument structure.",
+    order: 23,
+    startOrder: 1320,
+    endOrder: 1370
+  },
+  {
+    slug: "b2-reported-speech",
+    label: "B2.2",
+    title: "Reported Speech and Viewpoint",
+    phase: "B2 Independent Use",
+    description: "Statements, tense relationships, embedded questions, reported requests, and shifts in person, place, and time.",
+    order: 24,
+    startOrder: 1380,
+    endOrder: 1430
+  },
+  {
+    slug: "b2-relative-clauses",
+    label: "B2.3",
+    title: "Advanced Relative Clauses",
+    phase: "B2 Independent Use",
+    description: "People and things, required prepositions, el que and lo que, possession with cuyo, and circumstance links.",
+    order: 25,
+    startOrder: 1440,
+    endOrder: 1490
+  },
+  {
+    slug: "b2-se-constructions",
+    label: "B2.4",
+    title: "Se by Function",
+    phase: "B2 Independent Use",
+    description: "Reflexive and reciprocal action, impersonal statements, passive agreement, accidental events, and passive contrasts.",
+    order: 26,
+    startOrder: 1500,
+    endOrder: 1550
+  },
+  {
+    slug: "b2-past-subjunctive",
+    label: "B2.5",
+    title: "Past Subjunctive and Counterfactual Past",
+    phase: "B2 Independent Use",
+    description: "Form derivation, past wishes and influence, reactions and doubt, earlier evaluated events, and unreal past conditions.",
+    order: 27,
+    startOrder: 1560,
+    endOrder: 1610
+  },
+  {
+    slug: "b2-verbal-periphrases",
+    label: "B2.6",
+    title: "Verbal Periphrases and Action Phases",
+    phase: "B2 Independent Use",
+    description: "Recent completion, continuity, accumulated duration, typical habits, beginnings, endings, and repetition.",
+    order: 28,
+    startOrder: 1620,
+    endOrder: 1670
+  },
+  {
+    slug: "b2-reading-inference",
+    label: "B2.7",
+    title: "Connected Reading and Inference",
+    phase: "B2 Independent Use",
+    description: "Main claims, causal structure, viewpoints, evidence, reference tracking, supported inference, and paraphrase.",
+    order: 29,
+    startOrder: 1680,
+    endOrder: 1730
+  },
+  {
+    slug: "b2-listening-comprehension",
+    label: "B2.8",
+    title: "Connected Listening Comprehension",
+    phase: "B2 Independent Use",
+    description: "Gist, changed details, announcements, viewpoints, event sequence, conditions, and spoken instructions.",
+    order: 30,
+    startOrder: 1740,
+    endOrder: 1790
+  },
+  {
+    slug: "c1-register-precision",
+    label: "C1.1",
+    title: "Register, Precision, and Cohesion",
+    phase: "C1 Proficient Use",
+    description: "Context-sensitive register, faithful paraphrase, nuanced stance, discourse cohesion, and productive collocations.",
+    order: 31,
+    startOrder: 1800,
+    endOrder: 1850
+  },
+  {
+    slug: "c1-narrative-viewpoint",
+    label: "C1.2",
+    title: "Advanced Narration and Viewpoint",
+    phase: "C1 Proficient Use",
+    description: "Narrative tempo, temporal layers, flashback and anticipation, source and viewpoint, stylistic compression, and deliberate narrative voice.",
+    order: 32,
+    startOrder: 1860,
+    endOrder: 1910
+  },
+  {
+    slug: "c1-argument-synthesis",
+    label: "C1.3",
+    title: "Argumentation, Evidence, and Synthesis",
+    phase: "C1 Proficient Use",
+    description: "Precise thesis scope, evidence and causality, source integration, fair counterargument, synthesis, and proportionate recommendations.",
+    order: 33,
+    startOrder: 1920,
+    endOrder: 1970
+  },
+  {
+    slug: "c1-pragmatic-interaction",
+    label: "C1.4",
+    title: "Pragmatics and Spoken Interaction",
+    phase: "C1 Proficient Use",
+    description: "Implicit meaning, diplomatic clarity, turn management, conversational repair, tone, stance, and shared understanding.",
+    order: 34,
+    startOrder: 1980,
+    endOrder: 2030
+  },
+  {
+    slug: "c1-mood-meaning",
+    label: "C1.5",
+    title: "Mood and Meaning in Complex Clauses",
+    phase: "C1 Proficient Use",
+    description: "Indicative and subjunctive choices based on reference, timeline, certainty, purpose, subject relationship, and open contingency.",
+    order: 35,
+    startOrder: 2040,
+    endOrder: 2090
+  },
+  {
+    slug: "c1-dense-listening",
+    label: "C1.6",
+    title: "Dense Listening and Spoken Discourse",
+    phase: "C1 Proficient Use",
+    description: "Spoken structure, self-correction, implicit requests, viewpoint attribution, conditions, exceptions, and accurate relay.",
+    order: 36,
+    startOrder: 2100,
+    endOrder: 2150
+  },
+  {
+    slug: "c2-precision-mediation",
+    label: "C2.1",
+    title: "Precision, Reformulation, and Mediation",
+    phase: "C2 Mastery",
+    description: "Ambiguity resolution, faithful compression, audience mediation, source reconciliation, connotation, and rhetorical effect.",
+    order: 37,
+    startOrder: 2160,
+    endOrder: 2210
+  },
+  {
+    slug: "c2-genre-rhetoric",
+    label: "C2.2",
+    title: "Genre, Lexis, and Rhetorical Control",
+    phase: "C2 Mastery",
+    description: "Lexical precision, collocation, figurative meaning, genre conventions, information structure, rhetorical progression, and deliberate style.",
+    order: 38,
+    startOrder: 2220,
+    endOrder: 2270
+  },
+  {
+    slug: "c2-sociolinguistic-variation",
+    label: "C2.3",
+    title: "Panhispanic and Sociolinguistic Competence",
+    phase: "C2 Mastery",
+    description: "Regional grammar and vocabulary, forms of address, social distance, facework, euphemism, humor, irony, cultural reference, and reciprocal accommodation.",
+    order: 39,
+    startOrder: 2280,
+    endOrder: 2330
+  },
+  {
+    slug: "c2-high-stakes-negotiation",
+    label: "C2.4",
+    title: "High-stakes Negotiation and Alignment",
+    phase: "C2 Mastery",
+    description: "Underlying interests, conflicting constraints, conditional concessions, hidden assumptions, multi-party synthesis, explicit reservations, de-escalation, accountability, and verifiable commitments.",
+    order: 40,
+    startOrder: 2340,
+    endOrder: 2390
+  },
+  {
+    slug: "c2-literary-creative-control",
+    label: "C2.5",
+    title: "Literary Interpretation and Creative Control",
+    phase: "C2 Mastery",
+    description: "Productive ambiguity, interpretive limits, free indirect discourse, motif and symbol networks, intertextuality, cultural memory, and controlled creative rewriting.",
+    order: 41,
+    startOrder: 2400,
+    endOrder: 2450
+  },
+  {
+    slug: "c2-expert-listening-synthesis",
+    label: "C2.6",
+    title: "Expert Listening, Polyphony, and Live Synthesis",
+    phase: "C2 Mastery",
+    description: "Spontaneous repair, compressed speech, speaker attribution, implicit stance, nested conditions and exceptions, actionable relay, and live synthesis.",
+    order: 42,
+    startOrder: 2460,
+    endOrder: 2510
   }
 ];
 
@@ -874,7 +1421,8 @@ const publicLessonSummary = (lesson) => {
     theme: lesson.theme,
     situation: lesson.situation,
     imageKey: lesson.imageKey,
-    estimatedMinutes: lesson.estimatedMinutes,
+    estimatedMinutes: estimateLessonMinutes(lesson),
+    reviewEstimatedMinutes: estimateLessonReviewMinutes(lesson),
     unit: {
       slug: unit.slug,
       label: unit.label,
@@ -1151,26 +1699,25 @@ async function refreshLessonProgress(userId, lessonId) {
     }
   });
 
-  if (progress.mastery >= 100) {
-    await enrollLessonWordsForReview(userId, lessonId);
-  }
-
+  // Vocabulary is enrolled later by the reinforcement-complete route, because
+  // exercise mastery alone does not prove that an unseen word was studied.
   return progress;
 }
 
-async function completeLessonReinforcement(userId, lessonId, score = 100) {
+async function completeLessonReinforcement(userId, lessonId, evidence = {}) {
   const progress = await refreshLessonProgress(userId, lessonId);
   const now = new Date();
   const mastered = progress.mastery >= 100;
-  const strongReview = Number(score) >= 80 && mastered;
   const currentInterval = progress.reviewIntervalDays || 3;
-  const nextInterval = mastered
-    ? strongReview
-      ? Math.min(30, progress.lessonReviewCount ? Math.ceil(currentInterval * 1.7) : 3)
-      : 1
-    : 1;
+  const nextInterval = lessonReinforcementInterval({
+    mastered,
+    firstPassScore: evidence.firstPassScore,
+    independentScore: evidence.independentScore,
+    currentInterval,
+    reviewCount: progress.lessonReviewCount
+  });
 
-  return prisma.userLessonProgress.update({
+  const updated = await prisma.userLessonProgress.update({
     where: { userId_lessonId: { userId, lessonId } },
     data: {
       completedAt: mastered ? progress.completedAt || now : null,
@@ -1180,15 +1727,19 @@ async function completeLessonReinforcement(userId, lessonId, score = 100) {
       reviewDueAt: mastered ? addDays(now, nextInterval) : null
     }
   });
+  if (mastered && Array.isArray(evidence.introducedWordIds) && evidence.introducedWordIds.length) {
+    await enrollLessonWordsForReview(userId, lessonId, addMinutes(now, 10), evidence.introducedWordIds);
+  }
+  return updated;
 }
 
 async function updateReviewItem(userId, exerciseId, quality) {
   const existing = await prisma.reviewItem.findUnique({
     where: { userId_exerciseId: { userId, exerciseId } }
   });
-  const scheduled = scheduleExerciseReview(existing, quality);
+  const scheduled = scheduleExercisePractice(existing, quality);
 
-  return prisma.reviewItem.upsert({
+  const review = await prisma.reviewItem.upsert({
     where: { userId_exerciseId: { userId, exerciseId } },
     update: {
       state: ReviewState[scheduled.state],
@@ -1207,15 +1758,112 @@ async function updateReviewItem(userId, exerciseId, quality) {
       lastAttemptAt: new Date()
     }
   });
+  return { ...review, scheduleAdvanced: scheduled.scheduleAdvanced };
+}
+
+async function updateDeferredChannelPractice({ userId, exercise, practiceMode, correct, now = new Date() }) {
+  if (exercise.type !== "LISTENING_DICTATION" || !correct) return null;
+  const existing = await prisma.deferredPractice.findUnique({
+    where: {
+      userId_exerciseId_channel: {
+        userId,
+        exerciseId: exercise.id,
+        channel: "listening"
+      }
+    }
+  });
+  const action = deferredChannelPracticeAction({
+    exerciseType: exercise.type,
+    practiceMode,
+    correct,
+    hasOpenPractice: Boolean(existing && !existing.completedAt)
+  });
+
+  if (action === "complete") {
+    return prisma.deferredPractice.update({
+      where: { id: existing.id },
+      data: { completedAt: now }
+    });
+  }
+  if (action === "keep") return existing;
+  if (action !== "create") return null;
+
+  return prisma.deferredPractice.upsert({
+    where: {
+      userId_exerciseId_channel: {
+        userId,
+        exerciseId: exercise.id,
+        channel: "listening"
+      }
+    },
+    update: {
+      dueAt: addMinutes(now, 10),
+      completedAt: null
+    },
+    create: {
+      userId,
+      exerciseId: exercise.id,
+      channel: "listening",
+      dueAt: addMinutes(now, 10)
+    }
+  });
+}
+
+async function updateDeferredLessonListeningPractice({ userId, lessonId, practiceMode, correct, now = new Date() }) {
+  if (!lessonId || !correct) return null;
+  const existing = await prisma.deferredPractice.findUnique({
+    where: {
+      userId_lessonId_channel: {
+        userId,
+        lessonId,
+        channel: "listening"
+      }
+    }
+  });
+  const action = deferredChannelPracticeAction({
+    exerciseType: "LISTENING_DICTATION",
+    practiceMode,
+    correct,
+    hasOpenPractice: Boolean(existing && !existing.completedAt)
+  });
+
+  if (action === "complete") {
+    return prisma.deferredPractice.update({
+      where: { id: existing.id },
+      data: { completedAt: now }
+    });
+  }
+  if (action === "keep") return existing;
+  if (action !== "create") return null;
+
+  return prisma.deferredPractice.upsert({
+    where: {
+      userId_lessonId_channel: {
+        userId,
+        lessonId,
+        channel: "listening"
+      }
+    },
+    update: {
+      dueAt: addMinutes(now, 10),
+      completedAt: null
+    },
+    create: {
+      userId,
+      lessonId,
+      channel: "listening",
+      dueAt: addMinutes(now, 10)
+    }
+  });
 }
 
 async function updateWordReview(userId, wordId, quality) {
   const existing = await prisma.wordReview.findUnique({
     where: { userId_wordId: { userId, wordId } }
   });
-  const scheduled = scheduleWordReview(existing, quality);
+  const scheduled = scheduleWordPractice(existing, quality);
 
-  return prisma.wordReview.upsert({
+  const review = await prisma.wordReview.upsert({
     where: { userId_wordId: { userId, wordId } },
     update: {
       state: ReviewState[scheduled.state],
@@ -1238,23 +1886,28 @@ async function updateWordReview(userId, wordId, quality) {
       lastAttemptAt: new Date()
     }
   });
+  return { review, scheduleAdvanced: scheduled.scheduleAdvanced };
 }
 
-async function enrollLessonWordsForReview(userId, lessonId, dueAt = addMinutes(new Date(), 10)) {
+async function enrollLessonWordsForReview(userId, lessonId, dueAt = addMinutes(new Date(), 10), introducedWordIds = []) {
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
     select: {
+      theme: true,
+      title: true,
       vocabularyGroups: {
         select: {
-          words: { select: { id: true } }
+          id: true,
+          slug: true,
+          words: { select: { id: true, spanish: true } }
         }
       }
     }
   });
 
-  const wordIds = [
-    ...new Set(lesson?.vocabularyGroups.flatMap((group) => group.words.map((word) => word.id)) || [])
-  ];
+  if (!lesson || isCheckpointLesson(lesson)) return 0;
+  const candidateWordIds = lesson.vocabularyGroups.flatMap((group) => group.words.map((word) => word.id));
+  const wordIds = validatedIntroducedVocabularyIds(candidateWordIds, introducedWordIds, 8);
   if (!wordIds.length) return 0;
 
   const result = await prisma.wordReview.createMany({
@@ -1270,23 +1923,6 @@ async function enrollLessonWordsForReview(userId, lessonId, dueAt = addMinutes(n
   });
 
   return result.count;
-}
-
-async function enrollCompletedLessonWordsForReview(userId) {
-  const completed = await prisma.userLessonProgress.findMany({
-    where: {
-      userId,
-      completedAt: { not: null },
-      mastery: { gte: 100 }
-    },
-    select: { lessonId: true }
-  });
-
-  let count = 0;
-  for (const progress of completed) {
-    count += await enrollLessonWordsForReview(userId, progress.lessonId);
-  }
-  return count;
 }
 
 async function ensureAudioLabVocabularyGroup() {
@@ -1381,6 +2017,71 @@ async function audioLabSavedWords(userId, limit = 12) {
   }));
 }
 
+async function learnedSpeakingContent(userId, limit = 60) {
+  const boundedLimit = Math.max(1, Math.min(120, Number(limit) || 60));
+  const [wordReviews, lessonProgress] = await Promise.all([
+    prisma.wordReview.findMany({
+      where: {
+        userId,
+        word: { vocabularyGroup: { slug: { not: "audio-lab-saved" } } }
+      },
+      orderBy: [{ updatedAt: "desc" }],
+      take: boundedLimit,
+      include: { word: { include: { vocabularyGroup: true } } }
+    }),
+    prisma.userLessonProgress.findMany({
+      where: { userId, completedExercises: { gt: 0 } },
+      orderBy: [{ updatedAt: "desc" }],
+      take: 16,
+      include: {
+        lesson: {
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+            cefrLevel: true,
+            sentences: { orderBy: { id: "asc" } }
+          }
+        }
+      }
+    })
+  ]);
+
+  const words = wordReviews.map((review) => ({
+    ...publicWord(review.word),
+    groupSlug: review.word.vocabularyGroup.slug,
+    groupTitle: review.word.vocabularyGroup.title,
+    review: {
+      state: review.state,
+      correctCount: review.correctCount,
+      wrongCount: review.wrongCount,
+      lastAttemptAt: review.lastAttemptAt
+    }
+  }));
+  const seenSpanish = new Set();
+  const sentences = [];
+  for (const progress of lessonProgress) {
+    for (const sentence of progress.lesson.sentences) {
+      const key = normalizeAnswer(sentence.spanish);
+      if (!key || seenSpanish.has(key)) continue;
+      seenSpanish.add(key);
+      sentences.push({
+        id: sentence.id,
+        spanish: sentence.spanish,
+        english: sentence.english,
+        lessonId: progress.lesson.id,
+        lessonSlug: progress.lesson.slug,
+        lessonTitle: progress.lesson.title,
+        cefrLevel: progress.lesson.cefrLevel
+      });
+      if (sentences.length >= boundedLimit) break;
+    }
+    if (sentences.length >= boundedLimit) break;
+  }
+
+  return { words, sentences };
+}
+
 function categoryLabel(category) {
   const labels = {
     accent: "Accents",
@@ -1447,6 +2148,11 @@ function summarizeMistakeEvents(events) {
           : categoryLabel(event.errorCategory),
       category: event.errorCategory,
       categoryLabel: categoryLabel(event.errorCategory),
+      exerciseId: event.exerciseId || event.exercise?.id || null,
+      lessonId: event.lessonId || event.lesson?.id || event.exercise?.lesson?.id || null,
+      topicId: event.topicId || event.topic?.id || event.exercise?.topic?.id || null,
+      topicSlug: event.topic?.slug || event.exercise?.topic?.slug || "",
+      topicTitle,
       count,
       lastOccurredAt,
       feedbackMessage: event.feedbackMessage,
@@ -1465,7 +2171,7 @@ async function buildMistakeSummary(userId, limit = 6) {
     orderBy: { lastOccurredAt: "desc" },
     take: 80,
     include: {
-      exercise: { include: { options: true, lesson: true, topic: true } },
+      exercise: { include: { options: true, lesson: { include: { sentences: true } }, topic: true } },
       lesson: true,
       topic: true,
       word: true
@@ -1518,14 +2224,48 @@ async function buildMistakeSummary(userId, limit = 6) {
   return visible;
 }
 
+async function pruneLockedCheckpointReviewTasks(userId) {
+  const reviewItems = await prisma.reviewItem.findMany({
+    where: { userId },
+    select: {
+      id: true,
+      exerciseId: true,
+      exercise: { select: { lesson: true } }
+    }
+  });
+  const checkpointLessons = new Map();
+  for (const item of reviewItems) {
+    const lesson = item.exercise?.lesson;
+    if (lesson && isCheckpointLesson(lesson)) checkpointLessons.set(lesson.id, lesson);
+  }
+
+  const lockedLessonIds = new Set();
+  for (const lesson of checkpointLessons.values()) {
+    const unlockState = await checkpointUnlockStateForUser(userId, lesson);
+    if (unlockState && !unlockState.unlocked) lockedLessonIds.add(lesson.id);
+  }
+  if (!lockedLessonIds.size) return { reviewItems: 0, mistakes: 0 };
+
+  const staleItems = reviewItems.filter((item) => lockedLessonIds.has(item.exercise?.lesson?.id));
+  const exerciseIds = [...new Set(staleItems.map((item) => item.exerciseId).filter(Boolean))];
+  const [reviewResult, mistakeResult] = await prisma.$transaction([
+    prisma.reviewItem.deleteMany({ where: { id: { in: staleItems.map((item) => item.id) } } }),
+    prisma.mistakeEvent.deleteMany({ where: { userId, exerciseId: { in: exerciseIds } } })
+  ]);
+  return { reviewItems: reviewResult.count, mistakes: mistakeResult.count };
+}
+
 async function buildDueReview(userId, limit = 12) {
+  await pruneLockedCheckpointReviewTasks(userId);
   const now = new Date();
-  const [grammarCount, wordCount, grammarItems, wordItems, weakSpots] = await Promise.all([
-    prisma.reviewItem.count({
-      where: { userId, dueAt: { lte: now } }
+  const [dueGrammarEntities, dueWordEntities, grammarItems, wordItems, weakSpots] = await Promise.all([
+    prisma.reviewItem.findMany({
+      where: { userId, dueAt: { lte: now } },
+      select: { exerciseId: true, dueAt: true }
     }),
-    prisma.wordReview.count({
-      where: { userId, dueAt: { lte: now } }
+    prisma.wordReview.findMany({
+      where: { userId, dueAt: { lte: now } },
+      select: { wordId: true, dueAt: true }
     }),
     prisma.reviewItem.findMany({
       where: { userId, dueAt: { lte: now } },
@@ -1535,7 +2275,7 @@ async function buildDueReview(userId, limit = 12) {
         exercise: {
           include: {
             options: true,
-            lesson: true,
+            lesson: { include: { sentences: true } },
             topic: true
           }
         }
@@ -1552,18 +2292,66 @@ async function buildDueReview(userId, limit = 12) {
     buildMistakeSummary(userId, 5)
   ]);
 
-  const items = [
-    ...weakSpots.map((spot) => ({
-      type: "mistake",
-      key: spot.key,
-      title: spot.title,
-      detail: spot.detail,
-      category: spot.category,
-      count: spot.count,
-      exercise: spot.exercise,
-      word: spot.word
-    })),
-    ...grammarItems.map((item) => ({
+  const grammarCount = dueGrammarEntities.length;
+  const wordCount = dueWordEntities.length;
+  const uniqueWeakSpots = deduplicateReviewEntities(weakSpots);
+  const conceptWeaknesses = buildConceptWeaknesses(uniqueWeakSpots);
+
+  const recurringConcepts = conceptWeaknesses.filter((concept) => concept.recurring && concept.topicIds.length).slice(0, 3);
+  const relatedTopicIds = [...new Set(recurringConcepts.flatMap((concept) => concept.topicIds))];
+  const excludedExerciseIds = new Set([
+    ...uniqueWeakSpots.map((spot) => spot.exercise?.id || spot.exerciseId),
+    ...grammarItems.map((item) => item.exerciseId)
+  ].filter(Boolean));
+  const relatedExercises = relatedTopicIds.length
+    ? await prisma.exercise.findMany({
+        where: {
+          topicId: { in: relatedTopicIds },
+          id: { notIn: [...excludedExerciseIds] },
+          attempts: { some: { userId, isCorrect: true } },
+          lesson: { isPublished: true }
+        },
+        orderBy: [{ difficulty: "asc" }, { order: "asc" }],
+        take: 40,
+        include: {
+          attempts: {
+            where: { userId, isCorrect: true },
+            select: { id: true },
+            take: 1
+          },
+          options: true,
+          lesson: { include: { sentences: true } },
+          topic: true
+        }
+      })
+    : [];
+  const contrastItems = selectConceptContrastCandidates({
+    conceptWeaknesses: recurringConcepts,
+    candidates: relatedExercises,
+    excludedExerciseIds: [...excludedExerciseIds],
+    limit: 2
+  }).map(({ concept, exercise }) => ({
+      type: "grammar",
+      key: `concept-contrast:${concept.key}:${exercise.id}`,
+      title: concept.labelEn,
+      titleDe: concept.labelDe,
+      detail: exercise.questionText,
+      conceptKey: concept.key,
+      relatedContrast: true,
+      exercise: publicExercise(exercise)
+    }));
+
+  const mistakeCandidates = uniqueWeakSpots.map((spot) => ({
+    type: "mistake",
+    key: spot.key,
+    title: spot.title,
+    detail: spot.detail,
+    category: spot.category,
+    count: spot.count,
+    exercise: spot.exercise,
+    word: spot.word
+  }));
+  const grammarCandidates = grammarItems.map((item) => ({
       type: "grammar",
       key: `grammar:${item.id}`,
       title: item.exercise.topic?.title || item.exercise.lesson?.title || "Grammar review",
@@ -1571,8 +2359,8 @@ async function buildDueReview(userId, limit = 12) {
       dueAt: item.dueAt,
       state: item.state,
       exercise: publicExercise(item.exercise)
-    })),
-    ...wordItems.map((item) => ({
+    }));
+  const wordCandidates = wordItems.map((item) => ({
       type: "word",
       key: `word:${item.id}`,
       title: item.word.english,
@@ -1583,19 +2371,52 @@ async function buildDueReview(userId, limit = 12) {
         ...publicWord(item.word),
         groupTitle: item.word.vocabularyGroup?.title || ""
       }
-    }))
-  ].slice(0, limit);
+    }));
+  const candidates = interleaveReviewItems(
+    { mistakes: mistakeCandidates, grammar: grammarCandidates, words: wordCandidates },
+    limit * 3
+  );
+  const items = deduplicateReviewEntities(candidates).slice(0, limit);
+  for (const contrast of contrastItems) {
+    if (items.length >= limit) break;
+    if (items.some((item) => reviewEntityKey(item) === reviewEntityKey(contrast))) continue;
+    items.push(contrast);
+  }
+  const distinctDueCount = new Set([
+    ...dueGrammarEntities.map((item) => reviewEntityKey(item)),
+    ...dueWordEntities.map((item) => reviewEntityKey(item)),
+    ...uniqueWeakSpots.map((item) => reviewEntityKey(item))
+  ].filter(Boolean)).size;
+  const diagnostics = buildReviewUrgencyDiagnostics({
+    dueDates: [...dueGrammarEntities, ...dueWordEntities].map((item) => item.dueAt),
+    weakSpots: uniqueWeakSpots,
+    reviewTotal: distinctDueCount,
+    mistakeCount: uniqueWeakSpots.length
+  }, now);
+  const sessionCounts = items.reduce(
+    (counts, item) => {
+      if (item.type === "word") counts.vocabulary += 1;
+      else if (item.type === "mistake") counts.mistakes += 1;
+      else counts.grammar += 1;
+      counts.total += 1;
+      return counts;
+    },
+    { grammar: 0, vocabulary: 0, mistakes: 0, total: 0 }
+  );
 
   return {
     counts: {
       grammar: grammarCount,
       vocabulary: wordCount,
-      mistakes: weakSpots.length,
-      total: grammarCount + wordCount + weakSpots.length
+      mistakes: uniqueWeakSpots.length,
+      total: distinctDueCount
     },
-    estimatedMinutes: Math.max(3, Math.ceil(Math.min(limit, grammarCount + wordCount + weakSpots.length) * 0.7)),
+    sessionCounts,
+    estimatedMinutes: Math.max(3, Math.ceil(items.length * 0.7)),
+    diagnostics,
     items,
-    weakSpots
+    weakSpots: uniqueWeakSpots,
+    conceptWeaknesses
   };
 }
 
@@ -1635,7 +2456,6 @@ function pickCurrentLessonSummary(lessons) {
         return left - right || (a.order || 0) - (b.order || 0);
       })[0] ||
     availableLessons.find((lesson) => lessonSummaryMastery(lesson) < 100) ||
-    availableLessons[0] ||
     null
   );
 }
@@ -1645,10 +2465,78 @@ function buildDailyPlan({ lessons, review }) {
   const currentLesson = pickCurrentLessonSummary(lessons);
   const reviewDue = review.counts.total > 0;
   const mistakeDue = review.counts.mistakes > 0;
+  const mastery = currentLesson ? lessonSummaryMastery(currentLesson) : 100;
+  const lessonDue = currentLesson ? lessonSummaryReviewDue(currentLesson, now) : false;
+  const recurringMistakeCount = Number(review.diagnostics?.recurringMistakeCount || 0);
+  const oldestOverdueDays = Number(review.diagnostics?.oldestOverdueDays || 0);
+  const reviewPriorityReason = dailyReviewPriorityReason({
+    reviewTotal: review.counts.total,
+    mistakeCount: review.counts.mistakes,
+    recurringMistakeCount,
+    oldestOverdueDays
+  });
+  const topWeakConcept = review.conceptWeaknesses?.find((concept) => concept.recurring) || review.conceptWeaknesses?.[0] || null;
+  const priority = chooseDailyPlanPriority({
+    hasInProgress: Boolean(currentLesson && mastery > 0 && mastery < 100),
+    hasDueLesson: lessonDue,
+    hasNewLesson: Boolean(currentLesson && mastery < 100),
+    hasFreshLessonSession: completedLessonSessionToday(lessons, now),
+    reviewTotal: review.counts.total,
+    mistakeCount: review.counts.mistakes,
+    recurringMistakeCount,
+    oldestOverdueDays
+  });
+  let reasonCode = reviewPriorityReason;
+  if (!reasonCode && currentLesson && mastery > 0 && mastery < 100) reasonCode = "in_progress_lesson";
+  else if (!reasonCode && lessonDue) reasonCode = "due_lesson";
+  else if (!reasonCode && completedLessonSessionToday(lessons, now)) reasonCode = "fresh_consolidation";
+  else if (!reasonCode && currentLesson && mastery < 100) reasonCode = "new_lesson";
+  else if (!reasonCode) reasonCode = "familiar_reinforcement";
+  const diagnosis = {
+    reasonCode,
+    reviewTotal: review.counts.total,
+    mistakeCount: review.counts.mistakes,
+    recurringMistakeCount,
+    maxMistakeOccurrences: Number(review.diagnostics?.maxMistakeOccurrences || 0),
+    oldestOverdueDays,
+    lessonProgress: currentLesson ? mastery : null,
+    lessonDue,
+    weakConcept: topWeakConcept ? {
+      key: topWeakConcept.key,
+      labelDe: topWeakConcept.labelDe,
+      labelEn: topWeakConcept.labelEn,
+      repairKey: topWeakConcept.repairKey,
+      repairBrief: topWeakConcept.repairBrief,
+      targetCount: topWeakConcept.targetCount,
+      occurrences: topWeakConcept.occurrences,
+      recurring: topWeakConcept.recurring
+    } : null
+  };
 
-  if (currentLesson) {
-    const currentMastery = lessonSummaryMastery(currentLesson);
-    const due = lessonSummaryReviewDue(currentLesson, now);
+  if (priority === "review") {
+    return {
+      kind: mistakeDue ? "mistake_review" : "review",
+      title: mistakeDue ? "Strengthen uncertain patterns" : "Review due today",
+      reason: reviewPriorityReason === "recurring_mistake"
+          ? "Repair the pattern that has failed repeatedly before adding similar material."
+          : reviewPriorityReason === "overdue_review"
+            ? "Retrieve the oldest overdue material before its memory trace weakens further."
+            : reviewPriorityReason === "multiple_mistakes"
+              ? "Correct several independent uncertainties before adding similar material."
+        : review.counts.total >= 8
+          ? "Clear a short, mixed review block before the due queue grows further."
+          : "Keep older vocabulary and grammar stable before adding more.",
+      estimatedMinutes: review.estimatedMinutes,
+      cta: "Start mixed review",
+      target: { type: "review" },
+      secondaryTarget: currentLesson ? { type: "lesson", id: currentLesson.id, slug: currentLesson.slug } : null,
+      diagnosis
+    };
+  }
+
+  if (priority === "lesson" && currentLesson) {
+    const currentMastery = mastery;
+    const due = lessonDue;
     return {
       kind: due ? "lesson_review" : "lesson",
       title: due
@@ -1661,30 +2549,27 @@ function buildDailyPlan({ lessons, review }) {
         : mistakeDue
           ? "This lesson moves you forward, and your mistakes are ready afterward."
           : "This is the best next step in your beginner path.",
-      estimatedMinutes: currentLesson.estimatedMinutes,
+      estimatedMinutes: due ? currentLesson.reviewEstimatedMinutes : currentLesson.estimatedMinutes,
       cta: "Start today's session",
-      target: { type: "lesson", id: currentLesson.id, slug: currentLesson.slug }
-    };
-  }
-
-  if (reviewDue) {
-    return {
-      kind: "review",
-      title: "Review due today",
-      reason: "Keep older vocabulary and grammar stable before adding more.",
-      estimatedMinutes: review.estimatedMinutes,
-      cta: "Start review",
-      target: { type: "review" }
+      target: { type: "lesson", id: currentLesson.id, slug: currentLesson.slug },
+      secondaryTarget: reviewDue ? { type: "review" } : null,
+      diagnosis
     };
   }
 
   return {
-    kind: "reinforcement",
-    title: "Reinforce completed Spanish",
-    reason: "A short mixed challenge will keep completed lessons active.",
+    kind: completedLessonSessionToday(lessons, now) ? "consolidation" : "reinforcement",
+    title: completedLessonSessionToday(lessons, now) ? "Let today's new foundation settle" : "Reinforce completed Spanish",
+    reason: completedLessonSessionToday(lessons, now)
+      ? "You completed a full learning package today. Use only familiar material now and return after a real memory gap."
+      : "A short mixed challenge will keep completed lessons active.",
     estimatedMinutes: 5,
     cta: "Start mixed challenge",
-    target: { type: "challenge" }
+    target: { type: "challenge" },
+    secondaryTarget: currentLesson && mastery < 100
+      ? { type: "lesson", id: currentLesson.id, slug: currentLesson.slug }
+      : null,
+    diagnosis
   };
 }
 
@@ -1749,8 +2634,8 @@ async function checkBadges(user, exercise, isCorrect) {
   if (exercise.type === "ARTICLE_MATCH") await awardBadge(user.id, "article-scout");
 }
 
-async function updateChallengeProgress(userId, exerciseId, source) {
-  if (source !== AttemptSource.CHALLENGE) return null;
+async function updateChallengeProgress(userId, exerciseId, source, isCorrect = false) {
+  if (source !== AttemptSource.CHALLENGE || !isCorrect) return null;
 
   const challengeExercise = await prisma.challengeExercise.findFirst({
     where: {
@@ -1819,7 +2704,8 @@ async function buildDashboard(userId) {
     include: {
       topic: true,
       progress: { where: { userId } },
-      exercises: { orderBy: { order: "asc" }, include: { options: true } }
+      exercises: { orderBy: { order: "asc" }, include: { options: true } },
+      sentences: true
     }
   });
   await syncLessonProgressForLessons(userId, lessons);
@@ -1832,7 +2718,7 @@ async function buildDashboard(userId) {
       exercise: {
         include: {
           options: true,
-          lesson: true,
+          lesson: { include: { sentences: true } },
           topic: true
         }
       }
@@ -1840,6 +2726,22 @@ async function buildDashboard(userId) {
   });
 
   const now = new Date();
+  const deferredPractices = await prisma.deferredPractice.findMany({
+    where: { userId, completedAt: null },
+    orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
+    take: 50,
+    include: {
+      exercise: {
+        include: {
+          options: true,
+          lesson: { include: { sentences: true } }
+        }
+      },
+      lesson: { include: { topic: true } }
+    }
+  });
+  const pendingDeferredPractice = deferredPractices[0] || null;
+  const deferredReadyCount = deferredPractices.filter((practice) => practice.dueAt <= now).length;
   const dueLesson = lessons
     .filter((lesson) => isLessonReviewDue(lesson.progress[0], now))
     .sort(
@@ -1854,21 +2756,28 @@ async function buildDashboard(userId) {
     lessons[0] ||
     null;
 
+  const correctAttempts = await prisma.attempt.findMany({
+    where: {
+      userId,
+      isCorrect: true
+    },
+    select: { exerciseId: true },
+    distinct: ["exerciseId"]
+  });
+  const correctExerciseIds = correctAttempts.map((attempt) => attempt.exerciseId);
+  const familiarTargets = familiarPracticeTargets(lessons, correctExerciseIds);
+  const familiarExerciseIds = new Set(familiarTargets.map((target) => target.exercise.id));
   let practiceExercise = dueReview?.exercise || null;
-  if (!practiceExercise && currentLesson) {
-    const correctAttempts = await prisma.attempt.findMany({
-      where: {
-        userId,
-        isCorrect: true,
-        exercise: { lessonId: currentLesson.id }
-      },
-      select: { exerciseId: true }
-    });
-    const correctIds = new Set(correctAttempts.map((attempt) => attempt.exerciseId));
-    practiceExercise =
-      currentLesson.exercises.find((exercise) => !correctIds.has(exercise.id)) ||
-      currentLesson.exercises[0] ||
-      null;
+  let practiceLesson = dueReview?.exercise?.lesson || null;
+  if (!practiceExercise) {
+    const dailySeed = `${userId}:${new Date().toISOString().slice(0, 10)}`;
+    const familiarTarget = selectFamiliarPracticeTarget(
+      lessons,
+      correctExerciseIds,
+      dailySeed
+    );
+    practiceExercise = familiarTarget?.exercise || null;
+    practiceLesson = familiarTarget?.lesson || null;
   }
 
   const activeChallenge = await prisma.challenge.findFirst({
@@ -1881,7 +2790,7 @@ async function buildDashboard(userId) {
       progress: { where: { userId } },
       exercises: {
         orderBy: { order: "asc" },
-        include: { exercise: { include: { options: true } } }
+        include: { exercise: { include: { options: true, lesson: { include: { sentences: true } } } } }
       }
     }
   });
@@ -1892,22 +2801,92 @@ async function buildDashboard(userId) {
     select: { id: true, name: true, xp: true, level: true, streakDays: true }
   });
 
-  const [recentAttempts, recentWordAttempts] = await Promise.all([
+  const [recentAttempts, recentWordAttempts, recentSkillAttempts] = await Promise.all([
     prisma.attempt.findMany({
-      where: { userId, createdAt: { gte: addDays(new Date(), -14) } },
-      select: { createdAt: true }
+      where: { userId, createdAt: { gte: addDays(new Date(), -30) } },
+      select: { createdAt: true, isCorrect: true, answerJson: true, exercise: { select: { type: true } } }
     }),
     prisma.wordAttempt.findMany({
-      where: { userId, createdAt: { gte: addDays(new Date(), -14) } },
-      select: { createdAt: true }
+      where: { userId, createdAt: { gte: addDays(new Date(), -30) } },
+      select: { createdAt: true, isCorrect: true, mode: true, activityMode: true }
+    }),
+    prisma.skillAttempt.findMany({
+      where: { userId, createdAt: { gte: addDays(new Date(), -30) } },
+      select: { createdAt: true, skill: true, mode: true, isSuccessful: true, usedSupport: true }
     })
   ]);
 
+  const fourteenDaysAgo = addDays(new Date(), -14);
+  const recentAttempts14Days = recentAttempts.filter((attempt) => attempt.createdAt >= fourteenDaysAgo);
+  const recentWordAttempts14Days = recentWordAttempts.filter((attempt) => attempt.createdAt >= fourteenDaysAgo);
+  const recentSkillAttempts14Days = recentSkillAttempts.filter((attempt) => attempt.createdAt >= fourteenDaysAgo);
   const activeDays = new Set(
-    [...recentAttempts, ...recentWordAttempts].map((attempt) =>
+    [...recentAttempts14Days, ...recentWordAttempts14Days, ...recentSkillAttempts14Days].map((attempt) =>
       startOfUtcDay(attempt.createdAt).toISOString().slice(0, 10)
     )
   );
+  const retrieval14Days = summarizeRetrievalAttempts(recentAttempts14Days);
+  const skillProfile = buildSkillProfile({ attempts: recentAttempts, wordAttempts: recentWordAttempts, skillAttempts: recentSkillAttempts });
+  const skillPracticeTarget = selectFamiliarPracticeTargetForSkill(
+    familiarTargets,
+    skillProfile.nextFocus,
+    `${userId}:${new Date().toISOString().slice(0, 10)}`
+  );
+  const skillRoutes = {
+    vocabulary: "words",
+    grammar: "grammar",
+    listening: "lab",
+    reading: "lab",
+    writing: "learn",
+    conversation: "talk",
+    speaking: "talk"
+  };
+  const skillBalanceKey = pendingDeferredPractice?.channel || skillProfile.nextFocus;
+  const deferredLesson = pendingDeferredPractice?.lesson || pendingDeferredPractice?.exercise?.lesson || null;
+  const skillBalance = {
+    key: skillBalanceKey,
+    route: skillRoutes[skillBalanceKey] || "learn",
+    quietDeferred: user.learningMode === "quiet" && ["listening", "speaking"].includes(skillBalanceKey),
+    deferred: pendingDeferredPractice
+      ? {
+          count: deferredPractices.length,
+          readyCount: deferredReadyCount,
+          dueAt: pendingDeferredPractice.dueAt,
+          ready: pendingDeferredPractice.dueAt <= now,
+          channel: pendingDeferredPractice.channel,
+          kind: pendingDeferredPractice.lessonId
+            ? pendingDeferredPractice.lesson?.readingJson?.inputMode === "listening"
+              ? "connected-listening"
+              : "sound-listening"
+            : "exercise"
+        }
+      : null,
+    exercise: pendingDeferredPractice?.exercise
+      ? publicExercise(
+          pendingDeferredPractice.exercise,
+          pendingDeferredPractice.exercise.lesson?.sentences || []
+        )
+      : skillPracticeTarget
+        ? publicExercise(skillPracticeTarget.exercise, skillPracticeTarget.lesson?.sentences || [])
+      : null,
+    lesson: deferredLesson
+      ? {
+          id: deferredLesson.id,
+          slug: deferredLesson.slug,
+          title: deferredLesson.title,
+          cefrLevel: deferredLesson.cefrLevel,
+          readingJson: pendingDeferredPractice?.lessonId ? deferredLesson.readingJson : null,
+          topicSlug: deferredLesson.topic?.slug || null
+        }
+      : skillPracticeTarget
+        ? {
+            id: skillPracticeTarget.lesson.id,
+            slug: skillPracticeTarget.lesson.slug,
+            title: skillPracticeTarget.lesson.title,
+            cefrLevel: skillPracticeTarget.lesson.cefrLevel
+          }
+      : null
+  };
   const streakCalendar = Array.from({ length: 14 }, (_, index) => {
     const date = addDays(startOfUtcDay(), index - 13);
     const key = date.toISOString().slice(0, 10);
@@ -1941,24 +2920,6 @@ async function buildDashboard(userId) {
   const earnedBadgeIds = new Set(user.badges.map((userBadge) => userBadge.badgeId));
   const lessonSummaries = applyCheckpointLocksToSummaries(lessons.map(publicLessonSummary));
   const currentLessonSummary = pickCurrentLessonSummary(lessonSummaries);
-  if (!dueReview && currentLessonSummary && practiceExercise?.lessonId !== currentLessonSummary.id) {
-    const summaryLesson = lessons.find((lesson) => lesson.id === currentLessonSummary.id);
-    if (summaryLesson) {
-      const correctAttempts = await prisma.attempt.findMany({
-        where: {
-          userId,
-          isCorrect: true,
-          exercise: { lessonId: summaryLesson.id }
-        },
-        select: { exerciseId: true }
-      });
-      const correctIds = new Set(correctAttempts.map((attempt) => attempt.exerciseId));
-      practiceExercise =
-        summaryLesson.exercises.find((exercise) => !correctIds.has(exercise.id)) ||
-        summaryLesson.exercises[0] ||
-        null;
-    }
-  }
   const curriculumProgress = curriculumUnits.map((unit) =>
     publicCurriculumUnit(
       unit,
@@ -1980,7 +2941,10 @@ async function buildDashboard(userId) {
       mistakeCount: review.counts.mistakes,
       reviewDueToday: review.counts.total + lessonReviewCount,
       masteredWords,
-      totalWords
+      totalWords,
+      retrieval14Days,
+      skillProfile,
+      skillBalance
     },
     dailyPlan: buildDailyPlan({ lessons: lessonSummaries, review }),
     review,
@@ -1988,9 +2952,14 @@ async function buildDashboard(userId) {
     recentAchievement: recentAchievementFromLessons(lessons),
     currentLesson: currentLessonSummary,
     lessons: lessonSummaries,
-    practiceExercise: practiceExercise ? publicExercise(practiceExercise) : null,
+    practiceExercise: practiceExercise ? publicExercise(practiceExercise, practiceLesson?.sentences || []) : null,
     challenge: activeChallenge
-      ? {
+      ? (() => {
+          const authoredExercises = activeChallenge.exercises.map((challengeExercise) => challengeExercise.exercise).filter(Boolean);
+          const familiarExercises = authoredExercises.filter((exercise) => familiarExerciseIds.has(exercise.id));
+          const requiredFamiliarCount = Math.min(activeChallenge.targetCount, authoredExercises.length);
+          const locked = familiarExercises.length < requiredFamiliarCount;
+          return {
           id: activeChallenge.id,
           slug: activeChallenge.slug,
           title: activeChallenge.title,
@@ -2000,14 +2969,15 @@ async function buildDashboard(userId) {
           endsAt: activeChallenge.endsAt,
           progress: activeChallenge.progress[0]?.completedCount || 0,
           isCompleted: activeChallenge.progress[0]?.isCompleted || false,
-          exercises: activeChallenge.exercises
-            .map((challengeExercise) => challengeExercise.exercise)
-            .filter(Boolean)
-            .map(publicExercise),
-          exercise: activeChallenge.exercises[0]?.exercise
-            ? publicExercise(activeChallenge.exercises[0].exercise)
+          locked,
+          familiarCount: familiarExercises.length,
+          requiredFamiliarCount,
+          exercises: locked ? [] : familiarExercises.map(publicExercise),
+          exercise: !locked && familiarExercises[0]
+            ? publicExercise(familiarExercises[0])
             : null
-        }
+          };
+        })()
       : null,
     badges: badgeCatalog.map((badge) => ({
       id: badge.id,
@@ -2108,6 +3078,25 @@ app.get("/api/me", requireAuth, (req, res) => {
   res.json({ user: publicUser(req.user) });
 });
 
+app.patch(
+  "/api/preferences",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const data = {};
+    if (req.body.nativeLanguage !== undefined) {
+      if (!["de", "en"].includes(req.body.nativeLanguage)) return res.status(400).json({ error: "Choose a supported native language." });
+      data.nativeLanguage = req.body.nativeLanguage;
+    }
+    if (req.body.learningMode !== undefined) {
+      if (!["home", "quiet"].includes(req.body.learningMode)) return res.status(400).json({ error: "Choose a supported learning environment." });
+      data.learningMode = req.body.learningMode;
+    }
+    if (!Object.keys(data).length) return res.status(400).json({ error: "No supported preference was provided." });
+    const user = await prisma.user.update({ where: { id: req.user.id }, data });
+    res.json({ user: publicUser(user) });
+  })
+);
+
 app.get(
   "/api/dashboard",
   requireAuth,
@@ -2194,22 +3183,34 @@ app.get(
     });
 
     if (!lesson) return res.status(404).json({ error: "Lesson not found" });
-    if (isCheckpointLesson(lesson)) {
-      const syncedLessons = await syncAllPublishedLessonProgress(req.user.id);
-      const lessonSummaries = applyCheckpointLocksToSummaries(syncedLessons.map(publicLessonSummary));
-      const checkpointSummary = lessonSummaries.find((item) => item.id === lesson.id);
-      if (checkpointSummary?.isLocked) {
-        return res.status(423).json({
-          error: checkpointSummary.lockedReason || "Complete the earlier lessons before this checkpoint.",
-          lesson: checkpointSummary
-        });
-      }
-      const syncedLesson = syncedLessons.find((item) => item.id === lesson.id);
-      if (syncedLesson) lesson.progress = syncedLesson.progress;
-    } else {
-      await syncLessonProgressForLessons(req.user.id, [lesson]);
+    const syncedLessons = await syncAllPublishedLessonProgress(req.user.id);
+    const lessonSummaries = applyCheckpointLocksToSummaries(syncedLessons.map(publicLessonSummary));
+    const gatedSummary = lessonSummaries.find((item) => item.id === lesson.id);
+    if (gatedSummary?.isLocked) {
+      return res.status(423).json({
+        error: gatedSummary.lockedReason || "Complete the earlier learning packages before starting this one.",
+        lesson: gatedSummary
+      });
     }
+    const syncedLesson = syncedLessons.find((item) => item.id === lesson.id);
+    if (syncedLesson) lesson.progress = syncedLesson.progress;
     const summary = publicLessonSummary(lesson);
+    const candidateWordIds = lesson.vocabularyGroups.flatMap((group) => group.words.map((word) => word.id));
+    const introducedWords = candidateWordIds.length
+      ? await prisma.wordReview.findMany({
+          where: { userId: req.user.id, wordId: { in: candidateWordIds } },
+          select: { wordId: true }
+        })
+      : [];
+    const learningWords = summary.isCheckpoint
+      ? []
+      : selectLessonVocabularyWords(
+          lesson.vocabularyGroups,
+          lesson.id,
+          8,
+          introducedWords.map((item) => item.wordId),
+          { ...lesson, texts: lessonVocabularyContextTexts(lesson) }
+        ).map(publicWord);
     const attempts = await prisma.attempt.findMany({
       where: {
         userId: req.user.id,
@@ -2232,17 +3233,26 @@ app.get(
         progress: summary.progress,
         completedExercises: summary.completedExercises,
         totalExercises: summary.totalExercises,
+        estimatedMinutes: summary.estimatedMinutes,
+        reviewEstimatedMinutes: summary.reviewEstimatedMinutes,
         unit: summary.unit,
         isCheckpoint: summary.isCheckpoint,
         outcomes: Array.isArray(lesson.outcomesJson) ? lesson.outcomesJson : [],
         conceptKeys: Array.isArray(lesson.conceptKeys) ? lesson.conceptKeys : [],
         reviewSummary: lesson.reviewSummary || "",
+        reviewDue: summary.reviewDue,
+        reviewDueAt: summary.reviewDueAt,
+        lessonReviewCount: summary.lessonReviewCount,
+        learningWords,
         exercises: lesson.exercises.map((exercise) =>
-          publicExercise({
-            ...exercise,
-            mastered: correctExerciseIds.has(exercise.id),
-            lastAttemptCorrect: latestAttemptByExercise.get(exercise.id)?.isCorrect ?? null
-          })
+          publicExercise(
+            {
+              ...exercise,
+              mastered: correctExerciseIds.has(exercise.id),
+              lastAttemptCorrect: latestAttemptByExercise.get(exercise.id)?.isCorrect ?? null
+            },
+            lesson.sentences
+          )
         )
       }
     });
@@ -2260,8 +3270,12 @@ app.post(
 
     if (!lesson) return res.status(404).json({ error: "Lesson not found" });
 
-    const score = Number.isFinite(Number(req.body.score)) ? Math.max(0, Math.min(100, Number(req.body.score))) : 100;
-    const progress = await completeLessonReinforcement(req.user.id, lesson.id, score);
+    const firstPassScore = Number.isFinite(Number(req.body.score)) ? Math.max(0, Math.min(100, Number(req.body.score))) : 100;
+    const independentScore = Number.isFinite(Number(req.body.independentScore)) ? Math.max(0, Math.min(100, Number(req.body.independentScore))) : firstPassScore;
+    const introducedWordIds = Array.isArray(req.body.introducedWordIds)
+      ? req.body.introducedWordIds.filter((wordId) => typeof wordId === "string").slice(0, 8)
+      : [];
+    const progress = await completeLessonReinforcement(req.user.id, lesson.id, { firstPassScore, independentScore, introducedWordIds });
 
     res.json({
       progress: {
@@ -2270,8 +3284,59 @@ app.post(
         reviewDueAt: progress.reviewDueAt,
         lastReviewedAt: progress.lastReviewedAt,
         reviewIntervalDays: progress.reviewIntervalDays,
-        lessonReviewCount: progress.lessonReviewCount
+        lessonReviewCount: progress.lessonReviewCount,
+        evidence: { firstPassScore, independentScore }
       }
+    });
+  })
+);
+
+const OPTIONAL_PRACTICE_TYPES = new Set(["SENTENCE_BUILDER", "ARTICLE_MATCH", "CONJUGATION"]);
+
+app.get(
+  "/api/practice/exercises",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const requestedTypes = String(req.query.type || "")
+      .split(",")
+      .map((type) => type.trim().toUpperCase())
+      .filter((type) => OPTIONAL_PRACTICE_TYPES.has(type));
+    const types = requestedTypes.length ? [...new Set(requestedTypes)] : [...OPTIONAL_PRACTICE_TYPES];
+    const limit = Math.max(1, Math.min(120, Math.floor(Number(req.query.limit) || 80)));
+    const exercises = await prisma.exercise.findMany({
+      where: {
+        type: { in: types },
+        OR: [
+          { lesson: { progress: { some: { userId: req.user.id, mastery: { gte: 100 } } } } },
+          { attempts: { some: { userId: req.user.id } } }
+        ]
+      },
+      orderBy: [{ lesson: { order: "asc" } }, { order: "asc" }],
+      take: limit,
+      include: {
+        options: true,
+        lesson: { select: { title: true, sentences: true } },
+        attempts: {
+          where: { userId: req.user.id },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { isCorrect: true }
+        }
+      }
+    });
+
+    res.json({
+      exercises: exercises.map((exercise) => ({
+        ...publicExercise(
+          {
+            ...exercise,
+            mastered: exercise.attempts.some((attempt) => attempt.isCorrect),
+            lastAttemptCorrect: exercise.attempts[0]?.isCorrect ?? null
+          },
+          exercise.lesson.sentences
+        ),
+        lessonTitle: exercise.lesson.title
+      }))
     });
   })
 );
@@ -2289,7 +3354,33 @@ app.post(
     });
 
     if (!exercise) return res.status(404).json({ error: "Exercise not found" });
-    if (isCheckpointLesson(exercise.lesson)) {
+    if ([AttemptSource.GAME, AttemptSource.CHALLENGE].includes(source)) {
+      const [progress, priorAttemptCount] = await Promise.all([
+        prisma.userLessonProgress.findUnique({
+          where: { userId_lessonId: { userId: req.user.id, lessonId: exercise.lessonId } },
+          select: { mastery: true }
+        }),
+        prisma.attempt.count({ where: { userId: req.user.id, exerciseId: exercise.id } })
+      ]);
+      if (!exerciseIsFamiliarForPractice({ lessonMastery: progress?.mastery, priorAttemptCount })) {
+        return res.status(423).json({ error: "Learn or attempt this content in its course lesson before using it in optional practice." });
+      }
+    }
+    if (source === AttemptSource.LESSON && !isCheckpointLesson(exercise.lesson)) {
+      const existingProgress = await prisma.userLessonProgress.findUnique({
+        where: { userId_lessonId: { userId: req.user.id, lessonId: exercise.lessonId } },
+        select: { id: true }
+      });
+      if (!existingProgress) {
+        const syncedLessons = await syncAllPublishedLessonProgress(req.user.id);
+        const gatedSummary = applyCheckpointLocksToSummaries(syncedLessons.map(publicLessonSummary))
+          .find((lessonSummary) => lessonSummary.id === exercise.lessonId);
+        if (gatedSummary?.isLocked) {
+          return res.status(423).json({ error: gatedSummary.lockedReason || "Complete the earlier learning package first." });
+        }
+      }
+    }
+    if (isCheckpointLesson(exercise.lesson) && requiresCheckpointUnlock(source)) {
       const unlockState = await checkpointUnlockStateForUser(req.user.id, exercise.lesson);
       if (unlockState && !unlockState.unlocked) {
         const unitLabel = lessonUnitForOrder(exercise.lesson.order).label || "this unit";
@@ -2302,7 +3393,18 @@ app.post(
 
     const evaluation = evaluateExerciseAnswer(exercise, req.body);
     const wasCorrect = evaluation.correct;
-    const quality = wasCorrect ? String(req.body.quality || "good").toLowerCase() : "again";
+    const practiceMode = ["home", "quiet-alternative"].includes(req.body.practiceMode)
+      ? req.body.practiceMode
+      : "home";
+    const correctionAttempt = Boolean(req.body.correctionAttempt);
+    const usedSupport = Boolean(req.body.usedSupport) || correctionAttempt;
+    const orthographyWarning = evaluation.status === "CORRECT_WITH_ACCENT_WARNING";
+    const quality = exerciseReviewQuality({
+      correct: wasCorrect,
+      requestedQuality: req.body.quality,
+      usedSupport,
+      needsOrthographyReview: orthographyWarning
+    });
     const previousCorrect = await prisma.attempt.findFirst({
       where: { userId: req.user.id, exerciseId: exercise.id, isCorrect: true }
     });
@@ -2320,6 +3422,15 @@ app.post(
         answerJson: {
           answer: req.body.answer || null,
           words: Array.isArray(req.body.words) ? req.body.words : null,
+          retrieval: {
+            quality,
+            usedSupport,
+            correctionAttempt,
+            practiceMode,
+            inputMethod: req.body.inputMethod === "speech" ? "speech" : "keyboard",
+            orthographyWarning,
+            responseTimeMs: Number.isFinite(Number(req.body.responseTimeMs)) ? Math.max(0, Math.min(3600000, Number(req.body.responseTimeMs))) : null
+          },
           evaluation: {
             status: evaluation.status,
             errorCategory: evaluation.errorCategory,
@@ -2333,9 +3444,15 @@ app.post(
 
     const updatedUser = await updatePracticeStats(req.user, xpAwarded, `Exercise: ${exercise.slug}`);
     const reviewItem = await updateReviewItem(req.user.id, exercise.id, quality);
+    const deferredChannelPractice = await updateDeferredChannelPractice({
+      userId: req.user.id,
+      exercise,
+      practiceMode,
+      correct: wasCorrect
+    });
     await recordMistakeEvent({ userId: req.user.id, exercise, source, evaluation });
     await refreshLessonProgress(req.user.id, exercise.lessonId);
-    await updateChallengeProgress(req.user.id, exercise.id, source);
+    await updateChallengeProgress(req.user.id, exercise.id, source, wasCorrect);
     await checkBadges(updatedUser, exercise, wasCorrect);
 
     res.json({
@@ -2348,12 +3465,28 @@ app.post(
       user: publicUser(updatedUser),
       expected: evaluation.expected || expectedAnswerForExercise(exercise),
       accepted: evaluation.accepted?.length ? evaluation.accepted : acceptedAnswersForExercise(exercise),
+      functionalCheck: evaluation.functionalCheck || null,
+      correctionFocus: evaluation.correctionFocus || null,
       evaluation,
+      deferredChannel: practiceMode === "quiet-alternative" && wasCorrect && exercise.type === "LISTENING_DICTATION"
+        ? {
+            channel: "listening",
+            dueAt: deferredChannelPractice?.dueAt || null,
+            message: "Die echte Hörfassung bleibt für den Zuhause-Modus vorgemerkt."
+          }
+        : null,
       review: {
         state: wasCorrect ? reviewItem.state : "needs_practice",
+        quality,
+        usedSupport,
+        correctionAttempt,
+        orthographyWarning,
         dueAt: reviewItem.dueAt,
+        scheduleAdvanced: reviewItem.scheduleAdvanced,
         message: wasCorrect
-          ? `Scheduled for review on ${reviewItem.dueAt.toISOString().slice(0, 10)}.`
+          ? reviewItem.scheduleAdvanced
+            ? `Scheduled for review on ${reviewItem.dueAt.toISOString().slice(0, 10)}.`
+            : "Useful reinforcement recorded; the existing due time remains unchanged."
           : "Saved to Fix My Mistakes and scheduled for another try."
       }
     });
@@ -2364,17 +3497,10 @@ app.get(
   "/api/pronunciation",
   requireAuth,
   asyncHandler(async (req, res) => {
-    const pronunciation = await resolvePronunciation(req.query.text);
     const shouldVerify = ["1", "true", "yes"].includes(String(req.query.verify || "").toLowerCase());
-    if (shouldVerify && pronunciation.sources.length) {
-      const sources = await Promise.all(
-        pronunciation.sources.map(async (source) => ({
-          ...source,
-          playable: await isPronunciationSourcePlayable(source)
-        }))
-      );
-      return res.json({ ...pronunciation, sources });
-    }
+    const pronunciation = shouldVerify
+      ? await resolvePronunciationWithAvailability(req.query.text)
+      : await resolvePronunciation(req.query.text);
     res.json(pronunciation);
   })
 );
@@ -2429,6 +3555,73 @@ app.get(
   })
 );
 
+app.get(
+  "/api/speaking/practice",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    res.json(await learnedSpeakingContent(req.user.id, req.query.limit));
+  })
+);
+
+app.post(
+  "/api/practice-signals",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const skill = String(req.body.skill || "").toLowerCase();
+    const mode = String(req.body.mode || "").toLowerCase();
+    const allowedSignalModes = {
+      reading: new Set(["connected-comprehension"]),
+      listening: new Set(["connected-comprehension", "sound-discrimination"]),
+      visual: new Set(["sound-discrimination"]),
+      speaking: new Set(["pronunciation", "authored-conversation"]),
+      conversation: new Set(["authored-conversation"])
+    };
+    if (!allowedSignalModes[skill]?.has(mode)) {
+      return res.status(400).json({ error: "Unsupported practice signal" });
+    }
+    let deferredChannelPractice = null;
+    if (req.body.targetChannel === "listening" && req.body.completesChannelTarget) {
+      const lessonId = String(req.body.lessonId || "");
+      const lesson = lessonId
+        ? await prisma.lesson.findUnique({ where: { id: lessonId }, select: { readingJson: true, topic: { select: { slug: true } } } })
+        : null;
+      const targetKind = req.body.targetKind === "sound-discrimination" ? "sound-discrimination" : "connected-listening";
+      const validLessonTarget = targetKind === "sound-discrimination"
+        ? String(lesson?.topic?.slug || "").startsWith("sound-")
+        : lesson?.readingJson?.inputMode === "listening";
+      const practiceMode = req.body.practiceMode === "home" ? "home" : "quiet-alternative";
+      const quietEvidenceSkill = targetKind === "sound-discrimination" ? "visual" : "reading";
+      const validEvidenceChannel = practiceMode === "home" ? skill === "listening" : skill === quietEvidenceSkill;
+      if (!validLessonTarget || !validEvidenceChannel) {
+        return res.status(400).json({ error: "Invalid connected listening target" });
+      }
+      deferredChannelPractice = await updateDeferredLessonListeningPractice({
+        userId: req.user.id,
+        lessonId,
+        practiceMode,
+        correct: Boolean(req.body.isSuccessful)
+      });
+    }
+    const signal = await prisma.skillAttempt.create({
+      data: {
+        userId: req.user.id,
+        skill,
+        mode,
+        isSuccessful: Boolean(req.body.isSuccessful),
+        usedSupport: Boolean(req.body.usedSupport),
+        sourceKey: String(req.body.sourceKey || "").slice(0, 160) || null
+      }
+    });
+    res.status(201).json({
+      id: signal.id,
+      recorded: true,
+      deferredChannel: deferredChannelPractice
+        ? { channel: "listening", dueAt: deferredChannelPractice.dueAt, completedAt: deferredChannelPractice.completedAt }
+        : null
+    });
+  })
+);
+
 app.delete(
   "/api/pronunciation/vocabulary/:wordId",
   requireAuth,
@@ -2453,9 +3646,18 @@ app.get(
     const pronunciation = await resolvePronunciation(req.query.text);
     const provider = String(req.query.provider || "").toLowerCase();
     const sourceText = String(req.query.sourceText || "");
-    let candidates = provider
-      ? pronunciation.sources.filter((source) => source.provider === provider)
+    const availabilityEntry = pronunciationAvailabilityCache.get(normalizeAnswer(pronunciation.text));
+    const verifiedSources = availabilityEntry &&
+      availabilityEntry.signature === pronunciationSourceSignature(pronunciation.sources) &&
+      Date.now() < availabilityEntry.expiresAt
+      ? availabilityEntry.payload.sources
       : pronunciation.sources;
+    let candidates = provider
+      ? verifiedSources.filter((source) => source.provider === provider)
+      : [...verifiedSources].sort((left, right) => {
+          const priority = { playable: 0, unknown: 1, unavailable: 2 };
+          return (priority[left.availability] ?? 1) - (priority[right.availability] ?? 1);
+        });
     if (sourceText) {
       const exactCandidates = candidates.filter((source) => source.sourceText === sourceText);
       candidates = exactCandidates.length
@@ -2496,8 +3698,6 @@ app.get(
   "/api/words",
   requireAuth,
   asyncHandler(async (req, res) => {
-    await enrollCompletedLessonWordsForReview(req.user.id);
-
     const groups = await prisma.vocabularyGroup.findMany({
       orderBy: { title: "asc" },
       include: {
@@ -2587,27 +3787,47 @@ app.post(
     });
     if (!word) return res.status(404).json({ error: "Word not found" });
 
-    const mode = String(req.body.mode || "es-en");
+    const mode = normalizeWordAttemptMode(req.body.mode);
     const answer = String(req.body.answer || "");
     const qualityInput = String(req.body.quality || "").toLowerCase();
-    const expected = mode === "en-es" ? word.spanish : word.english;
-    const accepted = mode === "en-es" ? [word.spanish] : [word.english];
-    const isCorrect = accepted.some((candidate) => normalizeAnswer(candidate) === normalizeAnswer(answer));
-    const reviewQuality = isCorrect ? qualityInput || "good" : "again";
-    const xpAwarded = isCorrect ? (mode === "typing" || mode === "en-es" ? 8 : 5) : 0;
+    const activityMode = ["flashcard", "recognition", "picture", "typing", "context"].includes(String(req.body.activityMode || ""))
+      ? String(req.body.activityMode)
+      : "";
+    const expectsSpanish = wordAttemptExpectsSpanish(mode);
+    const contextualAnswer = activityMode === "context" ? wordContextAnswer(word) : "";
+    const expected = contextualAnswer || (expectsSpanish ? word.spanish : word.english);
+    const evaluation = expectsSpanish || contextualAnswer
+      ? evaluateSpanishWordAnswer(expected, answer)
+      : {
+          correct: normalizeAnswer(expected) === normalizeAnswer(answer),
+          status: normalizeAnswer(expected) === normalizeAnswer(answer) ? "CORRECT" : "INCORRECT",
+          errorCategory: "vocabulary",
+          orthographyWarning: false
+        };
+    const isCorrect = evaluation.correct;
+    const reviewQuality = isCorrect
+      ? evaluation.orthographyWarning ? "hard" : qualityInput || "good"
+      : "again";
+
+    const { review, scheduleAdvanced } = await updateWordReview(req.user.id, word.id, reviewQuality);
+    const xpAwarded = isCorrect
+      ? activityMode === "flashcard" || !scheduleAdvanced
+        ? 2
+        : expectsSpanish ? 8 : 5
+      : 0;
 
     await prisma.wordAttempt.create({
       data: {
         userId: req.user.id,
         wordId: word.id,
         mode,
+        activityMode,
         answer,
         isCorrect,
         xpAwarded
       }
     });
 
-    const review = await updateWordReview(req.user.id, word.id, reviewQuality);
     if (!isCorrect) {
       await recordMistakeEvent({
         userId: req.user.id,
@@ -2617,8 +3837,10 @@ app.post(
           correct: false,
           submitted: answer,
           expected,
-          errorCategory: "vocabulary",
-          feedbackMessage: `Review ${word.spanish}: ${word.english}.`
+          errorCategory: evaluation.errorCategory,
+          feedbackMessage: evaluation.errorCategory === "orthography"
+            ? `Review the Spanish spelling of ${word.spanish}; ñ and ü are distinct letters or spelling signs.`
+            : `Review ${word.spanish}: ${word.english}.`
         }
       });
     }
@@ -2626,8 +3848,9 @@ app.post(
 
     res.json({
       correct: isCorrect,
-      status: isCorrect ? "CORRECT" : "INCORRECT",
-      errorCategory: isCorrect ? null : "vocabulary",
+      status: evaluation.status,
+      errorCategory: evaluation.errorCategory,
+      orthographyWarning: evaluation.orthographyWarning,
       xpAwarded,
       expected,
       word: publicWord(word),
@@ -2636,8 +3859,13 @@ app.post(
         dueAt: review.dueAt,
         correctCount: review.correctCount,
         wrongCount: review.wrongCount,
+        scheduleAdvanced,
         message: isCorrect
-          ? `This word moved forward in your review schedule (${reviewQuality}).`
+          ? evaluation.orthographyWarning
+            ? `The meaning was correct, but the written accent still needs attention. This word will return sooner.`
+            : scheduleAdvanced
+            ? `This word moved forward in your review schedule (${reviewQuality}).`
+            : "This was useful reinforcement; the existing due date remains unchanged."
           : "Saved to Fix My Mistakes and queued for another retrieval attempt."
       },
       user: publicUser(updatedUser)

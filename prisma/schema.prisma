@@ -46,30 +46,34 @@ enum ChallengeType {
 }
 
 model User {
-  id               String               @id @default(cuid())
-  email            String               @unique
-  name             String
-  passwordHash     String
-  role             Role                 @default(USER)
-  avatarUrl        String?
-  xp               Int                  @default(0)
-  level            Int                  @default(1)
-  streakDays       Int                  @default(0)
-  lastPracticeDate DateTime?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  attempts         Attempt[]
-  badges           UserBadge[]
-  challengeRecords ChallengeProgress[]
-  groupMembers     GroupMember[]
-  lessonProgress   UserLessonProgress[]
-  miniGameScores   MiniGameScore[]
-  mistakeEvents    MistakeEvent[]
-  reviewItems      ReviewItem[]
-  sessions         Session[]
-  wordAttempts     WordAttempt[]
-  wordReviews      WordReview[]
-  xpEvents         XpEvent[]
+  id                String               @id @default(cuid())
+  email             String               @unique
+  name              String
+  passwordHash      String
+  role              Role                 @default(USER)
+  avatarUrl         String?
+  nativeLanguage    String               @default("de")
+  learningMode      String               @default("home")
+  xp                Int                  @default(0)
+  level             Int                  @default(1)
+  streakDays        Int                  @default(0)
+  lastPracticeDate  DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  attempts          Attempt[]
+  badges            UserBadge[]
+  challengeRecords  ChallengeProgress[]
+  deferredPractices DeferredPractice[]
+  groupMembers      GroupMember[]
+  lessonProgress    UserLessonProgress[]
+  miniGameScores    MiniGameScore[]
+  mistakeEvents     MistakeEvent[]
+  reviewItems       ReviewItem[]
+  sessions          Session[]
+  skillAttempts     SkillAttempt[]
+  wordAttempts      WordAttempt[]
+  wordReviews       WordReview[]
+  xpEvents          XpEvent[]
 }
 
 model Session {
@@ -128,19 +132,35 @@ model Word {
 }
 
 model WordAttempt {
-  id        String   @id @default(cuid())
-  userId    String
-  wordId    String
-  mode      String
-  answer    String
-  isCorrect Boolean
-  xpAwarded Int      @default(0)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  word      Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  userId       String
+  wordId       String
+  mode         String
+  activityMode String   @default("")
+  answer       String
+  isCorrect    Boolean
+  xpAwarded    Int      @default(0)
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word         Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([wordId])
+}
+
+model SkillAttempt {
+  id           String   @id @default(cuid())
+  userId       String
+  skill        String
+  mode         String
+  isSuccessful Boolean
+  usedSupport  Boolean  @default(false)
+  sourceKey    String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, skill])
 }
 
 model WordReview {
@@ -178,29 +198,31 @@ model Sentence {
 }
 
 model Lesson {
-  id               String               @id @default(cuid())
-  slug             String               @unique
-  title            String
-  summary          String
-  cefrLevel        String
-  theme            String
-  situation        String
-  imageKey         String?
-  outcomesJson     Json?
-  conceptKeys      Json?
-  reviewSummary    String?
-  order            Int                  @default(0)
-  estimatedMinutes Int                  @default(8)
-  isPublished      Boolean              @default(true)
-  topicId          String
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  exercises        Exercise[]
-  mistakeEvents    MistakeEvent[]
-  progress         UserLessonProgress[]
-  sentences        Sentence[]
-  topic            GrammarTopic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  vocabularyGroups VocabularyGroup[]
+  id                String               @id @default(cuid())
+  slug              String               @unique
+  title             String
+  summary           String
+  cefrLevel         String
+  theme             String
+  situation         String
+  imageKey          String?
+  outcomesJson      Json?
+  conceptKeys       Json?
+  readingJson       Json?
+  reviewSummary     String?
+  order             Float                @default(0)
+  estimatedMinutes  Int                  @default(8)
+  isPublished       Boolean              @default(true)
+  topicId           String
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  exercises         Exercise[]
+  deferredPractices DeferredPractice[]
+  mistakeEvents     MistakeEvent[]
+  progress          UserLessonProgress[]
+  sentences         Sentence[]
+  topic             GrammarTopic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  vocabularyGroups  VocabularyGroup[]
 
   @@index([topicId])
 }
@@ -223,6 +245,7 @@ model Exercise {
   createdAt          DateTime            @default(now())
   attempts           Attempt[]
   challengeExercises ChallengeExercise[]
+  deferredPractices  DeferredPractice[]
   lesson             Lesson              @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   mistakeEvents      MistakeEvent[]
   options            ExerciseOption[]
@@ -259,6 +282,25 @@ model Attempt {
 
   @@index([userId, createdAt])
   @@index([exerciseId])
+}
+
+model DeferredPractice {
+  id          String    @id @default(cuid())
+  userId      String
+  exerciseId  String?
+  lessonId    String?
+  channel     String
+  dueAt       DateTime
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise    Exercise? @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  lesson      Lesson?   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, exerciseId, channel])
+  @@unique([userId, lessonId, channel])
+  @@index([userId, completedAt, dueAt])
 }
 
 model UserLessonProgress {

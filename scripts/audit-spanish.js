@@ -4,8 +4,10 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.resolve(__dirname, "..");
-const seedPath = path.join(root, "prisma", "seed.js");
-const source = fs.readFileSync(seedPath, "utf8");
+const sourcePaths = [
+  path.join(root, "prisma", "seed.js"),
+  path.join(root, "server", "learning-core.js")
+];
 
 const ignoredLinePatterns = [
   /\bslug:\s*["']/,
@@ -18,11 +20,12 @@ const ignoredLinePatterns = [
   // Object entries whose KEY is a kebab-case identifier (e.g. the
   // exercise-slug -> imageKey map). These keys are intentionally ASCII
   // slugs, not display Spanish, so accent checks must not apply to them.
-  /^\s*["'][a-z0-9-]+["']\s*:/
+  /^\s*["'][a-z0-9-]+["']\s*:/,
+  /^\s*const ESTAR_FORMS =/
 ];
 
 const checks = [
-  { pattern: /\besta\b/g, expected: "está", note: "Use está for the estar form." },
+  { pattern: /\besta\b(?=\s+(?:en|aquí|allí|bien|mal|cerca|lejos|feliz|triste|cansad[oa]s?|abiert[oa]s?|cerrad[oa]s?|rot[oa]s?|list[oa]s?|trabajando|comiendo|leyendo)\b|[.!?,;:])/g, expected: "está", note: "Use está for the estar form." },
   { pattern: /\bestan\b/g, expected: "están", note: "Use están for the estar form." },
   { pattern: /\bDonde\b/g, expected: "Dónde", note: "Use dónde for the question word." },
   { pattern: /\bQue\b/g, expected: "Qué", note: "Use qué for the question word." },
@@ -63,25 +66,35 @@ const checks = [
 
 const issues = [];
 
-source.split(/\r?\n/).forEach((line, index) => {
-  if (ignoredLinePatterns.some((pattern) => pattern.test(line))) return;
-  for (const check of checks) {
-    check.pattern.lastIndex = 0;
-    if (check.pattern.test(line)) {
-      issues.push({
-        line: index + 1,
-        expected: check.expected,
-        note: check.note,
-        text: line.trim()
-      });
+for (const sourcePath of sourcePaths) {
+  const source = fs.readFileSync(sourcePath, "utf8");
+  let insideNormalizedStopwords = false;
+  source.split(/\r?\n/).forEach((line, index) => {
+    if (line.includes("const VOCABULARY_CONTEXT_STOPWORDS")) insideNormalizedStopwords = true;
+    if (insideNormalizedStopwords) {
+      if (line.includes("]);")) insideNormalizedStopwords = false;
+      return;
     }
-  }
-});
+    if (ignoredLinePatterns.some((pattern) => pattern.test(line))) return;
+    for (const check of checks) {
+      check.pattern.lastIndex = 0;
+      if (check.pattern.test(line)) {
+        issues.push({
+          sourcePath,
+          line: index + 1,
+          expected: check.expected,
+          note: check.note,
+          text: line.trim()
+        });
+      }
+    }
+  });
+}
 
 if (issues.length) {
   console.error(`Spanish audit found ${issues.length} possible canonical spelling issue(s):`);
   for (const issue of issues.slice(0, 80)) {
-    console.error(`- ${seedPath}:${issue.line}: ${issue.note}`);
+    console.error(`- ${issue.sourcePath}:${issue.line}: ${issue.note}`);
     console.error(`  ${issue.text}`);
   }
   if (issues.length > 80) {

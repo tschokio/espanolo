@@ -110,6 +110,14 @@ const topics = [
     order: 8
   },
   {
+    slug: "numbers-in-life",
+    title: "Numbers in Everyday Life",
+    description: "Build numbers in manageable groups and use them for age, dates, prices, times, quantities, and contact details.",
+    cefrLevel: "A1",
+    imageKey: "quantities-and-clear-colors:25",
+    order: 8.5
+  },
+  {
     slug: "negation-basics",
     title: "Negation Basics",
     description: "Build simple negative sentences with no before the verb.",
@@ -202,7 +210,7 @@ const vocabularyGroups = [
       ["estudiar", "to study", "verb", null, "Ella estudia gramática.", "daily-actions:2"],
       ["trabajar", "to work", "verb", null, "Nosotros trabajamos hoy.", "daily-actions:3"],
       ["comprar", "to buy", "verb", null, "Tú compras pan.", "daily-actions:4"],
-      ["caminar", "to walk", "verb", null, "Nosotros caminamos al parque.", "daily-actions:5"],
+      ["caminar", "to walk", "verb", null, "Nosotros caminamos juntos.", "daily-actions:5"],
       ["leer", "to read", "verb", null, "Leo un libro.", "daily-actions:7"]
     ]
   },
@@ -441,6 +449,33 @@ const vocabularyGroups = [
       ["la mañana", "morning", "noun", "feminine", "Estudio por la mañana.", "weather-and-time:8"],
       ["la tarde", "afternoon", "noun", "feminine", "Trabajo por la tarde.", "weather-and-time:9"],
       ["la noche", "night", "noun", "feminine", "Leo por la noche.", "weather-and-time:11"],
+      ["lunes", "Monday", "weekday", null, "Hoy es lunes.", "weather-and-time:12"],
+      ["martes", "Tuesday", "weekday", null, "Los martes estudio español.", "weather-and-time:12"],
+      ["miércoles", "Wednesday", "weekday", null, "La clase es el miércoles.", "weather-and-time:12"],
+      ["jueves", "Thursday", "weekday", null, "Trabajo el jueves.", "weather-and-time:12"],
+      ["viernes", "Friday", "weekday", null, "El viernes no hay clase.", "weather-and-time:12"],
+      ["sábado", "Saturday", "weekday", null, "El mercado abre el sábado.", "weather-and-time:12"],
+      ["domingo", "Sunday", "weekday", null, "El domingo descanso.", "weather-and-time:12"],
+      ["enero", "January", "month", null, "Estamos en enero.", "weather-and-time:12"],
+      ["febrero", "February", "month", null, "El curso termina en febrero.", "weather-and-time:12"],
+      ["marzo", "March", "month", null, "Viajo en marzo.", "weather-and-time:12"],
+      ["abril", "April", "month", null, "La clase empieza en abril.", "weather-and-time:12"],
+      ["mayo", "May", "month", null, "Mi cumpleaños es en mayo.", "weather-and-time:12"],
+      ["junio", "June", "month", null, "Hoy es el veinte de junio.", "weather-and-time:12"],
+      ["julio", "July", "month", null, "Trabajo en julio.", "weather-and-time:12"],
+      ["agosto", "August", "month", null, "Las vacaciones son en agosto.", "weather-and-time:12"],
+      ["septiembre", "September", "month", null, "El curso empieza en septiembre.", "weather-and-time:12"],
+      ["octubre", "October", "month", null, "Hoy es el tres de octubre.", "weather-and-time:12"],
+      ["noviembre", "November", "month", null, "Viajo en noviembre.", "weather-and-time:12"],
+      ["diciembre", "December", "month", null, "La tienda cierra en diciembre.", "weather-and-time:12"],
+      ["el fin de semana", "weekend", "noun", "masculine", "Estudio el fin de semana.", "weather-and-time:12"],
+      ["¿Qué hora es?", "What time is it?", "phrase", null, "Perdona, ¿qué hora es?", "weather-and-time:13"],
+      ["¿A qué hora?", "At what time?", "phrase", null, "¿A qué hora empieza?", "weather-and-time:13"],
+      ["y cuarto", "quarter past", "time phrase", null, "Son las dos y cuarto.", "weather-and-time:13"],
+      ["y media", "half past", "time phrase", null, "Son las tres y media.", "weather-and-time:13"],
+      ["menos cuarto", "quarter to", "time phrase", null, "Son las cinco menos cuarto.", "weather-and-time:13"],
+      ["mediodía", "noon", "noun", "masculine", "Es mediodía.", "weather-and-time:13"],
+      ["medianoche", "midnight", "noun", "feminine", "Es medianoche.", "weather-and-time:13"],
       ["el paraguas", "umbrella", "noun", "masculine", "Necesito un paraguas.", "weather-and-time:14"]
     ]
   },
@@ -468,7 +503,7 @@ const vocabularyGroups = [
   {
     slug: "numbers-and-colors",
     title: "Numbers & Colors",
-    description: "Count from zero to twenty and use common color words in descriptions and shopping.",
+    description: "Build useful numbers from zero to one hundred and use common color words in descriptions and shopping.",
     situation: "describing things",
     imageKey: "quantities-and-clear-colors:25",
     words: [
@@ -493,6 +528,23 @@ const vocabularyGroups = [
       ["dieciocho", "eighteen", "number", null, "La clase tiene dieciocho estudiantes.", null],
       ["diecinueve", "nineteen", "number", null, "Hay diecinueve libros.", null],
       ["veinte", "twenty", "number", null, "Necesito veinte minutos.", null],
+      ["veintiuno", "twenty-one", "number", null, "Tengo veintiún años.", null],
+      ["veintidós", "twenty-two", "number", null, "Hay veintidós personas.", null],
+      ["veintitrés", "twenty-three", "number", null, "Cuesta veintitrés euros.", null],
+      ["veinticuatro", "twenty-four", "number", null, "Tengo veinticuatro años.", null],
+      ["veinticinco", "twenty-five", "number", null, "Necesito veinticinco minutos.", null],
+      ["veintiséis", "twenty-six", "number", null, "Hay veintiséis preguntas.", null],
+      ["veintisiete", "twenty-seven", "number", null, "Cuesta veintisiete euros.", null],
+      ["veintiocho", "twenty-eight", "number", null, "Hay veintiocho estudiantes.", null],
+      ["veintinueve", "twenty-nine", "number", null, "Tengo veintinueve años.", null],
+      ["treinta", "thirty", "number", null, "Cuesta treinta euros.", null],
+      ["cuarenta", "forty", "number", null, "Hay cuarenta personas.", null],
+      ["cincuenta", "fifty", "number", null, "Necesito cincuenta minutos.", null],
+      ["sesenta", "sixty", "number", null, "Hay sesenta libros.", null],
+      ["setenta", "seventy", "number", null, "Cuesta setenta euros.", null],
+      ["ochenta", "eighty", "number", null, "Hay ochenta personas.", null],
+      ["noventa", "ninety", "number", null, "Necesito noventa minutos.", null],
+      ["cien", "one hundred", "number", null, "Hay cien libros.", null],
       ["el color", "color", "noun", "masculine", "El color es azul.", "quantities-and-clear-colors:25"],
       ["rojo", "red", "adjective", "masculine", "El tomate es rojo.", "quantities-and-clear-colors:24"],
       ["roja", "red", "adjective", "feminine", "La manzana es roja.", "quantities-and-clear-colors:24"],
@@ -880,7 +932,7 @@ const lessons = [
       ["Yo hablo español.", "I speak Spanish.", "Yo uses the -o ending."],
       ["Tú estudias mucho.", "You study a lot.", "Tú uses the -as ending."],
       ["Ellos trabajan hoy.", "They work today.", "Ellos uses the -an ending."],
-      ["Nosotros caminamos al parque.", "We walk to the park.", "Nosotros uses the -amos ending."]
+      ["Nosotros caminamos juntos.", "We walk together.", "Nosotros uses the -amos ending."]
     ]
   },
   {
@@ -994,7 +1046,7 @@ const lessons = [
     theme: "Noun Patterns",
     situation: "people and objects",
     imageKey: "grammar-scenes:8",
-    topicSlug: "plural-agreement",
+    topicSlug: "numbers-in-life",
     vocabularySlugs: ["classroom-basics", "people-and-pronouns"],
     order: 130,
     estimatedMinutes: 8,
@@ -1102,7 +1154,7 @@ const lessons = [
     estimatedMinutes: 9,
     sentences: [
       ["Yo compro pan.", "I buy bread.", "Comprar is a regular -ar verb."],
-      ["Nosotros caminamos al parque.", "We walk to the park.", "Nosotros uses -amos."],
+      ["Nosotros caminamos juntos.", "We walk together.", "Nosotros uses -amos."],
       ["Ella lee un libro.", "She reads a book.", "Leer is useful even before full -er verb study."],
       ["Tú hablas con un amigo.", "You speak with a friend.", "Tú uses -as for regular -ar verbs."]
     ]
@@ -1553,7 +1605,7 @@ const lessons = [
     estimatedMinutes: 7,
     sentences: [
       ["Nosotros hablamos español.", "We speak Spanish.", "Nosotros uses -amos."],
-      ["Nosotros caminamos al parque.", "We walk to the park.", "Caminar becomes caminamos."],
+      ["Nosotros caminamos juntos.", "We walk together.", "Caminar becomes caminamos."],
       ["Ellos trabajan hoy.", "They work today.", "Ellos uses -an."],
       ["Ellos estudian hoy.", "They study today.", "Estudiar becomes estudian."]
     ]
@@ -1706,7 +1758,7 @@ const lessons = [
       ["Me duele la cabeza.", "My head hurts.", "Use me duele with one thing that hurts."],
       ["Me duele el pie.", "My foot hurts.", "El matches pie."],
       ["Necesito un doctor.", "I need a doctor.", "Use necesito for practical needs."],
-      ["No entiendo al doctor.", "I do not understand the doctor.", "Use no before entiendo."]
+      ["No entiendo esta explicación.", "I do not understand this explanation.", "Use no before entiendo."]
     ]
   },
   {
@@ -1730,7 +1782,7 @@ const lessons = [
   },
   {
     slug: "checkpoint-a1-health-and-states",
-    title: "A1.6 Health and Body States Checkpoint",
+    title: "A1.8 Health and Body States Checkpoint",
     summary: "Check body words, me duele, necesito, and common tengo states.",
     cefrLevel: "A1",
     theme: "Checkpoint",
@@ -1764,7 +1816,7 @@ const lessons = [
     imageKey: "quantities-and-clear-colors:5",
     topicSlug: "plural-agreement",
     vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "classroom-basics"],
-    order: 460,
+    order: 416,
     estimatedMinutes: 7,
     sentences: [
       ["Tengo uno.", "I have one.", "Uno means one."],
@@ -1782,9 +1834,9 @@ const lessons = [
     theme: "Numbers",
     situation: "counting",
     imageKey: "quantities-and-clear-colors:10",
-    topicSlug: "plural-agreement",
+    topicSlug: "numbers-in-life",
     vocabularySlugs: ["numbers-and-colors", "fruit-and-produce", "classroom-basics"],
-    order: 465,
+    order: 417,
     estimatedMinutes: 7,
     sentences: [
       ["Tengo seis uvas.", "I have six grapes.", "Seis means six."],
@@ -4507,7 +4559,7 @@ const exercises = [
     lessonSlug: "checkpoint-a1-health-and-states",
     topicSlug: "tener-necesitar",
     type: ExerciseType.ARTICLE_MATCH,
-    prompt: "A1.6 checkpoint.",
+    prompt: "A1.8 checkpoint.",
     instruction: "Choose the article.",
     questionText: "____ cabeza",
     answerJson: { correct: "la", accepted: ["la"] },
@@ -4527,7 +4579,7 @@ const exercises = [
     lessonSlug: "checkpoint-a1-health-and-states",
     topicSlug: "tener-necesitar",
     type: ExerciseType.SHORT_ANSWER,
-    prompt: "A1.6 checkpoint.",
+    prompt: "A1.8 checkpoint.",
     instruction: "Translate the sentence.",
     questionText: "My head hurts.",
     answerJson: { correct: "Me duele la cabeza.", accepted: ["me duele la cabeza", "me duele la cabeza."] },
@@ -4543,7 +4595,7 @@ const exercises = [
     lessonSlug: "checkpoint-a1-health-and-states",
     topicSlug: "tener-necesitar",
     type: ExerciseType.CLOZE,
-    prompt: "A1.6 checkpoint.",
+    prompt: "A1.8 checkpoint.",
     instruction: "Choose the state word.",
     questionText: "Tengo ____.",
     answerJson: { correct: "hambre", accepted: ["hambre"] },
@@ -4563,7 +4615,7 @@ const exercises = [
     lessonSlug: "checkpoint-a1-health-and-states",
     topicSlug: "tener-necesitar",
     type: ExerciseType.DIALOGUE_REPLY,
-    prompt: "A1.6 checkpoint.",
+    prompt: "A1.8 checkpoint.",
     instruction: "Type a practical answer.",
     questionText: "En la farmacia: ¿Qué necesita?",
     answerJson: {

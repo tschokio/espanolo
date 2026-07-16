@@ -1,7 +1,8 @@
 const { PrismaClient, ExerciseType } = require("@prisma/client");
 
 const prisma = new PrismaClient();
-const TARGET_EXERCISE_COUNT = 16;
+const CORE_EXERCISE_COUNT = 10;
+const CHECKPOINT_EXERCISE_COUNT = 12;
 
 const normalize = (value) =>
   String(value || "")
@@ -289,17 +290,32 @@ function choiceOptions(correct, distractors) {
 
 function sentenceExercises(lesson) {
   const exercises = [];
-  for (const [index, sentence] of lesson.sentences.entries()) {
+  const contextualSentences = lesson.sentences
+    .map((sentence, index) => ({ sentence, index, words: tokensForBuilder(String(sentence.spanish || "").trim()) }))
+    .filter(({ sentence, words }) => sentence.spanish?.trim() && sentence.english?.trim() && words.filter((word) => /[\p{L}\p{N}]/u.test(word)).length >= 2);
+
+  for (const { sentence, index, words } of contextualSentences) {
     const spanish = sentence.spanish.trim();
     const english = sentence.english.trim();
-    if (!spanish || !english) continue;
-    const words = tokensForBuilder(spanish);
-    const lexicalWordCount = words.filter((word) => /[\p{L}\p{N}]/u.test(word)).length;
 
-    // A single conjugated form such as "es" or "está" needs a subject or
-    // situation before it can be translated unambiguously. Keep it as a
-    // teaching card, but do not turn it into a standalone recall question.
-    if (lexicalWordCount < 2) continue;
+    if (contextualSentences.length >= 3) {
+      exercises.push({
+        key: `recognize-${index + 1}`,
+        type: ExerciseType.MULTIPLE_CHOICE,
+        prompt: "Recognize the complete message.",
+        instruction: "Choose the Spanish sentence that expresses this meaning.",
+        questionText: english,
+        answerJson: {
+          correct: spanish,
+          accepted: acceptedSentence(spanish),
+          goal: "sentence_recognition"
+        },
+        explanation: sentence.note || `The matching Spanish sentence is: ${spanish}`,
+        difficulty: 1,
+        imageKey: semanticImageKey(`${spanish} ${english}`, lesson.imageKey),
+        options: choiceOptions(spanish, contextualSentences.map((item) => item.sentence.spanish.trim()).filter((value) => value !== spanish))
+      });
+    }
 
     exercises.push({
       key: `translate-${index + 1}`,
@@ -373,6 +389,52 @@ function vocabularyExercises(lesson) {
   return exercises;
 }
 
+function isCheckpointLesson(lesson) {
+  return /checkpoint/i.test(`${lesson?.slug || ""} ${lesson?.theme || ""} ${lesson?.title || ""}`);
+}
+
+function balancedSupplementSelection(candidates, authoredExercises, targetCount) {
+  const needed = Math.max(0, targetCount - authoredExercises.length);
+  if (!needed) return [];
+
+  const authoredTypes = new Set(authoredExercises.map((exercise) => exercise.type));
+  const preferredTypes = [
+    ExerciseType.MULTIPLE_CHOICE,
+    ExerciseType.SENTENCE_BUILDER,
+    ExerciseType.TRANSLATION,
+    ExerciseType.SHORT_ANSWER,
+    ExerciseType.DIALOGUE_REPLY,
+    ExerciseType.WRITING_PROMPT
+  ];
+  const queues = new Map();
+  for (const candidate of candidates) {
+    if (!queues.has(candidate.type)) queues.set(candidate.type, []);
+    queues.get(candidate.type).push(candidate);
+  }
+
+  const selected = [];
+  const selectedKeys = new Set();
+  const take = (type) => {
+    const queue = queues.get(type) || [];
+    const candidate = queue.find((item) => !selectedKeys.has(item.key));
+    if (!candidate || selected.length >= needed) return false;
+    selected.push(candidate);
+    selectedKeys.add(candidate.key);
+    return true;
+  };
+
+  for (const type of preferredTypes) {
+    if (!authoredTypes.has(type)) take(type);
+  }
+  while (selected.length < needed) {
+    let added = false;
+    for (const type of preferredTypes) added = take(type) || added;
+    for (const type of queues.keys()) added = take(type) || added;
+    if (!added) break;
+  }
+  return selected;
+}
+
 async function upsertExercise(lesson, topicId, exercise, order) {
   const slug = `supplement-${lesson.slug}-${exercise.key}`;
   const saved = await prisma.exercise.upsert({
@@ -443,7 +505,8 @@ async function main() {
     const candidates = [...sentenceExercises(lesson), ...vocabularyExercises(lesson)]
       .filter((exercise) => exercise.options.length === 0 || exercise.options.length >= 2)
       .filter((exercise, index, list) => list.findIndex((candidate) => candidate.key === exercise.key) === index);
-    const selected = candidates.slice(0, Math.max(0, TARGET_EXERCISE_COUNT - authoredExercises.length));
+    const targetCount = isCheckpointLesson(lesson) ? CHECKPOINT_EXERCISE_COUNT : CORE_EXERCISE_COUNT;
+    const selected = balancedSupplementSelection(candidates, authoredExercises, targetCount);
     const validSupplementSlugs = new Set(selected.map((exercise) => `${supplementPrefix}${exercise.key}`));
     const staleSupplements = lesson.exercises.filter(
       (exercise) => exercise.slug.startsWith(supplementPrefix) && !validSupplementSlugs.has(exercise.slug)
@@ -478,6 +541,9 @@ if (require.main === module) {
 }
 
 module.exports = {
+  balancedSupplementSelection,
+  CORE_EXERCISE_COUNT,
+  CHECKPOINT_EXERCISE_COUNT,
   lessonTeachingCorpus,
   semanticImageKey,
   sentenceExercises,

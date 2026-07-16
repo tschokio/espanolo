@@ -72,8 +72,39 @@ function checkpointUnlockState(lesson, lessonSummaries = []) {
   };
 }
 
+function progressiveLessonUnlockState(lesson, lessonSummaries = []) {
+  const lessonOrder = Number(lesson?.order || 0);
+  const actualProgress = Number(lesson?.actualProgress ?? lesson?.progress ?? 0);
+  // Preserve access to anything the learner has already begun. This keeps
+  // existing progress and deliberate review available after curriculum edits.
+  if (!lesson?.isCheckpoint && actualProgress > 0) {
+    return { unlocked: true, incompleteCount: 0, blockingLesson: null };
+  }
+
+  const prerequisites = (Array.isArray(lessonSummaries) ? lessonSummaries : [])
+    .filter((candidate) => candidate && candidate.id !== lesson?.id && Number(candidate.order || 0) < lessonOrder)
+    .sort((left, right) => Number(left.order || 0) - Number(right.order || 0));
+  const incompletePrerequisites = prerequisites.filter((candidate) => Number(candidate.actualProgress ?? candidate.progress ?? 0) < 100);
+  const blocker = incompletePrerequisites[0] || null;
+  return {
+    unlocked: incompletePrerequisites.length === 0,
+    incompleteCount: incompletePrerequisites.length,
+    blockingLesson: blocker
+      ? {
+          id: blocker.id,
+          slug: blocker.slug,
+          title: blocker.title,
+          order: blocker.order,
+          cefrLevel: blocker.cefrLevel,
+          unit: blocker.unit ? { slug: blocker.unit.slug, label: blocker.unit.label } : null
+        }
+      : null
+  };
+}
+
 function applyCheckpointLocksToSummaries(lessonSummaries = []) {
   const lessons = lessonSummaries.filter(Boolean);
+  const globallyOrdered = [...lessons].sort((left, right) => Number(left.order || 0) - Number(right.order || 0));
   const byUnit = new Map();
 
   for (const lesson of lessons) {
@@ -84,6 +115,7 @@ function applyCheckpointLocksToSummaries(lessonSummaries = []) {
 
   const lockedCheckpointIds = new Set();
   const lockedReasons = new Map();
+  const unlockStates = new Map();
   for (const unitLessons of byUnit.values()) {
     const ordered = [...unitLessons].sort((left, right) => (left.order || 0) - (right.order || 0));
     for (const lesson of ordered) {
@@ -92,11 +124,24 @@ function applyCheckpointLocksToSummaries(lessonSummaries = []) {
       if (lockState.unlocked) continue;
 
       lockedCheckpointIds.add(lesson.id);
-      const unitLabel = lesson.unit?.label || "this unit";
       const count = lockState.incompleteCount;
       lockedReasons.set(
         lesson.id,
-        `Complete ${count} earlier ${count === 1 ? "lesson" : "lessons"} in ${unitLabel} before this checkpoint.`
+        `Complete ${count} earlier ${count === 1 ? "learning package" : "learning packages"} before this checkpoint.`
+      );
+    }
+  }
+
+  const lockedLessonIds = new Set(lockedCheckpointIds);
+  for (const lesson of globallyOrdered) {
+    const lockState = progressiveLessonUnlockState(lesson, globallyOrdered);
+    unlockStates.set(lesson.id, lockState);
+    if (lockState.unlocked) continue;
+    lockedLessonIds.add(lesson.id);
+    if (!lockedReasons.has(lesson.id)) {
+      lockedReasons.set(
+        lesson.id,
+        `Complete the earlier learning package${lockState.incompleteCount === 1 ? "" : "s"} before starting this one.`
       );
     }
   }
@@ -105,12 +150,13 @@ function applyCheckpointLocksToSummaries(lessonSummaries = []) {
     const actualProgress = lesson.progress || 0;
     const actualCompletedExercises = lesson.completedExercises || 0;
     const actualStatus = lesson.status || "not_started";
-    const locked = lockedCheckpointIds.has(lesson.id);
+    const locked = lockedLessonIds.has(lesson.id);
     if (!locked) {
       return {
         ...lesson,
         isLocked: false,
         lockedReason: "",
+        unlockState: unlockStates.get(lesson.id) || { unlocked: true, incompleteCount: 0, blockingLesson: null },
         actualProgress,
         displayProgress: actualProgress
       };
@@ -120,6 +166,7 @@ function applyCheckpointLocksToSummaries(lessonSummaries = []) {
       ...lesson,
       isLocked: true,
       lockedReason: lockedReasons.get(lesson.id) || "Complete the earlier lessons before this checkpoint.",
+      unlockState: unlockStates.get(lesson.id) || { unlocked: false, incompleteCount: 1, blockingLesson: null },
       actualProgress,
       actualCompletedExercises,
       actualStatus,
@@ -138,5 +185,6 @@ module.exports = {
   applyCheckpointLocksToSummaries,
   buildLessonProgressState,
   checkpointUnlockState,
+  progressiveLessonUnlockState,
   lessonProgressNeedsSync
 };

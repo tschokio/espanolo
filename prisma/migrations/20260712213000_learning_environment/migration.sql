@@ -1,0 +1,2 @@
+ALTER TABLE "User"
+ADD COLUMN "learningMode" TEXT NOT NULL DEFAULT 'home';
