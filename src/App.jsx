@@ -10262,6 +10262,11 @@ function ReviewQueueView({ refreshDashboard, nativeLanguage = "de", learningMode
               <p className="mt-4 text-sm font-semibold text-slate-600">
                 {german ? `${reviewItems.length} gezielte ${reviewItems.length === 1 ? "Aufgabe" : "Aufgaben"} · etwa ${review.estimatedMinutes} Minuten.` : `${reviewItems.length} focused ${reviewItems.length === 1 ? "question" : "questions"} · about ${review.estimatedMinutes} minutes.`}
               </p>
+              <p className="mt-2 text-xs font-bold leading-5 text-slate-500">
+                {german
+                  ? "Wörter erscheinen hier erst, nachdem du sie im Wörter-Tab eingeführt hast. Ein sicherer Erstabruf verschiebt sie auf einen späteren Tag; Fehler kommen früher zurück."
+                  : "Words appear here only after you introduce them in the Words tab. A correct first recall moves them to a later day; missed items return sooner."}
+              </p>
               {!!review.conceptWeaknesses?.length && (
                 <div className="mt-5 rounded-lg border border-lagoon-200 bg-lagoon-50 p-4">
                   <p className="text-xs font-black uppercase tracking-wide text-lagoon-800">

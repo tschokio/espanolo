@@ -2258,13 +2258,16 @@ async function pruneLockedCheckpointReviewTasks(userId) {
 async function buildDueReview(userId, limit = 12) {
   await pruneLockedCheckpointReviewTasks(userId);
   const now = new Date();
-  const [dueGrammarEntities, dueWordEntities, grammarItems, wordItems, weakSpots] = await Promise.all([
+  const wordsTabIntroductionWhere = {
+    attempts: { some: { userId, activityMode: "flashcard" } }
+  };
+  const [dueGrammarEntities, dueWordEntities, grammarItems, wordItems, weakSpots, introducedWordAttempts] = await Promise.all([
     prisma.reviewItem.findMany({
       where: { userId, dueAt: { lte: now } },
       select: { exerciseId: true, dueAt: true }
     }),
     prisma.wordReview.findMany({
-      where: { userId, dueAt: { lte: now } },
+      where: { userId, dueAt: { lte: now }, word: wordsTabIntroductionWhere },
       select: { wordId: true, dueAt: true }
     }),
     prisma.reviewItem.findMany({
@@ -2282,19 +2285,26 @@ async function buildDueReview(userId, limit = 12) {
       }
     }),
     prisma.wordReview.findMany({
-      where: { userId, dueAt: { lte: now } },
+      where: { userId, dueAt: { lte: now }, word: wordsTabIntroductionWhere },
       orderBy: { dueAt: "asc" },
       take: limit,
       include: {
         word: { include: { vocabularyGroup: true } }
       }
     }),
-    buildMistakeSummary(userId, 5)
+    buildMistakeSummary(userId, 5),
+    prisma.wordAttempt.findMany({
+      where: { userId, activityMode: "flashcard" },
+      distinct: ["wordId"],
+      select: { wordId: true }
+    })
   ]);
 
   const grammarCount = dueGrammarEntities.length;
   const wordCount = dueWordEntities.length;
-  const uniqueWeakSpots = deduplicateReviewEntities(weakSpots);
+  const introducedWordIds = new Set(introducedWordAttempts.map((attempt) => attempt.wordId));
+  const uniqueWeakSpots = deduplicateReviewEntities(weakSpots)
+    .filter((spot) => !spot.word?.id || introducedWordIds.has(spot.word.id));
   const conceptWeaknesses = buildConceptWeaknesses(uniqueWeakSpots);
 
   const recurringConcepts = conceptWeaknesses.filter((concept) => concept.recurring && concept.topicIds.length).slice(0, 3);
@@ -2910,9 +2920,21 @@ async function buildDashboard(userId) {
     where: { userId, dueAt: { lte: new Date() } }
   });
   const [wordReviewCount, lessonReviewCount, masteredWords, totalWords] = await Promise.all([
-    prisma.wordReview.count({ where: { userId, dueAt: { lte: new Date() } } }),
+    prisma.wordReview.count({
+      where: {
+        userId,
+        dueAt: { lte: new Date() },
+        word: { attempts: { some: { userId, activityMode: "flashcard" } } }
+      }
+    }),
     prisma.userLessonProgress.count({ where: { userId, completedAt: { not: null }, reviewDueAt: { lte: new Date() } } }),
-    prisma.wordReview.count({ where: { userId, state: ReviewState.MASTERED } }),
+    prisma.wordReview.count({
+      where: {
+        userId,
+        state: ReviewState.MASTERED,
+        word: { attempts: { some: { userId, activityMode: "flashcard" } } }
+      }
+    }),
     prisma.word.count()
   ]);
 
@@ -3706,7 +3728,7 @@ app.get(
           include: {
             reviews: { where: { userId: req.user.id } },
             attempts: {
-              where: { userId: req.user.id },
+              where: { userId: req.user.id, activityMode: "flashcard" },
               orderBy: { createdAt: "desc" },
               take: 1
             }
@@ -3719,11 +3741,13 @@ app.get(
     const payload = groups.map((group) => {
       const words = group.words.map((word) => {
         const review = word.reviews[0] || null;
+        const introducedInWords = Boolean(word.attempts[0]);
         return {
           ...publicWord(word),
           groupSlug: group.slug,
           groupTitle: group.title,
-          review: review
+          introducedInWords,
+          review: introducedInWords && review
             ? {
                 state: review.state,
                 dueAt: review.dueAt,
@@ -3741,8 +3765,8 @@ app.get(
           lastAttempt: word.attempts[0] || null
         };
       });
-      const learned = words.filter((word) => word.review.correctCount > 0).length;
-      const reviewDue = words.filter((word) => word.review.correctCount > 0 && word.review.due).length;
+      const learned = words.filter((word) => word.introducedInWords && word.review.correctCount > 0).length;
+      const reviewDue = words.filter((word) => word.introducedInWords && word.review.due).length;
 
       return {
         id: group.id,
@@ -3752,11 +3776,11 @@ app.get(
         situation: group.situation,
         imageKey: group.imageKey,
         total: words.length,
-        due: words.filter((word) => word.review.due).length,
+        due: reviewDue,
         reviewDue,
-        new: words.filter((word) => word.review.correctCount === 0).length,
+        new: words.filter((word) => !word.introducedInWords).length,
         learned,
-        mastered: words.filter((word) => word.review.state === ReviewState.MASTERED).length,
+        mastered: words.filter((word) => word.introducedInWords && word.review.state === ReviewState.MASTERED).length,
         words
       };
     });
@@ -3766,12 +3790,12 @@ app.get(
       groups: payload,
       stats: {
         total: allWords.length,
-        due: allWords.filter((word) => word.review.due).length,
-        reviewDue: allWords.filter((word) => word.review.correctCount > 0 && word.review.due).length,
-        new: allWords.filter((word) => word.review.correctCount === 0).length,
-        learned: allWords.filter((word) => word.review.correctCount > 0).length,
-        mastered: allWords.filter((word) => word.review.state === ReviewState.MASTERED).length,
-        learning: allWords.filter((word) => word.review.state === ReviewState.LEARNING || word.review.state === "NEW").length
+        due: allWords.filter((word) => word.introducedInWords && word.review.due).length,
+        reviewDue: allWords.filter((word) => word.introducedInWords && word.review.due).length,
+        new: allWords.filter((word) => !word.introducedInWords).length,
+        learned: allWords.filter((word) => word.introducedInWords && word.review.correctCount > 0).length,
+        mastered: allWords.filter((word) => word.introducedInWords && word.review.state === ReviewState.MASTERED).length,
+        learning: allWords.filter((word) => word.introducedInWords && word.review.state !== ReviewState.MASTERED).length
       }
     });
   })

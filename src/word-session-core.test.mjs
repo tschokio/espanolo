@@ -8,6 +8,7 @@ const word = (id, learned = false, imageKey = "") => ({
   spanish: `palabra-${id}`,
   example: `Uso palabra-${id} aquí.`,
   imageKey,
+  introducedInWords: learned,
   review: { due: true, correctCount: learned ? 2 : 0, state: learned ? "REVIEW" : "NEW", wrongCount: 0 }
 });
 const group = (words) => ({ id: "group", words });
@@ -65,6 +66,29 @@ test("memory sessions exclude untouched words and keep picture fallback usable",
 
   assert.deepEqual(items.map((item) => item.wordId), ["known"]);
   assert.equal(items[0].mode, "recognition");
+});
+
+test("lesson or audio review records do not make a word eligible before a Words introduction", () => {
+  const lessonEnrolled = {
+    ...word("lesson-word", true),
+    introducedInWords: false,
+    lastAttempt: null,
+    review: { due: true, dueAt: "2026-07-23T00:00:00.000Z", correctCount: 3, state: "REVIEW", wrongCount: 0 }
+  };
+  const wordsIntroduced = {
+    ...word("words-word", false),
+    introducedInWords: true,
+    lastAttempt: { activityMode: "flashcard" }
+  };
+
+  const items = buildWordSession(
+    "memory",
+    [group([lessonEnrolled, wordsIntroduced])],
+    [group([lessonEnrolled, wordsIntroduced])],
+    { sessionSize: 4, questionStyle: "typing", random: () => 0.999999 }
+  );
+
+  assert.deepEqual(items.map((item) => item.wordId), ["words-word"]);
 });
 
 test("context prompts hide only the complete learned expression", () => {

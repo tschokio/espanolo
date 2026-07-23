@@ -14,13 +14,7 @@ export function isWordLearned(word) {
 }
 
 export function isWordAttempted(word) {
-  return (
-    isWordLearned(word) ||
-    Boolean(word?.lastAttempt) ||
-    Boolean(word?.review?.dueAt && word?.review?.state !== "NEW") ||
-    word?.groupSlug === "audio-lab-saved" ||
-    (word?.review?.wrongCount || 0) > 0
-  );
+  return Boolean(word?.introducedInWords || word?.lastAttempt?.activityMode === "flashcard");
 }
 
 function wordDueTimestamp(word) {
